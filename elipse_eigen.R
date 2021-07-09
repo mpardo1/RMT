@@ -1,7 +1,8 @@
 rm(list = ls())
 library(easypackages)
 libraries("gdata", "ggExtra","ggplot2", "numbers",
-          "tidyverse", "MASS", "bivariate", "barsurf")
+          "tidyverse", "MASS", "bivariate", "barsurf",
+          "ggforce")
 
 ############FUNCTIONS#############
 # Function which create a circle:
@@ -123,8 +124,8 @@ eigen_mat <- function(mat){
     geom_point(data = eig, aes(re,im) , size = 0.05)
 
 # Bivariate distribution:
-  mu_bi = 0
-  sigma_bi = 1
+  mu_bi = 3
+  sigma_bi = 1.2
   rho = 0.8
   N = 1000
   
@@ -137,7 +138,7 @@ eigen_mat <- function(mat){
   # 
   # Diagonal distribution
   mu_d <- 2
-  mu_diag <- mu_d - mu
+  mu_diag <- mu_d - mu_bi
   sigma_d <- 0.4
   mat <- change_diag(N,mat, mu_diag,sigma_d)
   eig <- eigen_mat(mat)
@@ -148,8 +149,14 @@ eigen_mat <- function(mat){
   gam = 0.2
   mat_2 <- NGM_matrix(N, mu_bi, sigma_bi, mu_d,sigma_d, gam,rho)
   eig <- eigen_mat(mat_2)
+  outlier <- data.frame(x = ((mu_d - mu_bi) + mu_bi*N)*(1/gam), y = 0)
   ggplot(eig) +
-    geom_point(aes(re,im), size = 0.05)
+    geom_point(aes(re,im), size = 0.05) +
+    geom_ellipse(aes(x0 = (mu_d - mu_bi)*(1/gam), y0 = 0,
+                     a = sigma_bi*sqrt(N)*(1+rho)*(1/gam),
+                     b = sigma_bi*sqrt(N)*(1-rho)*(1/gam),
+                     angle = 0, colour = "red")) +
+    geom_point(data = outlier, aes(x,y), color = "red",size = 0.3)
 
   mat_2 <- J_matrix(N, mu_bi, sigma_bi, mu_d,sigma_d, gam,rho)
   eig <- eigen_mat(mat_2)
