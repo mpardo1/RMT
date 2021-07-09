@@ -14,8 +14,8 @@ circle <- function(t, N, mu, sigma){
 # Function which create an ellipse.
 # For the NGM:
 elipse_NGM <- function(t, N, mu, mu_d, sigma, rho, gamma){
-  x <- (mu_d - mu)/gamma + (sigma*sqrt(N)*(1+rho)/gamma)*cos(t)
-  y <- (sigma*sqrt(N)*(1-rho)/gamma)*sin(t)
+  x <- (mu_d - mu - (1/gamma)) + (sigma*sqrt(N)*(1+rho))*cos(t)
+  y <- (sigma*sqrt(N)*(1-rho))*sin(t)
   vec <- c(x,y)
   return(vec)
 }
@@ -63,18 +63,28 @@ rand_ellip_mat <- function(N, mu1, s1,rho){
 }
 
 # Function which change the diagonal of a matrix:
-change_diag <- function(N, mat,sigma, mu){
+change_diag <- function(N, mat, mu, sigma){
   diag(mat) <- rnorm(N, mu, sigma)
     return(mat)
 }
 
-NGM_matrix <- function(N, mu, sigma, mu_d,sigma_d, gamma){
-  mat <- rand_ellip_mat(N, mu, sigma)
-  mat_1 <- change_diag(N, mat, mu_d, sigma_d)
-  id_gamma <- 1/gamma*diag(N)
-  mat_1 <- mat_1 %*% id_gamma
-  return(mat_1)
+NGM_matrix <- function(N, mu, sigma, mu_d,sigma_d, gam,rho){
+  ellip <- rand_ellip_mat(N, mu, sigma, rho)
+  mu_diag <- mu_d - mu
+  mat_1 <- change_diag(N, ellip, mu_diag, sigma_d)
+  mat_2 <- (1/gam)*mat_1
+  return(mat_2)
 }
+
+
+J_matrix <- function(N, mu, sigma, mu_d,sigma_d, gam,rho){
+  ellip <- rand_ellip_mat(N, mu, sigma, rho)
+  mu_diag <- mu_d - mu
+  mat_1 <- change_diag(N, ellip, mu_diag, sigma_d)
+  mat_2 <- (1/gam)*diag(N) + mat_1
+  return(mat_2)
+}
+
 # Function which plot the eigenvalues:
 eigen_mat <- function(mat){
   eigen_m <- as.complex(eigen(mat)$values)
@@ -87,8 +97,8 @@ eigen_mat <- function(mat){
 
 ############COMPUTATIONS#############
 # Normal distribution:
-  mu = 0.01
-  sigma = 0.009
+  mu = 0
+  sigma = 1
   N = 100
   mat <- rand_norm_mat(N, mu, sigma)
   eig <- eigen_mat(mat)
@@ -113,72 +123,61 @@ eigen_mat <- function(mat){
     geom_point(data = eig, aes(re,im) , size = 0.05)
 
 # Bivariate distribution:
-  N = 20
-  mu1 = 1
-  mu2 = 1
-  s1 = 0.4
-  s2 = 0.4
-  rho = 0.6
-  bvn3 <- rbvn(N,mu1,s1,mu2,s2,rho)
-  
-  
-  
-  
-  
-  
-# Variables for the bivariate distribution:
-  # sigma_bi <-rbind(c(1.2,0.1), c(0.1,1.2)) # Covariance matrix
-  # mu_bi <-c(3,3) 
-  # rho <- cov2cor(sigma_bi)[1,2]
-  # gamma = 0.4
-# Diagonal distribution
-  mu_d <- 2
-  sigma_d <- 0.4
-# Size of the NxN matrix
-  N = 300
-
-# Bivariate distribution:
-  mu_bi = 1.2
-  sigma_bi = 0.2
+  mu_bi = 0
+  sigma_bi = 1
   rho = 0.8
-  N = 800
+  N = 1000
+  
   mat <- rand_ellip_mat(N,mu_bi,sigma_bi,rho)
   eig <- eigen_mat(mat)
   ggplot(eig) +
-    geom_point(aes(re,im), size = 0.05)+
-    xlim(c(-10,10))
-  
-  
-  mat <- change_diag(N,mat, mu,sigma)
-  eig <- eigen_mat(mat)
-  ggplot(eig) +
-    geom_point(aes(re,im), size = 0.05)+
-    xlim(c(-20,20))
-  
-  mat <- NGM_matrix(N, mu, sigma, mu_d,sigma_d, gamma)
+    geom_point(aes(re,im), size = 0.05)
+  # +
+  #   xlim(c(-10,10))
+  # 
+  # Diagonal distribution
+  mu_d <- 2
+  mu_diag <- mu_d - mu
+  sigma_d <- 0.4
+  mat <- change_diag(N,mat, mu_diag,sigma_d)
   eig <- eigen_mat(mat)
   ggplot(eig) +
     geom_point(aes(re,im), size = 0.05)
+  # + xlim(c(-20,20))
 
+  gam = 0.2
+  mat_2 <- NGM_matrix(N, mu_bi, sigma_bi, mu_d,sigma_d, gam,rho)
+  eig <- eigen_mat(mat_2)
+  ggplot(eig) +
+    geom_point(aes(re,im), size = 0.05)
+
+  mat_2 <- J_matrix(N, mu_bi, sigma_bi, mu_d,sigma_d, gam,rho)
+  eig <- eigen_mat(mat_2)
+  ggplot(eig) +
+    geom_point(aes(re,im), size = 0.05)
+  
 ############# Draw the ellipse  ################:
   min_seq <- 0
   max_seq <- 2*pi
   x <- seq(min_seq, max_seq, 0.01)
-  sigma <- sigma_bi[1,1]
-  lap <- lapply(x, elipse_NGM, N, mu, mu_d, sigma, rho, gamma)
+  lap <- lapply(x, elipse_NGM, N, mu, mu_d, sigma, rho, gam)
   l = length(x)
   mat <- matrix(unlist(lap,recursive =TRUE), ncol = l, byrow = FALSE)
   
   df_mat <- data.frame(t(mat))
-  out <- (mu* sqrt(N) + (mu_d - mu))*gamma^(-1)
+  out <- (mu* sqrt(N) + (mu_d - mu))*gam^(-1)
   outlier <- c(out,0)
   df_mat <- rbind(df_mat, outlier)
   head(df_mat)
   colnames(df_mat) <- c("X","Y")
 # df_1 <- data.frame(x,vec = -vec)
 # df_join <- rbind(df,df_1)
-  df_center <- data.frame(x = ((mu_d - mu))*gamma^(-1), y=0)
+  df_center <- data.frame(x = ((mu_d - mu))*gam^(-1), y=0)
+  
   ggplot(df_mat) +
     geom_point(aes(X,Y), size = 0.05)+
     geom_point(data = df_center, aes(x,y), color = "red")
 
+  ggplot(eig) +
+    geom_point(aes(re,im), size = 0.05)+
+    geom_point(data = df_mat,aes(X,Y), size = 0.05, color = "red")

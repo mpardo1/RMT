@@ -1,4 +1,4 @@
-#sLibraries
+#Libraries
 library(matlib)
 ##########CHECKING CONSISTENCY RMT WITH J AND NGM###############
 
