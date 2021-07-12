@@ -2,7 +2,7 @@ rm(list = ls())
 library(easypackages)
 libraries("gdata", "ggExtra","ggplot2", "numbers",
           "tidyverse", "MASS", "bivariate", "barsurf",
-          "ggforce")
+          "ggforce", "MethylCapSig")
 
 ############FUNCTIONS#############
 # Function which create a circle:
@@ -93,7 +93,7 @@ J_matrix <- function(N, mu, sigma, mu_d,sigma_d, gam,rho){
   ellip <- rand_ellip_mat_norm(N, mu, sigma, rho)
   mu_diag <- mu_d - mu
   mat_1 <- change_diag_norm(N, ellip, mu_diag, sigma_d)
-  mat_2 <- (1/gam)*diag(N) + mat_1
+  mat_2 <- gam*diag(N) + mat_1
   return(mat_2)
 }  
 
@@ -101,7 +101,7 @@ J_matrix_lognorm <- function(N, mu, sigma, mu_d,sigma_d, gam,rho){
   ellip <- rand_ellip_mat_lognorm(N, mu, sigma, rho)
   mu_diag <- mu_d - mu
   mat_1 <- change_diag_lognorm(N, ellip, mu_diag, sigma_d)
-  mat_2 <- (1/gam)*diag(N) + mat_1
+  mat_2 <- gam*diag(N) + mat_1
   return(mat_2)
 }  
 
@@ -113,12 +113,57 @@ eigen_mat <- function(mat){
 }
 
 
+##### Stability conditions ######
+# NGM:
+NGM_stability <- function(N, mu, sigma, mu_d, rho, gam, eps){
+  cond1 = (sigma*sqrt(N)*(1+rho) + (mu_d - mu))*(1/gam)
+  cond2 = (-sigma*sqrt(N)*(1+rho) + (mu_d - mu))*(1/gam)
+  cond3 = (sigma*sqrt(N)*(1-rho) + (mu_d - mu))*(1/gam)
+  cond4 = (-sigma*sqrt(N)*(1-rho) + (mu_d - mu))*(1/gam)
+  cond5 = ((mu_d - mu) + mu*N)*(1/gamma)
+  stab = "FALSE"
+  tol <- 1 + eps
+  if(cond1 < tol){
+    if(abs(cond2) < tol){
+      if(cond3 < tol){
+        if(abs(cond4) < tol){
+          if(cond5 < tol){
+            stab = "TRUE"
+          }else{
+            print("Condition 5 (outlier) failed")
+          }
+        }else{
+          print("Condition 4 (down y) failed")
+        }
+      }else{
+        print("Condition 3 (up y) failed")
+      }
+    }else{
+      print("Condition 2 (left x) failed")
+    }
+  }else{
+    print("Condition 1 (right x) failed")
+  }
+  return(stab)
+}
+
+# Jacobian:
+J_stability <- function(N, mu, sigma, mu_d, rho, gam, eps){
+  cond = sigma*sqrt(N)*(1+rho) + (mu_d - mu) - gam
+  stab = "FALSE"
+  if( cond < eps){
+    stab = "TRUE"
+  }else{
+    print("Condition of stability failed")
+  }
+  return(stab)
+}
 
 
 ############COMPUTATIONS#############
 # Normal distribution ######
   mu = 0
-  sigma = 1
+  sigma = 0.00001
   N = 100
   mat <- rand_norm_mat(N, mu, sigma)
   eig <- eigen_mat(mat)
@@ -146,18 +191,18 @@ eigen_mat <- function(mat){
 # Bivariate distribution #######
   ## NGM Matrix:
   mu_bi = 3        # Bivariate mean
-  sigma_bi = 1.2   # Bivariate variance
+  sigma_bi = 0.08  # Bivariate variance
   rho = 0.8        # Correlation
-  N = 300           # Size matrix
-  gam = 0.2        # gamma
-  mu_d = 1         # Media diagonal
-  sigma_d = 0.2    # Variance diagonal
+  N = 300          # Size matrix
+  gam = 0.0003        # gamma
+  mu_d = 0.0008 # Media diagonal
+  sigma_d = 2   # Variance diagonal
   
   # with normal distribution:
   mat_2 <- NGM_matrix(N, mu_bi, sigma_bi, mu_d,sigma_d, gam,rho)
   eig <- eigen_mat(mat_2)
   outlier <- data.frame(x = ((mu_d - mu_bi) + mu_bi*N)*(1/gam), y = 0)
-  ggplot(eig) +
+  plot_J <- ggplot(eig) +
     geom_point(aes(re,im), size = 0.05) +
     geom_ellipse(aes(x0 = (mu_d - mu_bi)*(1/gam), y0 = 0,
                      a = sigma_bi*sqrt(N)*(1+rho)*(1/gam),
@@ -165,7 +210,12 @@ eigen_mat <- function(mat){
                      angle = 0, colour = "red")) +
     geom_point(data = outlier, aes(x,y), color = "red",size = 0.3) +
     ggtitle("NGM matrix normal distribution") +
-    theme_bw()
+    theme_bw() 
+  
+  plot_J
+  xmin = (mu_d - mu_bi)*(1/gam) + sigma_bi*sqrt(N)*(1+rho)*(1/gam)
+  xmax = (mu_d - mu_bi)*(1/gam) - sigma_bi*sqrt(N)*(1+rho)*(1/gam)
+  plot_J + xlim(c(xmin,xmax))  
   
   
   # with lognormal distribution:
@@ -183,7 +233,9 @@ eigen_mat <- function(mat){
     theme_bw()
   
   plot_J
-  plot_J + xlim(c(-250,250))
+  xmin = (mu_d - mu_bi)*(1/gam) + sigma_bi*sqrt(N)*(1+rho)*(1/gam)
+  xmax = (mu_d - mu_bi)*(1/gam) - sigma_bi*sqrt(N)*(1+rho)*(1/gam)
+  plot_J + xlim(c(xmin,xmax))
   
   ### Jacobian Matrix: 
   # With normal distribution:
@@ -192,7 +244,7 @@ eigen_mat <- function(mat){
   outlier <- data.frame(x = ((mu_d - mu_bi) + mu_bi*N) + gam, y = 0)
   plot_J <- ggplot(eig) +
     geom_point(aes(re,im), size = 0.05)+
-    geom_ellipse(aes(x0 = (mu_d - mu_bi) +gam, y0 = 0,
+    geom_ellipse(aes(x0 = (mu_d - mu_bi) - gam, y0 = 0,
                      a = sigma_bi*sqrt(N)*(1+rho),
                      b = sigma_bi*sqrt(N)*(1-rho),
                      angle = 0, colour = "red")) +
@@ -201,9 +253,52 @@ eigen_mat <- function(mat){
     theme_bw()
   
   plot_J
-  plot_J + xlim(c(-50,50))
+  xmin = (mu_d - mu_bi) + sigma_bi*sqrt(N)*(1+rho) - gam
+  xmax = (mu_d - mu_bi) - sigma_bi*sqrt(N)*(1+rho) - gam
+  plot_J + xlim(c(xmin,xmax))
+  
+  xmin = -10
+  xmax = 10
+  plot_J + xlim(c(xmin,xmax))
   
   # with lognormal distribution:
+  mat_2 <- J_matrix_lognorm(N, mu_bi, sigma_bi, mu_d,sigma_d, gam,rho)
+  eig <- eigen_mat(mat_2)
+  outlier <- data.frame(x = ((mu_d - mu_bi) + mu_bi*N) + gam, y = 0)
+  plot_J <- ggplot(eig) +
+    geom_point(aes(re,im), size = 0.05)+
+    geom_ellipse(aes(x0 = (mu_d - mu_bi) - gam, y0 = 0,
+                     a = sigma_bi*sqrt(N)*(1+rho),
+                     b = sigma_bi*sqrt(N)*(1-rho),
+                     angle = 0, colour = "red")) +
+    geom_point(data = outlier, aes(x,y), color = "red",size = 0.3)+
+    ggtitle("Jacobian matrix lognormal distribution") +
+    theme_bw()
+  
+  plot_J
+  xmin = (mu_d - mu_bi) + sigma_bi*sqrt(N)*(1+rho) - gam
+  xmax = (mu_d - mu_bi) - sigma_bi*sqrt(N)*(1+rho) - gam
+  plot_J + xlim(c(xmin,xmax))
+  
+  plot_J + xlim(c(-250,250))
+# Stability computations:
+  mu_vec <- runif(10,0,3)
+  sigma_vec <- runif(10,0,3)  
+  mud_vec <- runif(10,0,3)
+  rho_vec <- runif(10,0,1)
+  gam_vec <- runif(10,0,3)
+    
+  N = 500
+  mu = 5
+  sigma = 0.001
+  mu_d = 1
+  rho = 0.2
+  gam = 5
+  eps = 0.00001
+  
+  J_stability(N, mu, sigma, mu_d, rho, gam, eps)
+  mu_bi = mu
+  sigma_bi = sigma
   mat_2 <- J_matrix_lognorm(N, mu_bi, sigma_bi, mu_d,sigma_d, gam,rho)
   eig <- eigen_mat(mat_2)
   outlier <- data.frame(x = ((mu_d - mu_bi) + mu_bi*N) + gam, y = 0)
@@ -214,8 +309,9 @@ eigen_mat <- function(mat){
                      b = sigma_bi*sqrt(N)*(1-rho),
                      angle = 0, colour = "red")) +
     geom_point(data = outlier, aes(x,y), color = "red",size = 0.3)+
-    ggtitle("Jacobian matrix lognormal distribution")
+    ggtitle("Jacobian matrix lognormal distribution") + 
     theme_bw()
   
-  plot_J
-  plot_J + xlim(c(-50,50))
+    plot_J
+    plot_J + xlim(c(-50,50))
+    
