@@ -2,7 +2,7 @@ rm(list = ls())
 library(easypackages)
 libraries("gdata", "ggExtra","ggplot2", "numbers",
           "tidyverse", "MASS", "bivariate", "barsurf",
-          "ggforce", "MethylCapSig")
+          "ggforce", "MethylCapSig", "simstudy")
 
 ############FUNCTIONS#############
 # Function which create a circle:
@@ -18,28 +18,43 @@ rand_norm_mat <- function(N, mu, sigma){
   rmatrix <- matrix(rnorm(N^2, mu, sigma),nrow = N)
   return(rmatrix)
 }
+# 
+# # Function which create a elliptic (bivariate) random matrix.
+# rand_ellip_mat_norm <- function(N, mu1, s1,c){
+#   mu <- c(mu1,mu1) # Mean
+#   sig <- matrix(c(1, c, c,1),
+#                   2) # Covariance matrix
+#   print(paste("sigma:", sig))
+#   biv_norm <- mvrnorm(N^2, mu = mu, Sigma = sig )
+#   biv_norm <- pnorm(biv_norm)
+#   rmatrix <- matrix(0,N,N)
+#   for(i in c(1:N)){
+#     for(j in c(i:N)){
+#       ind = j + (i-1)*N
+#       rmatrix[i,j] = biv_norm[ind,1]
+#       rmatrix[j,i] = biv_norm[ind,2]
+#     }
+#   }
+#   rmatrix <- rmatrix * s1
+#   return(rmatrix)
+# }
 
-# Function which create a elliptic (bivariate) random matrix.
-rand_ellip_mat_norm <- function(N, mu1, s1,c){
-  mu2 = mu1
-  s2 = s1
-  mu <- c(mu1,mu2) # Mean
-  sig <- matrix(c(s1^2, c*s1^2, c*s1^2, s2^2),
-                  2) # Covariance matrix
-  print(paste("sigma:", sig))
-  biv_norm <- mvrnorm(N^2, mu = mu, Sigma = sig )
+######TEST#####
+rand_ellip_mat_norm <- function(N, mu1, s1,rho){
+  mu_vec <- c(mu1,mu1) # Mean
+  sig_vec <- c(s1, s1)
+  cor_mat = matrix(c(1,rho,rho,1),nrow = 2)
+  biv_norm <- genCorData(N^2, mu = mu_vec, sigma = sig_vec, corMatrix = cor_mat)[,2:3]
   rmatrix <- matrix(0,N,N)
   for(i in c(1:N)){
     for(j in c(i:N)){
       ind = j + (i-1)*N
-      rmatrix[i,j] = biv_norm[ind,1]
-      rmatrix[j,i] = biv_norm[ind,2]
+      rmatrix[i,j] = biv_norm$V1[ind]
+      rmatrix[j,i] = biv_norm$V2[ind]
     }
   }
-  
   return(rmatrix)
 }
-
 # Function which create a elliptic (bivariate) random matrix.
 rand_ellip_mat_lognorm <- function(N, mu1, s1,rho){
   mu2 = mu1
@@ -163,7 +178,7 @@ J_stability <- function(N, mu, sigma, mu_d, rho, gam, eps){
 ############COMPUTATIONS#############
 # Normal distribution ######
   mu = 0
-  sigma = 0.00000000000001
+  sigma = 0.0000000000001
   N = 100
   mat <- rand_norm_mat(N, mu, sigma)
   eig <- eigen_mat(mat)
@@ -186,47 +201,38 @@ J_stability <- function(N, mu, sigma, mu_d, rho, gam, eps){
   ggplot(df_mat) +
     geom_point(aes(X,Y), size = 0.05, color = "red")+
     geom_point(data = eig, aes(re,im) , size = 0.05)
-
   
 # Bivariate distribution #######
   ## NGM Matrix:
+  N = 500
   mu_bi = 5        # Bivariate mean
-  sigma_bi = 0.002  # Bivariate variance
-  rho = 0.2        # Correlation
+  sigma_bi = 0.04  # Bivariate variance
+  rho = -0.2        # Correlation
   N = 500          # Size matrix
   gam = 5        # gamma
   mu_d = 1 # Media diagonal
-  sigma_d = 0.00015   # Variance diagonal
+  sigma_d = 0.02  # Variance diagonal
   
   
-  N = 400
-  mu_bi = 0.01
-  sigma_bi = 0.2
-  sigma_d = 2
-  mu_d = 2
-  rho = 0
-  gam = 1
-  eps = 1
-
-  # with normal distribution:
   mat_2 <- NGM_matrix(N, mu_bi, sigma_bi, mu_d,sigma_d, gam,rho)
   eig <- eigen_mat(mat_2)
   outlier <- data.frame(x = ((mu_d - mu_bi) + mu_bi*N)*(1/gam), y = 0)
-  plot_J <- ggplot(eig) +
-    geom_point(aes(re,im), size = 0.05) +
+  plot_J <- ggplot(eig) + geom_point(aes(re,im), size = 0.05) 
+  
+  plot_J
+  c = rho * sigma_bi^2 + mu_bi
+  plot_J + 
     geom_ellipse(aes(x0 = (mu_d - mu_bi)*(1/gam), y0 = 0,
-                     a = sigma_bi*sqrt(N)*(1+rho)*(1/gam),
-                     b = sigma_bi*sqrt(N)*(1-rho)*(1/gam),
+                     a = sigma_bi*sqrt(N)*(1+c)*(1/gam),
+                     b = sigma_bi*sqrt(N)*(1-c)*(1/gam),
                      angle = 0, colour = "red")) +
     geom_point(data = outlier, aes(x,y), color = "red",size = 0.3) +
     ggtitle("NGM matrix normal distribution") +
     theme_bw() 
-  
-  plot_J
   xmin = (mu_d - mu_bi)*(1/gam) - sigma_bi*sqrt(N)*(1+c)*(1/gam)
   xmax = (mu_d - mu_bi)*(1/gam) + sigma_bi*sqrt(N)*(1+c)*(1/gam)
   plot_J + xlim(c(xmin,xmax))  
-  plot_J + xlim(c(-2.5,2.5)) 
+  plot_J + xlim(c(-20,20)) + ylim(c(-0.00002,0.00002)) 
   # plot_J + xlim(c(-20,10)) 
   # with lognormal distribution:
   mat_2 <- NGM_matrix_lognorm(N, mu_bi, sigma_bi, mu_d,sigma_d, gam,rho)
