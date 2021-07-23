@@ -74,14 +74,14 @@ change_diag_lognorm <- function(N, mat, mu, sigma){
 NGM_matrix <- function(N, mu, sigma, mu_d,sigma_d, gam,rho){
   ellip <- rand_ellip_mat_norm(N, mu, sigma, rho)
   mat_1 <- change_diag_norm(N, ellip, mu_d, sigma_d)
-  mat_2 <- (1/(gam*(N-1)*mu))*mat_1
+  mat_2 <- (1/(gam+(N-1)*mu))*mat_1
   return(mat_2)
 }
 
 NGM_matrix_lognorm <- function(N, mu, sigma, mu_d,sigma_d, gam,rho){
   ellip <- rand_ellip_mat_lognorm(N, mu, sigma, rho)
   mat_1 <- change_diag_lognorm(N, ellip, mu_d, sigma_d)
-  mat_2 <- (1/(gam*(N-1)*mu))*mat_1
+  mat_2 <- (1/(gam+(N-1)*mu))*mat_1
   return(mat_2)
 }
 
@@ -90,14 +90,14 @@ NGM_matrix_lognorm <- function(N, mu, sigma, mu_d,sigma_d, gam,rho){
 J_matrix <- function(N, mu, sigma, mu_d,sigma_d, gam,rho){
   ellip <- rand_ellip_mat_norm(N, mu, sigma, rho)
   mat_1 <- change_diag_norm(N, ellip, mu_d, sigma_d)
-  mat_2 <- gam*diag(N) + mat_1
+  mat_2 <- (gam+(N-1)*mu)*diag(N) + mat_1
   return(mat_2)
 }  
 
 J_matrix_lognorm <- function(N, mu, sigma, mu_d,sigma_d, gam,rho){
   ellip <- rand_ellip_mat_lognorm(N, mu, sigma, rho)
   mat_1 <- change_diag_lognorm(N, ellip, mu_d, sigma_d)
-  mat_2 <- gam*diag(N) + mat_1
+  mat_2 <- (gam+(N-1)*mu)*diag(N) + mat_1
   return(mat_2)
 }  
 
