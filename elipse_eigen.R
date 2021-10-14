@@ -178,11 +178,11 @@ eigen_mat <- function(mat){
   ## NGM Matrix:
   mu_bi = 2       # Bivariate mean
   sigma_bi = 1     # Bivariate variance
-  rho = 0.3        # Correlation
+  rho = 0       # Correlation
   N = 300          # Size matrix
   gam = 1.2          # gamma
-  mu_d = 3        # Media diagonal
-  sigma_d = 1      # Variance diagonal
+  mu_d = 1        # Media diagonal
+  sigma_d = 0.0000000001      # Variance diagonal
   
   ##--------------------------------------------------------------#
   # Check the eigenvalues with same distribution in the diagonal.
