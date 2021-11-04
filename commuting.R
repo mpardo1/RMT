@@ -102,4 +102,5 @@ plot_J +
   geom_circle(aes(x0 = center,
                   y0 = 0,
                   r = radius, colour = "red")) +
-  geom_point(aes(outlier,0), colour =  "red") 
+  geom_point(aes(outlier,0), colour =  "red") +
+  coord_fixed()
