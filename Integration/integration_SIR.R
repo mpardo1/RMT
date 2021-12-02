@@ -6,31 +6,36 @@ library("ggpubr")
 library("ggsci")
 
 # -------------------------PARAMETERS ---------------------------------
-N = 2 # Number of patches
+N = 100 # Number of patches
 mu = 1 
 sig = 0.5
 
 # Random generation of parameters:
-del_N <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2)) # Birth rate
+# del_N <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2)) # Birth rate
 bet <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2))   # Transmission rate
-d_vec <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2)) # Natural mortality rate
+# d_vec <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2)) # Natural mortality rate
 thet <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2))  # Rate of loss of immunity 
-connect_mat <- matrix(rgamma(N^2,shape = (mu/sig)^2,rate = mu/(sig^2)), nrow = N) # Connectivity matrix
-commut_mat <- matrix(rgamma(N^2,shape = (mu/sig)^2,rate = mu/(sig^2)), nrow = N) # Commuting matrix
 alp <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2)) # Rate of disease overcome
 delt <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2)) # Diseases related mortality rate
 
-# CTEf parameters:
-# del_N <- 1 # Birth rate
+# CTE parameters:
+del_N <- matrix(1.2, ncol = N, nrow = 1) # Birth rate
 # bet <- 1   # Transmission rate
-# d_vec <- 1 # Natural mortality rate
+d_vec <- matrix(0.5, ncol = N, nrow = 1) # Natural mortality rate
 # thet <- 1  # Rate of loss of immunity 
-# connect_mat <- 0 # Connectivity matrix
-# commut_mat <- 0 # Commuting matrix
 # alp <- 1 # Rate of disease overcome
 # delt <- 1 # Diseases related mortality rate
 
-# Parameter vector
+#--------------------MOBILITY PARAMETERS --------------------------
+# Migration matrix:
+connect_mat <- matrix(rgamma(N^2,shape = (mu/sig)^2,rate = mu/(sig^2)), nrow = N) 
+# connect_mat <- matrix(0, nrow = N, ncol = N) # No migration
+
+#Commuting matrix:
+commut_mat <- matrix(rgamma(N^2,shape = (mu/sig)^2,rate = mu/(sig^2)), nrow = N)
+# commut_mat <- matrix(0, nrow = N, ncol = N) # No commuting
+
+# Create vector of parameters for ode function:
 parameters <- list(
   dim = N,
   delta_N = del_N,
@@ -42,8 +47,8 @@ parameters <- list(
   alpha_r = alp,
   delta_r = delt )
 
-# ----------------------------MODEL ----------------------------------
-# 1D SIR model:
+# ----------------------------MODELS ----------------------------------
+#------------------------- 1D SIR model--------------------------------
 SIR_1 <- function(t, state, parameters) {
   with(as.list(c(state, parameters)),{
     dS1 <- delta_N[1]*(S1+I1+R1) - beta_r[1]*(S1/(S1+I1+R1))*I1  -
@@ -86,15 +91,6 @@ SIR_2 <- function(t, state, parameters) {
     
       dI1 <- q1 - q2  - q3 + q4 + q5
       
-      # print("------------------------------------------------------------")
-      # print(paste("t :",t))
-      # print(paste("q1 :",q1))
-      # print(paste("q2 :",q2))
-      # print(paste("q3 :",q3))
-      # print(paste("q4 :",q4))
-      # print(paste("q5 :",q5))
-      # print(paste("dI1:", dI1))
-      
       # Recovered individuals:
       q1 <- alpha_r[1]*I1
       q2 <- (theta_r[1] + d[1])*R1
@@ -121,15 +117,7 @@ SIR_2 <- function(t, state, parameters) {
       q4 <-  (I1*C[2,1] + I2*C[2,2]) #sum(I2*C[2,])
       q5 <- (S2/(S2+I2+R2))*(beta_r[1]*W[1,2]*I1 + beta_r[2]*W[2,2]*I2)
       dI2 <- q1 - q2 - q3 + q4 + q5
-      
-      # print("")
-      # print(paste("q1 :",q1))
-      # print(paste("q2 :",q2))
-      # print(paste("q3 :",q3))
-      # print(paste("q4 :",q4))
-      # print(paste("q5 :",q5))
-      # print(paste("dI2:", dI2))
-      
+    
       # Recovered individuals:
       q1 <- alpha_r[2]*I2 
       q2 <-  (theta_r[2] + d[2])*R2 
@@ -147,8 +135,7 @@ population <- c(S1 = 100, S2 = 100, I1 = 10, I2 = 10, R1= 0, R2 = 0 )
 z <- ode(population, times, SIR_2, parameters)
 
 head(z)
-#---------------------------------------------------------------------
-# ND: SIR metapopulation model:
+#--------------------ND: SIR metapopulation model-----------------------
 SIR <- function(t, y, parameters) {
   with(as.list(c(y, parameters)),{
     dy <- c()
@@ -180,16 +167,6 @@ SIR <- function(t, y, parameters) {
       # dI/dt
       dy[i+dim] <- q1 - q2 - q3 + q4 + q5
       
-      # print("------------------------------------------------------------")
-      # print(paste("t :",t))
-      # print(paste("i :",i))
-      # print(paste("q1 :",q1))
-      # print(paste("q2 :",q2))
-      # print(paste("q3 :",q3))
-      # print(paste("q4 :",q4))
-      # print(paste("q5 :",q5))
-      # print(paste("dy[i+dim] :",dy[i+dim]))
-      
       # Recovered individuals:
       q1 <- alpha_r[i]*y[i+dim] 
       q2 <- (theta_r[i] + d[i])*y[i+2*dim] 
@@ -203,11 +180,71 @@ SIR <- function(t, y, parameters) {
   }) 
 }
 
+times = seq(0, 100, 0.1)
+
+# Vector of initial values:
 population <- c(matrix(0,ncol=3*N,nrow =1 ))
+
+# Susceptible initial values:
 population[1:N] <- 100
-N1 <- N+1
-N2 <- 2*N
-population[N1:N2] <- 10
+population[(N+1):(2*N)] <- 10
+
+# Run integration:
 z <- ode(population, times, SIR, parameters)
 
 head(z)
+
+# Change labels:
+for(i in c(1:N)){
+  colnames(z)[i+1] <-  paste0("S",i)
+  colnames(z)[N+i+1] <-  paste0("I",i)
+  colnames(z)[2*N+i+1] <-  paste0("R",i)
+}
+
+z <- as.data.frame(z)
+df_plot <- reshape2::melt(z, id.vars = c("time"))
+
+ggplot2::theme_set(ggplot2::theme_bw() %+replace% 
+                    ggplot2::theme(axis.ticks = 
+                    element_line(color = 'black'),axis.title = element_text(color = 'black', size = 15),
+                    axis.text = element_text(color = 'black', size = 15),
+                    legend.text = element_text(color = 'black', size = 15),
+                    legend.title = element_text(color = 'black', size = 16),
+                    plot.title = element_text(color = 'black', size = 18, face = 'bold'),
+                    strip.text = element_text(color = 'black', size = 15),
+                    legend.position = "none"
+                    ))
+
+head(df_plot)
+# Plot number of individuals at each time.
+plot_1  <- ggplot(df_plot,aes(time, value)) + 
+  geom_line(aes( colour = variable))  +
+  ylab("Number of individuals") 
+
+plot_1
+
+# Filter Susceptibles:
+df_sus <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "S")
+plot_sus  <- ggplot(df_sus,aes(time, value)) + 
+  geom_line(aes( colour = variable))  +
+  ylab("Number of individuals")  + 
+  ggtitle("Susceptible individuals")
+plot_sus
+
+# Filter Infected:
+df_inf <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "I")
+plot_sus  <- ggplot(df_inf,aes(time, value)) + 
+  geom_line(aes( colour = variable))  +
+  ylab("Number of individuals") +
+  ggtitle("Infected individuals")
+
+plot_sus
+
+# Filter Recovered:
+df_rec <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "R")
+plot_sus  <- ggplot(df_rec,aes(time, value)) + 
+  geom_line(aes( colour = variable))  +
+  ylab("Number of individuals") +
+  ggtitle("Recovered individuals")
+
+plot_sus
