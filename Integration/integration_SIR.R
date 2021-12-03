@@ -4,35 +4,41 @@ library("tidyverse")
 library("deSolve")
 library("ggpubr")
 library("ggsci")
+library("ggforce")
 
 # -------------------------PARAMETERS ---------------------------------
 N = 100 # Number of patches
-mu = 1 
-sig = 0.5
+mu = 2 
+sig = 3
 
 # Random generation of parameters:
 # del_N <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2)) # Birth rate
-bet <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2))   # Transmission rate
+# bet <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2))   # Transmission rate
 # d_vec <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2)) # Natural mortality rate
-thet <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2))  # Rate of loss of immunity 
-alp <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2)) # Rate of disease overcome
-delt <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2)) # Diseases related mortality rate
+# thet <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2))  # Rate of loss of immunity 
+# alp <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2)) # Rate of disease overcome
+# delt <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2)) # Diseases related mortality rate
 
 # CTE parameters:
-del_N <- matrix(1.2, ncol = N, nrow = 1) # Birth rate
-# bet <- 1   # Transmission rate
-d_vec <- matrix(0.5, ncol = N, nrow = 1) # Natural mortality rate
-# thet <- 1  # Rate of loss of immunity 
-# alp <- 1 # Rate of disease overcome
-# delt <- 1 # Diseases related mortality rate
+del_N <- matrix(0.1, ncol = N, nrow = 1) # Birth rate
+bet <- matrix(1, ncol = N, nrow = 1)  # Transmission rate
+d_vec <- matrix(0.8, ncol = N, nrow = 1) # Natural mortality rate
+thet <- matrix(0.001, ncol = N, nrow = 1) # Rate of loss of immunity
+alp <- matrix(0.31, ncol = N, nrow = 1) # Rate of disease overcome
+delt <- matrix(0.19, ncol = N, nrow = 1) # Diseases related mortality rate
 
+print(paste0("gamma:", alp[1,1] + delt[1,1] + d_vec[1,1]))
 #--------------------MOBILITY PARAMETERS --------------------------
 # Migration matrix:
-connect_mat <- matrix(rgamma(N^2,shape = (mu/sig)^2,rate = mu/(sig^2)), nrow = N) 
+mu_m = 0.4
+s_m = 0.25
+connect_mat <- matrix(rgamma(N^2,shape = (mu_m/s_m)^2,rate = mu_m/(s_m^2)), nrow = N)
 # connect_mat <- matrix(0, nrow = N, ncol = N) # No migration
 
 #Commuting matrix:
-commut_mat <- matrix(rgamma(N^2,shape = (mu/sig)^2,rate = mu/(sig^2)), nrow = N)
+mu_w = 5
+s_w = 30
+commut_mat <- matrix(rgamma(N^2,shape = (mu_w/s_w)^2,rate = mu_w/(s_w^2)), nrow = N)
 # commut_mat <- matrix(0, nrow = N, ncol = N) # No commuting
 
 # Create vector of parameters for ode function:
@@ -180,14 +186,17 @@ SIR <- function(t, y, parameters) {
   }) 
 }
 
-times = seq(0, 100, 0.1)
+end_time <- 15
+times = seq(0,end_time, 0.1)
 
 # Vector of initial values:
 population <- c(matrix(0,ncol=3*N,nrow =1 ))
 
 # Susceptible initial values:
-population[1:N] <- 100
-population[(N+1):(2*N)] <- 10
+init_sus <- 100000
+init_inf <- 2
+population[1:N] <- 100000
+population[(N+1):(2*N)] <- ceiling(abs(rnorm(N,100,60)))
 
 # Run integration:
 z <- ode(population, times, SIR, parameters)
@@ -205,23 +214,24 @@ z <- as.data.frame(z)
 df_plot <- reshape2::melt(z, id.vars = c("time"))
 
 ggplot2::theme_set(ggplot2::theme_bw() %+replace% 
-                    ggplot2::theme(axis.ticks = 
-                    element_line(color = 'black'),axis.title = element_text(color = 'black', size = 15),
-                    axis.text = element_text(color = 'black', size = 15),
-                    legend.text = element_text(color = 'black', size = 15),
-                    legend.title = element_text(color = 'black', size = 16),
-                    plot.title = element_text(color = 'black', size = 18, face = 'bold'),
-                    strip.text = element_text(color = 'black', size = 15),
+                    ggplot2::theme(axis.ticks =
+                    element_line(color = 'black'),
+                    # axis.title = element_text(color = 'black', size = 15),
+                    # axis.text = element_text(color = 'black', size = 15),
+                    # legend.text = element_text(color = 'black', size = 15),
+                    # legend.title = element_text(color = 'black', size = 16),
+                    # plot.title = element_text(color = 'black', size = 18, face = 'bold'),
+                    # strip.text = element_text(color = 'black', size = 15),
                     legend.position = "none"
                     ))
 
 head(df_plot)
 # Plot number of individuals at each time.
-plot_1  <- ggplot(df_plot,aes(time, value)) + 
+plot_tot  <- ggplot(df_plot,aes(time, value)) + 
   geom_line(aes( colour = variable))  +
   ylab("Number of individuals") 
 
-plot_1
+plot_tot
 
 # Filter Susceptibles:
 df_sus <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "S")
@@ -233,18 +243,97 @@ plot_sus
 
 # Filter Infected:
 df_inf <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "I")
-plot_sus  <- ggplot(df_inf,aes(time, value)) + 
+plot_inf  <- ggplot(df_inf,aes(time, value)) + 
   geom_line(aes( colour = variable))  +
   ylab("Number of individuals") +
   ggtitle("Infected individuals")
 
-plot_sus
+plot_inf
 
 # Filter Recovered:
 df_rec <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "R")
-plot_sus  <- ggplot(df_rec,aes(time, value)) + 
+plot_rec  <- ggplot(df_rec,aes(time, value)) + 
   geom_line(aes( colour = variable))  +
   ylab("Number of individuals") +
   ggtitle("Recovered individuals")
 
-plot_sus
+plot_rec
+
+ggarrange(plot_tot,plot_inf)
+
+#---------------EIGENVALUE DISTRIBUTION------------------
+
+# Function which plot the eigenvalues:
+eigen_mat <- function(mat){
+  eigen_m <- as.complex(eigen(mat, only.values = TRUE)$values)
+  df <- data.frame(re = Re(eigen_m), im = Im(eigen_m))
+  return(df)
+}
+
+# Create a random matrix
+rand_mat <- function(N,mu,sig,distrib){
+  muln <- log(mu^2/sqrt(mu^2 + sig^2))
+  sdln <- sqrt(log(1+sig^2/mu^2))
+  rmatrix <- dplyr::case_when(
+    distrib == "gamma" ~ matrix(rgamma(N^2,shape = (mu/sig)^2,rate = mu/(sig^2)), nrow = N),
+    distrib == "lognormal" ~ matrix(rlnorm(N^2,meanlog = muln,sdlog = sdln), nrow = N),
+    TRUE ~ matrix(rep(0, N^2), nrow = N)
+  )
+  rmatrix <- matrix(rmatrix, nrow = N)
+  #return(rmatrix)
+}
+
+# Parameters:
+muw = mu_w          # Bivariate mean
+sw = s_w            # Bivariate variance
+beta_ct = bet[1,1]  # gamma
+gamma_ct = alp[1,1] + delt[1,1] + d_vec[1,1]        # beta
+
+# Generate de Jacobian:
+betas <- matrix(rep(0,N^2), nrow = N)
+diag(betas) <- rep(beta_ct,N)
+BIGT <- rand_mat(N, muw, sw, distrib = "gamma")
+diag(BIGT) <- rep(1,N)
+BIGT <- BIGT%*%betas
+BIGS <- matrix(rep(0,N^2), nrow = N)
+diag(BIGS) <- rep(-gamma_ct, N)
+jacobian <- BIGT+BIGS
+
+# Compute the eigenvalues:
+eig <- eigen_mat(jacobian)
+
+# Compute the center and radius for the circular law:
+center = beta_ct*(1-muw)-gamma_ct
+radius = beta_ct*sw*sqrt(N)
+outlier <- beta_ct*(mu_w*(N-1)+1)-gamma_ct
+
+# Generate plots:
+plot_eig <- ggplot(eig) + geom_point(aes(re,im), size = 0.05) 
+
+plot_eig <- plot_eig + 
+  geom_circle(aes(x0 = center,
+                  y0 = 0,
+                  r = radius), colour = "blue",
+              show.legend = NA,size = 0.2) +
+  geom_point(aes(outlier,0), colour =  "blue",
+             show.legend = NA) +
+  coord_fixed() +
+  theme_bw() 
+
+plot_eig
+
+# Plot with the segment defining x = 0:
+max_im <- max(eig$im) + max(eig$im)/4
+df <- data.frame(x1 = 0, x2 = 0, y1 =-max_im, y2 = max_im)
+plot_eig <- plot_eig +
+  geom_segment(aes(x = 0, y = -max_im, xend = 0, yend = max_im,
+                   colour = "segment"), data = df) +
+  theme(legend.position = "none")
+
+plot_eig
+
+top_row = ggarrange(plot_tot, plot_inf, ncol = 2)
+bottom_row = ggarrange(NULL, plot_eig, NULL, ncol = 3, widths = c(1,10,1), heights = 2)
+final_plot = ggarrange(top_row, bottom_row, ncol = 1)
+final_plot
+
