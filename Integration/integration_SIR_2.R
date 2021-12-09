@@ -7,7 +7,7 @@ library("ggsci")
 library("ggforce")
 
 # -------------------------PARAMETERS ---------------------------------
-N = 100 # Number of patches
+N = 200 # Number of patches
 mu = 2 
 sig = 3
 
@@ -21,11 +21,11 @@ sig = 3
 
 # CTE parameters:
 del_N <- matrix(0.1, ncol = N, nrow = 1) # Birth rate
-bet <- matrix(0.02, ncol = N, nrow = 1)  # Transmission rate
+bet <- matrix(1, ncol = N, nrow = 1)  # Transmission rate
 d_vec <- matrix(0.8, ncol = N, nrow = 1) # Natural mortality rate
-thet <- matrix(0.1, ncol = N, nrow = 1) # Rate of loss of immunity
+thet <- matrix(0.001, ncol = N, nrow = 1) # Rate of loss of immunity
 alp <- matrix(0.31, ncol = N, nrow = 1) # Rate of disease overcome
-delt <- matrix(0, ncol = N, nrow = 1) # Diseases related mortality rate
+delt <- matrix(0.19, ncol = N, nrow = 1) # Diseases related mortality rate
 
 print(paste0("gamma:", alp[1,1] + delt[1,1] + d_vec[1,1]))
 #--------------------MOBILITY PARAMETERS --------------------------
@@ -49,18 +49,6 @@ if( MOB == 0 | MOB ==2){
   commut_mat <- matrix(0, nrow = N, ncol = N) # No commuting
 }
 
-
-# Constant population at each patch (ie. no mortality induced by the disease):
-mu_p = 10000
-s_p = 5000
-# Initial populations:
-init_pop <- matrix(rgamma(N,shape = (mu_p/s_p)^2,rate = mu_p/(s_p^2)), nrow = N)
-delt <- matrix(0, ncol = N, nrow = 1) # Diseases related mortality rate
-del_N <- c()
-for(i in c(1:N)){
-  del_N[i] <- sum(connect_mat[,i]) - (1/init_pop[i])*sum(connect_mat[i,]*init_pop) + d_vec[i]
-}
-
 # Create vector of parameters for ode function:
 parameters <- list(
   dim = N,
@@ -73,7 +61,7 @@ parameters <- list(
   alpha_r = alp,
   delta_r = delt )
 
-# ----------------------------MODELS ----------------------------------
+# ----------------------------MODEL ----------------------------------
 #--------------------ND: SIR metapopulation model-----------------------
 SIR <- function(t, y, parameters) {
   with(as.list(c(y, parameters)),{
@@ -119,7 +107,7 @@ SIR <- function(t, y, parameters) {
   }) 
 }
 
-end_time <- 100
+end_time <- 15
 times = seq(0,end_time, 0.1)
 
 # Vector of initial values:
@@ -130,11 +118,6 @@ init_sus <- 100000
 init_inf <- 2
 population[1:N] <- 100000
 population[(N+1):(2*N)] <- ceiling(abs(rnorm(N,100,60)))
-
-# If we assume constat population at each patch:
-population[1:N] <- init_pop - population[(N+1):(2*N)]
-population[(N+1):(2*N)] <- ceiling(abs(rnorm(N,100,60)))
-
 
 # Run integration:
 z <- ode(population, times, SIR, parameters)
@@ -149,7 +132,6 @@ for(i in c(1:N)){
 }
 
 z <- as.data.frame(z)
-# z  <- z   %>% filter( z$time < 1) 
 df_plot <- reshape2::melt(z, id.vars = c("time"))
 
 ggplot2::theme_set(ggplot2::theme_bw() %+replace% 
@@ -246,6 +228,7 @@ eig <- eigen_mat(jacobian)
 center = beta_ct*(1-muw)-gamma_ct
 radius = beta_ct*sw*sqrt(N)
 outlier <- beta_ct*(mu_w*(N-1)+1)-gamma_ct
+
 #------------------- MIGRATION ----------------------
 # Generate de Jacobian:
 BIGT <- rand_mat(N, mu_m, s_m, distrib = "gamma")
@@ -281,7 +264,6 @@ center = beta_ct*(1-mu_w) - N*mu_m - gamma_ct
 radius = sqrt(N*(beta_ct^2*s_w^2 + 2*beta_ct*tau_ct + s_m^2))
 outlier <- beta_ct*(mu_w*(N-1) + 1) - gamma_ct
 
-#-----------------------PLOTS------------------------------------
 # Generate plots:
 plot_eig <- ggplot(eig) + geom_point(aes(re,im), size = 0.05) 
 
@@ -290,7 +272,7 @@ plot_eig <- plot_eig +
                   y0 = 0,
                   r = radius), colour = "blue",
               show.legend = NA,size = 0.2) +
-  geom_point(aes(outlier,0), colour =  "blue",
+  geom_point(aes(outlier,0), color =  "blue",
              show.legend = NA) +
   coord_fixed() +
   theme_bw() 
