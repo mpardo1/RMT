@@ -21,25 +21,36 @@ sig = 3
 
 # CTE parameters:
 del_N <- matrix(0.1, ncol = N, nrow = 1) # Birth rate
-bet <- matrix(1, ncol = N, nrow = 1)  # Transmission rate
+bet <- matrix(0.02, ncol = N, nrow = 1)  # Transmission rate
 d_vec <- matrix(0.8, ncol = N, nrow = 1) # Natural mortality rate
-thet <- matrix(0.001, ncol = N, nrow = 1) # Rate of loss of immunity
+thet <- matrix(0.1, ncol = N, nrow = 1) # Rate of loss of immunity
 alp <- matrix(0.31, ncol = N, nrow = 1) # Rate of disease overcome
-delt <- matrix(0.19, ncol = N, nrow = 1) # Diseases related mortality rate
+delt <- matrix(0, ncol = N, nrow = 1) # Diseases related mortality rate
 
 print(paste0("gamma:", alp[1,1] + delt[1,1] + d_vec[1,1]))
 #--------------------MOBILITY PARAMETERS --------------------------
 # Migration matrix:
-mu_m = 0.4
-s_m = 0.25
-connect_mat <- matrix(rgamma(N^2,shape = (mu_m/s_m)^2,rate = mu_m/(s_m^2)), nrow = N)
-# connect_mat <- matrix(0, nrow = N, ncol = N) # No migration
+mu_m = 2
+s_m = 5
+# connect_mat <- matrix(rgamma(N^2,shape = (mu_m/s_m)^2,rate = mu_m/(s_m^2)), nrow = N)
+connect_mat <- matrix(0, nrow = N, ncol = N) # No migration
 
 #Commuting matrix:
-mu_w = 5
-s_w = 30
+mu_w = 0.02
+s_w = 0.2
 commut_mat <- matrix(rgamma(N^2,shape = (mu_w/s_w)^2,rate = mu_w/(s_w^2)), nrow = N)
 # commut_mat <- matrix(0, nrow = N, ncol = N) # No commuting
+
+# Constant population at each patch (ie. no mortality induced by the disease):
+mu_w = 10000
+s_w = 5000
+# Initial populations:
+init_pop <- matrix(rgamma(N,shape = (mu_w/s_w)^2,rate = mu_w/(s_w^2)), nrow = N)
+delt <- matrix(0, ncol = N, nrow = 1) # Diseases related mortality rate
+del_N <- c()
+for(i in c(1:N)){
+  del_N[i] <- sum(connect_mat[,i]) - (1/init_pop[i])*sum(connect_mat[i,]*init_pop) + d_vec[i]
+}
 
 # Create vector of parameters for ode function:
 parameters <- list(
@@ -186,7 +197,7 @@ SIR <- function(t, y, parameters) {
   }) 
 }
 
-end_time <- 15
+end_time <- 100
 times = seq(0,end_time, 0.1)
 
 # Vector of initial values:
@@ -197,6 +208,11 @@ init_sus <- 100000
 init_inf <- 2
 population[1:N] <- 100000
 population[(N+1):(2*N)] <- ceiling(abs(rnorm(N,100,60)))
+
+# If we assume constat population at each patch:
+population[1:N] <- init_pop - population[(N+1):(2*N)]
+population[(N+1):(2*N)] <- ceiling(abs(rnorm(N,100,60)))
+
 
 # Run integration:
 z <- ode(population, times, SIR, parameters)
@@ -211,6 +227,7 @@ for(i in c(1:N)){
 }
 
 z <- as.data.frame(z)
+# z  <- z   %>% filter( z$time < 1) 
 df_plot <- reshape2::melt(z, id.vars = c("time"))
 
 ggplot2::theme_set(ggplot2::theme_bw() %+replace% 
