@@ -21,8 +21,8 @@ sig = 3
 
 # CTE parameters:
 del_N <- matrix(0.1, ncol = N, nrow = 1) # Birth rate
-bet <- matrix(0.02, ncol = N, nrow = 1)  # Transmission rate
-d_vec <- matrix(0.8, ncol = N, nrow = 1) # Natural mortality rate
+bet <- matrix(0.2, ncol = N, nrow = 1)  # Transmission rate
+d_vec <- matrix(0.2, ncol = N, nrow = 1) # Natural mortality rate
 thet <- matrix(0.1, ncol = N, nrow = 1) # Rate of loss of immunity
 alp <- matrix(0.31, ncol = N, nrow = 1) # Rate of disease overcome
 delt <- matrix(0, ncol = N, nrow = 1) # Diseases related mortality rate
@@ -30,13 +30,15 @@ delt <- matrix(0, ncol = N, nrow = 1) # Diseases related mortality rate
 print(paste0("gamma:", alp[1,1] + delt[1,1] + d_vec[1,1]))
 #--------------------MOBILITY PARAMETERS --------------------------
 # Mobility parameter, 0: Just commuting, 1: just migration 2: migration & commuting.
-MOB <- 0
+MOB <- 1
 # Migration matrix:
 mu_m = 0.4
 s_m = 0.25
 if( MOB == 1 | MOB ==2){
+  print("Migration added")
   connect_mat <- matrix(rgamma(N^2,shape = (mu_m/s_m)^2,rate = mu_m/(s_m^2)), nrow = N)
 }else{
+  print("No migration")
   connect_mat <- matrix(0, nrow = N, ncol = N) # No migration
 }
 
@@ -44,22 +46,31 @@ if( MOB == 1 | MOB ==2){
 mu_w = 5
 s_w = 3
 if( MOB == 0 | MOB ==2){
+  print("Commuting added")
   commut_mat <- matrix(rgamma(N^2,shape = (mu_w/s_w)^2,rate = mu_w/(s_w^2)), nrow = N)
 }else{
+  print("No commuting")
   commut_mat <- matrix(0, nrow = N, ncol = N) # No commuting
 }
 
-
+# Parameter for initial population. 0: No cte pop, 1: cte pop.
+CTE_POP <- 1
 # Constant population at each patch (ie. no mortality induced by the disease):
-mu_p = 10000
-s_p = 5000
-# Initial populations:
-init_pop <- matrix(rgamma(N,shape = (mu_p/s_p)^2,rate = mu_p/(s_p^2)), nrow = N)
-delt <- matrix(0, ncol = N, nrow = 1) # Diseases related mortality rate
-del_N <- c()
-for(i in c(1:N)){
-  del_N[i] <- sum(connect_mat[,i]) - (1/init_pop[i])*sum(connect_mat[i,]*init_pop) + d_vec[i]
+if(CTE_POP == 0){
+  print("No constant population")
+}else{
+  print("Constant population")
+  mu_p = 10000
+  s_p = 5000
+  # Initial populations:
+  init_pop <- matrix(rgamma(N,shape = (mu_p/s_p)^2,rate = mu_p/(s_p^2)), nrow = N)
+  delt <- matrix(0, ncol = N, nrow = 1) # Diseases related mortality rate
+  del_N <- c()
+  for(i in c(1:N)){
+    del_N[i] <- sum(connect_mat[,i]) - (1/init_pop[i])*sum(connect_mat[i,]*init_pop) + d_vec[i]
+  }
 }
+
 
 # Create vector of parameters for ode function:
 parameters <- list(
@@ -124,17 +135,17 @@ times = seq(0,end_time, 0.1)
 
 # Vector of initial values:
 population <- c(matrix(0,ncol=3*N,nrow =1 ))
-
-# Susceptible initial values:
-init_sus <- 100000
-init_inf <- 2
-population[1:N] <- 100000
+# Initial value for infected individuals:
 population[(N+1):(2*N)] <- ceiling(abs(rnorm(N,100,60)))
 
-# If we assume constat population at each patch:
-population[1:N] <- init_pop - population[(N+1):(2*N)]
-population[(N+1):(2*N)] <- ceiling(abs(rnorm(N,100,60)))
-
+if(CTE_POP == 0){
+  print("No constant population")
+  population[1:N] <- 100000
+}else{
+  print("Constant population")
+  # Susceptible individuals:
+  population[1:N] <- init_pop - population[(N+1):(2*N)]
+}
 
 # Run integration:
 z <- ode(population, times, SIR, parameters)
@@ -229,71 +240,94 @@ beta_ct = bet[1,1]  # gamma
 gamma_ct = alp[1,1] + delt[1,1] + d_vec[1,1]        # beta
 
 #------------------- COMMUTING ----------------------
-# Generate de Jacobian:
-betas <- matrix(rep(0,N^2), nrow = N)
-diag(betas) <- rep(beta_ct,N)
-BIGT <- rand_mat(N, muw, sw, distrib = "gamma")
-diag(BIGT) <- rep(1,N)
-BIGT <- BIGT%*%betas
-BIGS <- matrix(rep(0,N^2), nrow = N)
-diag(BIGS) <- rep(-gamma_ct, N)
-jacobian <- BIGT+BIGS
+if(MOB == 0){
+  print("Just commuting")
+  # Generate de Jacobian:
+  betas <- matrix(rep(0,N^2), nrow = N)
+  diag(betas) <- rep(beta_ct,N)
+  BIGT <- rand_mat(N, muw, sw, distrib = "gamma")
+  diag(BIGT) <- rep(1,N)
+  BIGT <- BIGT%*%betas
+  BIGS <- matrix(rep(0,N^2), nrow = N)
+  diag(BIGS) <- rep(-gamma_ct, N)
+  jacobian <- BIGT+BIGS
+  
+  # Compute the eigenvalues:
+  eig <- eigen_mat(jacobian)
+  
+  # Compute the center and radius for the circular law:
+  center = beta_ct*(1-muw)-gamma_ct
+  radius = beta_ct*sw*sqrt(N)
+  outlier <- beta_ct*(mu_w*(N-1)+1)-gamma_ct
+}
 
-# Compute the eigenvalues:
-eig <- eigen_mat(jacobian)
-
-# Compute the center and radius for the circular law:
-center = beta_ct*(1-muw)-gamma_ct
-radius = beta_ct*sw*sqrt(N)
-outlier <- beta_ct*(mu_w*(N-1)+1)-gamma_ct
 #------------------- MIGRATION ----------------------
-# Generate de Jacobian:
-BIGT <- rand_mat(N, mu_m, s_m, distrib = "gamma")
-diag(BIGT) <- rep(beta_ct - gamma_ct - mu_m*(N-1),N)
-# diag(BIGT) <- 0
-# diag(BIGT) <- rep(beta_ct - gamma_ct,N) - colSums(BIGT)
-jacobian <- BIGT
-
-# Compute the eigenvalues:
-eig <- eigen_mat(jacobian)
-
-# Compute the center and radius for the circular law:
-center = beta_ct-gamma_ct-mu_m*(N-1)
-radius = mu_m*(N-1)
+if(MOB == 1){
+  print("Just migration")
+  # Generate de Jacobian:
+  BIGT <- rand_mat(N, mu_m, s_m, distrib = "gamma")
+  diag(BIGT) <- rep(beta_ct - gamma_ct - mu_m*(N-1),N)
+  # diag(BIGT) <- 0
+  # diag(BIGT) <- rep(beta_ct - gamma_ct,N) - colSums(BIGT)
+  jacobian <- BIGT
+  
+  # Compute the eigenvalues:
+  eig <- eigen_mat(jacobian)
+  
+  # Compute the center and radius for the Gershgorin th:
+  center = beta_ct-gamma_ct-mu_m*(N-1)
+  radius = mu_m*(N-1)
+}
 
 #--------------- MIGRATION & COMMUTING -------------------------
-# Generate de Jacobian:
-betas <- matrix(rep(0,N^2), nrow = N)
-diag(betas) <- rep(beta_ct,N)
-BIGT <- rand_mat(N, muw, sw, distrib = "gamma")
-diag(BIGT) <- rep(1,N)
-BIGT <- BIGT%*%betas
-BIGS <- rand_mat(N, mu_m, s_m, distrib = "gamma")
-diag(BIGS) <- rep(-gamma_ct - mu_m*(N-1), N)
-jacobian <- BIGT+BIGS
-
-# Compute the eigenvalues:
-eig <- eigen_mat(jacobian)
-
-# Compute the center and radius for the circular law:
-tau_ct <- 0
-center = beta_ct*(1-mu_w) - N*mu_m - gamma_ct
-radius = sqrt(N*(beta_ct^2*s_w^2 + 2*beta_ct*tau_ct + s_m^2))
-outlier <- beta_ct*(mu_w*(N-1) + 1) - gamma_ct
+if(MOB == 2){
+  print("Migration and commuting")
+  # Generate de Jacobian:
+  betas <- matrix(rep(0,N^2), nrow = N)
+  diag(betas) <- rep(beta_ct,N)
+  BIGT <- rand_mat(N, muw, sw, distrib = "gamma")
+  diag(BIGT) <- rep(1,N)
+  BIGT <- BIGT%*%betas
+  BIGS <- rand_mat(N, mu_m, s_m, distrib = "gamma")
+  diag(BIGS) <- rep(-gamma_ct - mu_m*(N-1), N)
+  jacobian <- BIGT+BIGS
+  
+  # Compute the eigenvalues:
+  eig <- eigen_mat(jacobian)
+  
+  # Compute the center and radius for the circular law:
+  tau_ct <- 0
+  center = beta_ct*(1-mu_w) - N*mu_m - gamma_ct
+  radius = sqrt(N*(beta_ct^2*s_w^2 + 2*beta_ct*tau_ct + s_m^2))
+  outlier <- beta_ct*(mu_w*(N-1) + 1) - gamma_ct
+}
 
 #-----------------------PLOTS------------------------------------
 # Generate plots:
 plot_eig <- ggplot(eig) + geom_point(aes(re,im), size = 0.05) 
 
-plot_eig <- plot_eig + 
-  geom_circle(aes(x0 = center,
-                  y0 = 0,
-                  r = radius), colour = "blue",
-              show.legend = NA,size = 0.2) +
-  geom_point(aes(outlier,0), colour =  "blue",
-             show.legend = NA) +
-  coord_fixed() +
-  theme_bw() 
+if(MOB == 0 | MOB == 2){
+  print("Commuting included")
+  plot_eig <- plot_eig + 
+    geom_circle(aes(x0 = center,
+                    y0 = 0,
+                    r = radius), colour = "blue",
+                show.legend = NA,size = 0.2) +
+    geom_point(aes(outlier,0), colour =  "blue",
+               show.legend = NA) +
+    coord_fixed() +
+    theme_bw() 
+}else{
+  print("Just migration")
+  plot_eig <- plot_eig + 
+    geom_circle(aes(x0 = center,
+                    y0 = 0,
+                    r = radius), colour = "blue",
+                show.legend = NA,size = 0.2) +
+    coord_fixed() +
+    theme_bw() 
+}
+
 
 plot_eig
 
@@ -308,7 +342,7 @@ plot_eig <- plot_eig +
 plot_eig
 
 top_row = ggarrange(plot_tot, plot_inf, ncol = 2)
-bottom_row = ggarrange(NULL, plot_eig, NULL, ncol = 3, widths = c(1,10,1), heights = 2)
+bottom_row = ggarrange(NULL, plot_eig, NULL, ncol = 3, widths = c(1,6,1), heights = 2)
 final_plot = ggarrange(top_row, bottom_row, ncol = 1)
 final_plot
 
