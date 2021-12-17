@@ -76,7 +76,7 @@ mat_conect <- function(N,alp,bet,MOB){
   return(rmatrix)
 }
 
-del_N <- function(connect_mat,d,init_pop){
+diff_f <- function(connect_mat,d,init_pop){
   # Constant population at each patch (ie. no mortality induced by the disease):
     diff <- c()
     for(i in c(1:N)){
@@ -92,7 +92,7 @@ del_N <- function(connect_mat,d,init_pop){
 }
 
 # function which integrate:
-int <- function(N, del_N,bet,d_vec,thet,alp,delt, commut_mat,connect_mat ,end_time, MOB, CTE_POP){
+int <- function(N, del_N,bet,d_vec,thet,alp,delt, commut_mat,connect_mat ,end_time, MOB, CTE_POP, CTE_INF){
   # Create vector of parameters for ode function:
   parameters <- list(
     dim = N,
@@ -108,20 +108,25 @@ int <- function(N, del_N,bet,d_vec,thet,alp,delt, commut_mat,connect_mat ,end_ti
   times = seq(0,end_time, 0.1)
   
   # Vector of initial values:
-  population <- c(matrix(0,ncol=3*N,nrow =1 ))
+  pops <- c(matrix(0,ncol=3*N,nrow =1 ))
   # Initial value for infected individuals:
-  population[(N+1):(2*N)] <- ceiling(abs(rnorm(N,100,60)))
+  if(CTE_INF == 1){
+    pops[(N+1):(2*N)] <- 100
+  }else{
+    pops[(N+1):(2*N)] <- ceiling(abs(rnorm(N,100,60)))
+  }
+  
   
   if(CTE_POP == 0){
     print("No constant population")
-    population[1:N] <- 100000
+    pops[1:N] <- 100000
   }else{
     print("Constant population")
     # Susceptible individuals:
-    population[1:N] <- init_pop - population[(N+1):(2*N)]
+    pops[1:N] <- init_pop - pops[(N+1):(2*N)]
   }
   # Run integration:
-  z <- ode(population, times, SIR, parameters)
+  z <- ode(pops, times, SIR, parameters)
   return(z)
 }
 
@@ -277,6 +282,12 @@ plot_eigen <- function(eig, center, radius, outlier, MOB){
   
   return(plot_eig)
 }
+
+cond_gen <- function(N, mu_c,s_c, mu_w,s_w, gam, bet, tau){
+  cond1 <- (N-1)*mu_w - (gam/bet) + 1
+  cond2 <- mu_w + sqrt(N*(s_w^2 + 2*(tau/bet)+(s_c/bet)^2))-(gam/bet) + 1 - N*(mu_c/bet)
+  return(c(cond1,cond2))
+}
 #----------------------------------------------------------------------------#
 
 #----------------PARAMETERS-----------------
@@ -285,26 +296,34 @@ plot_eigen <- function(eig, center, radius, outlier, MOB){
   MOB <- 2
   # Integration parameter, 0: No integration, 1: integration.
   INT <- 1
-  # Parameter for initial population. 0: No cte pop, 1: cte pop.
-  CTE_POP <- 1
-
+  # Parameter for initial population. 0: No cte, 1: cte.
+  CTE_POP <- 0
+  # Parameter for transmission rate. 0: No cte, 1: cte.
+  BETA_CTE <- 1
+  # Parameter for initial infected ind. 0: No cte , 1: cte.
+  CTE_INF <- 1
 #-------------------EPIDEMIOLOGICAL----------------------
   N = 100 # Number of patches
   # CTE parameters:
-  del_N <- matrix(0.6, ncol = N, nrow = 1) # Birth rate
-  bet <- matrix(0.3, ncol = N, nrow = 1)  # Transmission rate
-  d_vec <- matrix(1.3, ncol = N, nrow = 1) # Natural mortality rate
-  thet <- matrix(0.1, ncol = N, nrow = 1) # Rate of loss of immunity
-  alp <- matrix(0.31, ncol = N, nrow = 1) # Rate of disease overcome
-  delt <- matrix(0, ncol = N, nrow = 1) # Diseases related mortality rate
+  del_N <- rep(0.6, N) # Birth rate
+  bet <- rep(0.001, N)  # Transmission rate
+  d_vec <- rep(0.8, N) # Natural mortality rate
+  thet <- rep(0.1, N) # Rate of loss of immunity
+  alp <- rep(0.6, N) # Rate of disease overcome
+  delt <- rep(0, N) # Diseases related mortality rate
   
-  print(paste0("gamma:", alp[1,1] + delt[1,1] + d_vec[1,1]))
-  print(paste0("beta - gamma:", bet[1,1] - (alp[1,1] + delt[1,1] + d_vec[1,1])))
+  # Changing transmission rate:
+  mu = 0.5
+  sig = 4
+  bet[(N/2 + 1):N] <- 7
+  
+  print(paste0("gamma:", alp[1] + delt[1] + d_vec[1]))
+  print(paste0("beta - gamma:", bet[1] - (alp[1] + delt[1] + d_vec[1])))
 
 #-------------------- MOBILITY------------------
 ### Migration:
-  alp_m <- 0.01
-  bet_m <- 0.5
+  alp_m <- 0.001
+  bet_m <- 0.1
   
   # Compute mean and sd:
   mu_m <- alp_m/(alp_m + bet_m)
@@ -315,7 +334,7 @@ plot_eigen <- function(eig, center, radius, outlier, MOB){
   migrate_mat <- mat_conect(N,alp_m,bet_m,MOB)
 ### Commuting
   alp_c <- 0.01
-  bet_c <- 0.9
+  bet_c <- 1
   
   # Compute mean and sd:
   mu_w <- alp_c/(alp_c + bet_c)
@@ -326,27 +345,37 @@ plot_eigen <- function(eig, center, radius, outlier, MOB){
   commut_mat <- mat_conect(N,alp_c,bet_c,MOB)
 
   tau_ct <- 0
-  
   # Initial populations:
   init_pop <- matrix(10000, nrow = N)
   if(CTE_POP == 1){
-    list_param <- del_N(migrate_mat,d_vec[1,1],init_pop)
+    list_param <- diff_f(migrate_mat,d_vec[1,1],init_pop)
+    d_vec[1,1] <- list_param[1]
+    del_N <- list_param[2:(N+1)]
+    d_vec[1,1] = 1.7
   }
   # init_pop <- matrix(rgamma(N,shape = (mu_p/s_p)^2,rate = mu_p/(s_p^2)), nrow = N)
   
   
+  print(paste0("beta - gamma:", bet[1] - (alp[1] + delt[1] + d_vec[1])))
 # End time integration:
-end_time <- 30
+end_time <- 100
 
 # Integrate the system:
-sol <- int(N, del_N,bet,d_vec,thet,alp,delt, commut_mat,migrate_mat,end_time, MOB, CTE_POP)
+sol <- int(N, del_N,bet,d_vec,thet,alp,delt, commut_mat,migrate_mat,end_time, MOB, CTE_POP, CTE_INF)
 # Plot the susceptible, infected and recovered:
 state <- "INF"
-
 # Parameters:
-beta_ct = bet[1,1]  # gamma
-gamma_ct = alp[1,1] + delt[1,1] + d_vec[1,1]        # beta
+beta_ct = bet[1]  # gamma
+gamma_ct = alp[1] + delt[1] + d_vec[1]        # beta
 
+print(paste0("beta - gamma", beta_ct - gamma_ct))
+if( BETA_CTE == 1){
+  beta_ct = bet[1]  # gamma
+}else{
+  beta_ct = mean(bet)  # gamma
+}
+
+cond_gen(N, mu_m, s_m, mu_w, s_w, gamma_ct, beta_ct, tau_ct)
 # Make distribution:
 jac <- jacobian(N,beta_ct,gamma_ct, commut_mat, migrate_mat,mu_m, MOB)
 eig <- eigen_mat(jac)
@@ -356,13 +385,26 @@ rad <- pred_radius(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
 cent <- pred_center(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
 outl <- pred_outlier(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
 
-plot_inf_1 <- plot_int(N, sol, state)
-plot_eigen_1 <- plot_eigen(eig, cent, rad, outl, MOB)
+plot_inf_2 <- plot_int(N, sol, state)
+plot_eigen_2 <- plot_eigen(eig, cent, rad, outl, MOB)
 
-plot_1 <- ggarrange(plot_inf_1,plot_inf_2)
-plot_2 <- ggarrange(plot_eigen_1,plot_eigen_2, nrow = 2)
+plot_inf_2
+plot_eigen_2
 
-plot <- ggarrange(plot_1, plot_2, nrow = 2)
+# plot_1 <- ggarrange(plot_inf_1,plot_inf_2, labels = c("a","b","c","d"))
+# plot_2 <- ggarrange(plot_eigen_1,plot_eigen_2, ncol = 2, labels = c("a","b","c","d"))
+
+plot_inf_1 <- plot_inf_1 + labs(title="a")
+plot_inf_2 <- plot_inf_2 + labs(title="b")
+plot_eigen_1 <- plot_eigen_1 + labs(title="c")
+plot_eigen_2 <- plot_eigen_2 + labs(title="d")
+
+plot <- ggarrange(plot_inf_1, plot_inf_2,
+                  plot_eigen_1, plot_eigen_2,
+                  nrow = 2,ncol = 2,
+                  label.x = 0,
+                  label.y = 1)
+plot
 
 Path <- "/home/marta/Documentos/PHD/2021/R0_SIR_RMT/Plots/"
 gamma_ct <- format(round(gamma_ct,2), decimal.mark = ',')
@@ -373,6 +415,8 @@ mu_m <- format(round(mu_m,2), decimal.mark = ',')
 s_m <- format(round(s_m,2), decimal.mark = ',')
 path <- paste0(Path,"gen","N",N,"g",gamma_ct,"b",beta_ct,"mw",
        mu_w,"sw","mu_w_uns","0,3",s_w,"mm",mu_m,"sm",s_m,".png")
-png(file = Path, width = 8000, height = 6000, res = 1100)
+png(file = path, width = 8000, height = 6000, res = 1100)
 plot
 dev.off()
+
+
