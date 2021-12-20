@@ -322,7 +322,7 @@ cond_gen <- function(N, mu_c,s_c, mu_w,s_w, gam, bet, tau){
 
 #-------------------- MOBILITY------------------
 ### Migration:
-  alp_m <- 0.001
+  alp_m <- 0.11
   bet_m <- 0.1
   
   # Compute mean and sd:
@@ -333,7 +333,7 @@ cond_gen <- function(N, mu_c,s_c, mu_w,s_w, gam, bet, tau){
 
   migrate_mat <- mat_conect(N,alp_m,bet_m,MOB)
 ### Commuting
-  alp_c <- 0.01
+  alp_c <- 0.1
   bet_c <- 1
   
   # Compute mean and sd:
@@ -388,8 +388,8 @@ outl <- pred_outlier(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
 plot_inf_2 <- plot_int(N, sol, state)
 plot_eigen_2 <- plot_eigen(eig, cent, rad, outl, MOB)
 
-plot_inf_2
-plot_eigen_2
+plot_inf_2 + scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
+plot_eigen_2 
 
 # plot_1 <- ggarrange(plot_inf_1,plot_inf_2, labels = c("a","b","c","d"))
 # plot_2 <- ggarrange(plot_eigen_1,plot_eigen_2, ncol = 2, labels = c("a","b","c","d"))
