@@ -34,11 +34,14 @@ source("~/RMT/integration/functions_eigen_int.R")
   BETA_CTE <- 0
   # Parameter for initial infected ind. 0: No cte , 1: cte.
   CTE_INF <- 1
+  
+  
 #-------------------EPIDEMIOLOGICAL----------------------
-  N = 50 # Number of patches
+  N = 100 # Number of patches
   # CTE parameters:
   del_N <- rep(0.6, N) # Birth rate
-  bet <- rep(0.001, N)  # Transmission rate
+  bet_cte <- 0.001
+  bet <- rep(bet_cte, N)  # Transmission rate
   d_vec <- rep(0.8, N) # Natural mortality rate
   thet <- rep(0.1, N) # Rate of loss of immunity
   alp <- rep(0.6, N) # Rate of disease overcome
@@ -48,14 +51,16 @@ source("~/RMT/integration/functions_eigen_int.R")
   mu = 0.5
   sig = 4
   ind <- sample(1:N,1)
-  bet[ind] <- 14
+  bet_new <- 6
+  # bet_new <- - bet_cte + 0.001
+  bet[ind] <- bet_cte + bet_new
   # vec_rand <- sample(1:N,(N/2))
   # bet[vec_rand] <- 2
   # 
   print(paste0("gamma:", alp[1] + delt[1] + d_vec[1]))
   print(paste0("beta - gamma:", bet[1] - (alp[1] + delt[1] + d_vec[1])))
 
-#-------------------- MOBILITY------------------
+#-------------------- MOBILITY ------------------#
 ### Migration:
   alp_m <- 0.01
   bet_m <- 0.1
@@ -102,11 +107,12 @@ sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
 
 sol_df <- as.data.frame(sol)
 sol_df_inf <- sol_df[(N+2):(2*N+1)]
-
+sol_df_inf_new_bet <- sol_df[c(1,(N + ind))]
+colnames(sol_df_inf_new_bet) <- c("time","inf")
 # Plot the susceptible, infected and recovered:
 state <- "INF"
 # Parameters:
-beta_ct = bet[1]  # gamma
+beta_ct = bet_cte  # gamma
 gamma_ct = alp[1] + delt[1] + d_vec[1]        # beta
 
 print(paste0("beta - gamma", beta_ct - gamma_ct))
@@ -126,24 +132,54 @@ rad <- pred_radius(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
 cent <- pred_center(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
 outl <- pred_outlier(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
 
+outl <- (1/2)*(N*(bet_cte*mu_w + mu_m) + bet_new +
+                 sqrt(N^2*(bet_cte*mu_w + mu_m)^2 +
+                        4*(N-1)*(bet_new*mu_w*(bet_new*mu_w+mu_m)) -
+                        (2*N-4)*(bet_new*(bet_cte*mu_w + mu_m)) +
+                        bet_new^2))
+outl <- outl + (bet_cte*(1-mu_w) - mu_m - gamma_ct)
+
+outl2 <- (1/2)*(N*(bet_cte*mu_w + mu_m) +
+                  bet_new - sqrt(N^2*(bet_cte*mu_w + mu_m)^2 +
+                                   4*(N-1)*(bet_new*mu_w*(bet_new*mu_w+mu_m)) -
+                                   (2*N-4)*(bet_new*(bet_cte*mu_w + mu_m)) +
+                                   bet_new^2))
+outl2 <- outl2 + (bet_cte*(1-mu_w) - mu_m - gamma_ct)
+
 plot_inf_1 <- plot_int(N, sol, state)
 # If last parameter is 1 he outlier is not computed:
-plot_eigen_1 <- plot_eigen(eig, cent, rad, outl, MOB)
+plot_eigen_1 <- plot_eigen(eig, cent, rad, outl, MOB) +
+  geom_point(aes(outl2,0), colour = "blue",
+             show.legend = NA) + 
+  geom_point(aes(outl,0), colour = "blue",
+             show.legend = NA)
 
-plot_inf_1 + scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
-# plot_eigen_1 <- plot_eig
-plot_inf_1_lim <- plot_inf_1 + xlim(c(0,1))
+
+
+vec_col <-  vector(mode="character", length=N)
+vec_col[1:N] <- "royalblue3"
+
+plot_inf_1 <-  plot_inf_1 +
+  scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) + 
+  scale_colour_manual(values = vec_col)
+
+plot_inf_1 <- plot_inf_1 + 
+  geom_line(data = sol_df_inf_new_bet, aes(time, inf), color = "red4")
+plot_inf_1_lim <- plot_inf_1 + xlim(c(0,5))
 plot_inf_1_lim
 plot_eigen_1
+
+plot_inf_1_lim <- plot_inf_1_lim + labs(title="a")
+plot_1 <- ggarrange(plot_inf_1_lim, plot_inf_2_lim)
 # plot_1 <- ggarrange(plot_inf_1,plot_inf_2, labels = c("a","b","c","d"))
 # plot_2 <- ggarrange(plot_eigen_1,plot_eigen_2, ncol = 2, labels = c("a","b","c","d"))
 plot_1 <- ggarrange(plot_inf_1_lim,
                     plot_inf_2,
                     plot_eigen_1,
                     plot_eigen_2,
-                  nrow = 2,ncol = 2,
-                  label.x = 0,
-                  label.y = 1)
+                    nrow = 2,ncol = 2,
+                    label.x = 0,
+                    label.y = 1)
 
 plot_2 <- ggarrange(plot_inf_2,
                   plot_inf_2_lim,
@@ -179,7 +215,7 @@ plot
 
 #-------------------SAVE FILE-------------------
 Path <- "~/Documentos/PHD/2021/R0_SIR_RMT/Plots/"
-Path <- "~/Documents/PHD/2021/R0_SIR_RMT/Plots/"
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/"
 gamma_ct <- format(round(gamma_ct,2), decimal.mark = ',')
 beta_ct <- format(round(beta_ct,2), decimal.mark = ',')
 mu_w <- format(round(mu_w,2), decimal.mark = ',')
@@ -187,10 +223,10 @@ s_w <- format(round(s_w,2), decimal.mark = ',')
 mu_m <- format(round(mu_m,2), decimal.mark = ',')
 s_m <- format(round(s_m,2), decimal.mark = ',')
 path <- paste0(Path,"gen","N",N,"g",gamma_ct,"b",beta_ct,"mw",
-       mu_w,"sw","mu_w_uns","0,3",s_w,"mm",mu_m,"sm",s_m,".png")
-path <- paste0(Path,"mod1patchtrans","N",N,"g",gamma_ct,"b",
-               beta_ct,"mw","bnew","14",
-               mu_w,"sw",s_w,"mm",mu_m,"sm",s_m,".png")
+       mu_w,"b_new_1p6","sw",s_w,"mm",mu_m,"sm",s_m,".png")
+# path <- paste0(Path,"mod1patchtrans","N",N,"g",gamma_ct,"b",
+               # beta_ct,"mw","bnew","14",
+               # mu_w,"sw",s_w,"mm",mu_m,"sm",s_m,".png")
 png(file = path, width = 8000, height = 6000, res = 1100)
 plot_1
 dev.off()
