@@ -41,9 +41,9 @@ source("~/RMT/Integration/functions_eigen_int.R")
   # CTE parameters:
   del_N <- rep(0.6, N) # Birth rate
   bet_cte <- 6
-  # bet_cte <-  0.001
+  bet_cte <-  0.001
   bet <- rep(bet_cte, N)  # Transmission rate
-  bet <- abs(rnorm(N,2,5))  # Transmission rate
+  # bet <- abs(rnorm(N,2,5))  # Transmission rate
   d_vec <- rep(0.8, N) # Natural mortality rate
   thet <- rep(0.1, N) # Rate of loss of immunity
   alp <- rep(0.6, N) # Rate of disease overcome
@@ -52,21 +52,21 @@ source("~/RMT/Integration/functions_eigen_int.R")
   # Changing transmission rate:
   mu = 0.5
   sig = 4
-  # ind <- sample(1:N,1)
-  # bet_new <- 10
-  bet_new <-  0.001
+  ind <- sample(1:N,1)
+  bet_new <- 8
+  # bet_new <-  0.001
   bet[ind] <- bet_new
-  size <- sample(1:N,1)
-  vec_rand <- sample(1:N,size)
+  # size <- sample(1:N,1)
+  # vec_rand <- sample(1:N,size)
   # vec_rand <- seq(1,round(N/4),1)
-  bet[vec_rand] <- bet_new
+  # bet[vec_rand] <- bet_new
   # 
   print(paste0("gamma:", alp[1] + delt[1] + d_vec[1]))
   print(paste0("beta - gamma:", bet[1] - (alp[1] + delt[1] + d_vec[1])))
 
 #-------------------- MOBILITY ------------------#
 ### Migration:
-  alp_m <- 0.1
+  alp_m <- 0.01
   bet_m <- 0.1
   
   # Compute mean and sd:
@@ -77,7 +77,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
 
   migrate_mat <- mat_conect(N,alp_m,bet_m,MOB)
 ### Commuting
-  alp_c <- 0.1
+  alp_c <- 0.01
   bet_c <- 0.1
   
   # Compute mean and sd:
@@ -158,12 +158,13 @@ plot_eigen_1
 vec_col <-  vector(mode="character", length=N)
 vec_col[1:N] <- "red4"
 vec_col[vec_rand] <- "royalblue3"
+vec_col[ind] <- "royalblue3"
 
 plot_inf_1 <-  plot_inf_1 +
   scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) + 
   scale_colour_manual(values = vec_col)
 
-plot_inf_1_lim <- plot_inf_1 + xlim(c(0,10))
+plot_inf_1_lim <- plot_inf_1 + xlim(c(0,20))
 plot_inf_1_lim
 plot_eigen_1
 
