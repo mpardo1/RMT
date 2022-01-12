@@ -53,7 +53,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   mu = 0.5
   sig = 4
   ind <- sample(1:N,1)
-  bet_new <- 8
+  bet_new <- 1
   # bet_new <-  0.001
   bet[ind] <- bet_new
   # size <- sample(1:N,1)
@@ -105,68 +105,92 @@ source("~/RMT/Integration/functions_eigen_int.R")
 end_time <- 100
 
 #-------------------------------------------------------------------------------#
+gamma_ct_w <- format(round(gamma_ct,2), decimal.mark = ',')
+beta_ct_w <- format(round(beta_ct,2), decimal.mark = ',')
+mu_w_w <- format(round(mu_w,2), decimal.mark = ',')
+s_w_w <- format(round(s_w,2), decimal.mark = ',')
+mu_m_w <- format(round(mu_m,2), decimal.mark = ',')
+s_m_w <- format(round(s_m,2), decimal.mark = ',')
 # Integrate the system:
-sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
-           commut_mat,migrate_mat,end_time,
-           MOB, CTE_POP, CTE_INF)
+for(i in seq(0.001,20.001,0.1)){
+  print(paste0("New beta : ",i))
+  bet_new <- i
+  bet[ind] <- bet_new
+  sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
+             commut_mat,migrate_mat,end_time,
+             MOB, CTE_POP, CTE_INF)
+  
+  sol_df <- as.data.frame(sol)
+  
+  # Plot the susceptible, infected and recovered:
+  state <- "INF"
+  # Parameters:
+  beta_ct = bet_cte  # gamma
+  gamma_ct = alp[1] + delt[1] + d_vec[1]        # beta
+  
+  print(paste0("beta - gamma", beta_ct - gamma_ct))
+  
+  cond_gen(N, mu_m, s_m, mu_w, s_w, gamma_ct, beta_ct, tau_ct)
+  # Make distribution:
+  jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_m, MOB)
+  eig <- eigen_mat(jac)
+  
+  # Predicted distribution:
+  rad <- pred_radius(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
+  cent <- pred_center(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
+  outl <- pred_outlier(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
+  
+  outl <- (1/2)*(N*(bet_cte*mu_w + mu_m) + bet_new +
+                   sqrt(N^2*(bet_cte*mu_w + mu_m)^2 +
+                          4*(N-1)*(bet_new*mu_w*(bet_new*mu_w+mu_m)) -
+                          (2*N-4)*(bet_new*(bet_cte*mu_w + mu_m)) +
+                          bet_new^2))
+  outl <- outl + (bet_cte*(1-mu_w) - mu_m - gamma_ct)
+  
+  outl2 <- (1/2)*(N*(bet_cte*mu_w + mu_m) +
+                    bet_new - sqrt(N^2*(bet_cte*mu_w + mu_m)^2 +
+                                     4*(N-1)*(bet_new*mu_w*(bet_new*mu_w+mu_m)) -
+                                     (2*N-4)*(bet_new*(bet_cte*mu_w + mu_m)) +
+                                     bet_new^2))
+  outl2 <- outl2 + (bet_cte*(1-mu_w) - mu_m - gamma_ct)
+  
+  plot_inf_1 <- plot_int(N, sol, state)
+  # If last parameter is 1 he outlier is not computed:
+  plot_eigen_1 <- plot_eigen(eig, cent, rad, outl, 1) +
+    geom_point(aes(outl2,0), colour = "blue",
+               show.legend = NA) + 
+    geom_point(aes(outl,0), colour = "blue",
+               show.legend = NA)
+  
+  
+  plot_eigen_1
+  
+  vec_col <-  vector(mode="character", length=N)
+  vec_col[1:N] <- "red4"
+  # vec_col[vec_rand] <- "royalblue3"
+  vec_col[ind] <- "royalblue3"
+  
+  plot_inf_1 <-  plot_inf_1 +
+    scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) + 
+    scale_colour_manual(values = vec_col)
+  
+  plot_inf_1_lim <- plot_inf_1 + xlim(c(0,30)) + ggtitle(paste(expression(alpha),":",i))
+  
+  Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/"
+  path <- paste0(Path,"gen","N",N,"g",gamma_ct_w,"b",beta_ct_w,"mw",
+                 mu_w_w,"b_new_1p", i,"sw",s_w_w,"mm",mu_m_w,"sm",s_m_w,".png")
+  # path <- paste0(Path,"mod1patchtrans","N",N,"g",gamma_ct,"b",
+  # beta_ct,"mw","bnew","14",
+  # mu_w,"sw",s_w,"mm",mu_m,"sm",s_m,".png")
+  ggsave(file = path, plot = plot_inf_1_lim,width = 5, height = 5)
+  # plot_inf_1_lim
+  # dev.off()
+}
 
-sol_df <- as.data.frame(sol)
+library(gifski)
+png_files <- list.files("~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/", pattern = ".*png$", full.names = TRUE)
+gifski(png_files, gif_file = "~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/animation.gif", width = 800, height = 600, delay = 0.3)
 
-# Plot the susceptible, infected and recovered:
-state <- "INF"
-# Parameters:
-beta_ct = bet_cte  # gamma
-gamma_ct = alp[1] + delt[1] + d_vec[1]        # beta
-
-print(paste0("beta - gamma", beta_ct - gamma_ct))
-
-cond_gen(N, mu_m, s_m, mu_w, s_w, gamma_ct, beta_ct, tau_ct)
-# Make distribution:
-jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_m, MOB)
-eig <- eigen_mat(jac)
-
-# Predicted distribution:
-rad <- pred_radius(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
-cent <- pred_center(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
-outl <- pred_outlier(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
-
-outl <- (1/2)*(N*(bet_cte*mu_w + mu_m) + bet_new +
-                 sqrt(N^2*(bet_cte*mu_w + mu_m)^2 +
-                        4*(N-1)*(bet_new*mu_w*(bet_new*mu_w+mu_m)) -
-                        (2*N-4)*(bet_new*(bet_cte*mu_w + mu_m)) +
-                        bet_new^2))
-outl <- outl + (bet_cte*(1-mu_w) - mu_m - gamma_ct)
-
-outl2 <- (1/2)*(N*(bet_cte*mu_w + mu_m) +
-                  bet_new - sqrt(N^2*(bet_cte*mu_w + mu_m)^2 +
-                                   4*(N-1)*(bet_new*mu_w*(bet_new*mu_w+mu_m)) -
-                                   (2*N-4)*(bet_new*(bet_cte*mu_w + mu_m)) +
-                                   bet_new^2))
-outl2 <- outl2 + (bet_cte*(1-mu_w) - mu_m - gamma_ct)
-
-plot_inf_1 <- plot_int(N, sol, state)
-# If last parameter is 1 he outlier is not computed:
-plot_eigen_1 <- plot_eigen(eig, cent, rad, outl, 1) +
-  geom_point(aes(outl2,0), colour = "blue",
-             show.legend = NA) + 
-  geom_point(aes(outl,0), colour = "blue",
-             show.legend = NA)
-
-
-plot_eigen_1
-
-vec_col <-  vector(mode="character", length=N)
-vec_col[1:N] <- "red4"
-vec_col[vec_rand] <- "royalblue3"
-vec_col[ind] <- "royalblue3"
-
-plot_inf_1 <-  plot_inf_1 +
-  scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) + 
-  scale_colour_manual(values = vec_col)
-
-plot_inf_1_lim <- plot_inf_1 + xlim(c(0,20))
-plot_inf_1_lim
-plot_eigen_1
 
 ggarrange(plot_inf_1_low, plot_inf_1_HALF, plot_inf_1_high)
 ggarrange(plot_inf_1_high, plot_inf_1_lim)
@@ -216,16 +240,16 @@ plot <- ggarrange(plot_inf_2_lim,
 plot
 
 #-------------------SAVE FILE-------------------
-Path <- "~/Documentos/PHD/2021/R0_SIR_RMT/Plots/"
+Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/"
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/"
-gamma_ct <- format(round(gamma_ct,2), decimal.mark = ',')
-beta_ct <- format(round(beta_ct,2), decimal.mark = ',')
-mu_w <- format(round(mu_w,2), decimal.mark = ',')
-s_w <- format(round(s_w,2), decimal.mark = ',')
-mu_m <- format(round(mu_m,2), decimal.mark = ',')
-s_m <- format(round(s_m,2), decimal.mark = ',')
-path <- paste0(Path,"gen","N",N,"g",gamma_ct,"b",beta_ct,"mw",
-       mu_w,"b_new_1p6","sw",s_w,"mm",mu_m,"sm",s_m,".png")
+gamma_ct_w <- format(round(gamma_ct,2), decimal.mark = ',')
+beta_ct_w <- format(round(beta_ct,2), decimal.mark = ',')
+mu_w_w <- format(round(mu_w,2), decimal.mark = ',')
+s_w_w <- format(round(s_w,2), decimal.mark = ',')
+mu_m_w <- format(round(mu_m,2), decimal.mark = ',')
+s_m_w <- format(round(s_m,2), decimal.mark = ',')
+path <- paste0(Path,"gen","N",N_w,"g",gamma_ct_w,"b",beta_ct_w,"mw",
+       mu_w_w,"b_new_1p", i,"sw",s_w_w,"mm",mu_m_w,"sm",s_m_w,".png")
 # path <- paste0(Path,"mod1patchtrans","N",N,"g",gamma_ct,"b",
                # beta_ct,"mw","bnew","14",
                # mu_w,"sw",s_w,"mm",mu_m,"sm",s_m,".png")
