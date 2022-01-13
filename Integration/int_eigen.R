@@ -5,6 +5,8 @@ library("deSolve")
 library("ggpubr")
 library("ggsci")
 library("ggforce")
+library("ggplot2")
+library("gifski")
 
 # Set up plots theme:
 ggplot2::theme_set(ggplot2::theme_bw() %+replace% 
@@ -77,7 +79,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
 
   migrate_mat <- mat_conect(N,alp_m,bet_m,MOB)
 ### Commuting
-  alp_c <- 0.01
+  alp_c <- 0.1
   bet_c <- 0.1
   
   # Compute mean and sd:
@@ -105,6 +107,8 @@ source("~/RMT/Integration/functions_eigen_int.R")
 end_time <- 100
 
 #-------------------------------------------------------------------------------#
+beta_ct = bet_cte  # gamma
+gamma_ct = alp[1] + delt[1] + d_vec[1]        # beta
 gamma_ct_w <- format(round(gamma_ct,2), decimal.mark = ',')
 beta_ct_w <- format(round(beta_ct,2), decimal.mark = ',')
 mu_w_w <- format(round(mu_w,2), decimal.mark = ',')
@@ -112,10 +116,12 @@ s_w_w <- format(round(s_w,2), decimal.mark = ',')
 mu_m_w <- format(round(mu_m,2), decimal.mark = ',')
 s_m_w <- format(round(s_m,2), decimal.mark = ',')
 # Integrate the system:
-for(i in seq(0.001,20.001,0.1)){
+count = 1
+for(i in seq(5,15,0.5)){
+
   print(paste0("New beta : ",i))
   bet_new <- i
-  bet[ind] <- bet_new
+  bet[ind] <- bet_cte + bet_new
   sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
              commut_mat,migrate_mat,end_time,
              MOB, CTE_POP, CTE_INF)
@@ -125,13 +131,10 @@ for(i in seq(0.001,20.001,0.1)){
   # Plot the susceptible, infected and recovered:
   state <- "INF"
   # Parameters:
-  beta_ct = bet_cte  # gamma
-  gamma_ct = alp[1] + delt[1] + d_vec[1]        # beta
-  
   print(paste0("beta - gamma", beta_ct - gamma_ct))
   
   cond_gen(N, mu_m, s_m, mu_w, s_w, gamma_ct, beta_ct, tau_ct)
-  # Make distribution:
+  # Make distribution: 
   jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_m, MOB)
   eig <- eigen_mat(jac)
   
@@ -140,22 +143,17 @@ for(i in seq(0.001,20.001,0.1)){
   cent <- pred_center(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
   outl <- pred_outlier(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
   
-  outl <- (1/2)*(N*(bet_cte*mu_w + mu_m) + bet_new +
-                   sqrt(N^2*(bet_cte*mu_w + mu_m)^2 +
-                          4*(N-1)*(bet_new*mu_w*(bet_new*mu_w+mu_m)) -
-                          (2*N-4)*(bet_new*(bet_cte*mu_w + mu_m)) +
-                          bet_new^2))
-  outl <- outl + (bet_cte*(1-mu_w) - mu_m - gamma_ct)
+  a <- bet_cte*mu_w +mu_m
+  b <- bet_new
+  c <- bet_new*mu_w
   
-  outl2 <- (1/2)*(N*(bet_cte*mu_w + mu_m) +
-                    bet_new - sqrt(N^2*(bet_cte*mu_w + mu_m)^2 +
-                                     4*(N-1)*(bet_new*mu_w*(bet_new*mu_w+mu_m)) -
-                                     (2*N-4)*(bet_new*(bet_cte*mu_w + mu_m)) +
-                                     bet_new^2))
-  outl2 <- outl2 + (bet_cte*(1-mu_w) - mu_m - gamma_ct)
+  outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+  outl2 <- (1/2)*(N*a + b - sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+  outl <- outl + (bet_cte*(1-mu_w) - N*mu_m - gamma_ct)
+  outl2 <- outl2 + (bet_cte*(1-mu_w) - N*mu_m - gamma_ct)
   
   plot_inf_1 <- plot_int(N, sol, state)
-  # If last parameter is 1 he outlier is not computed:
+  # If last parameter is 1 he outlier is jnoatj acjoajmputed:
   plot_eigen_1 <- plot_eigen(eig, cent, rad, outl, 1) +
     geom_point(aes(outl2,0), colour = "blue",
                show.legend = NA) + 
@@ -176,9 +174,13 @@ for(i in seq(0.001,20.001,0.1)){
   
   plot_inf_1_lim <- plot_inf_1 + xlim(c(0,30)) + ggtitle(paste(expression(alpha),":",i))
   
-  Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/"
+  count = count + 1
+  
+  print(paste0("N*(bet_cte*mu_w +mu_m): ", N*(bet_cte*mu_w +mu_m)))
+  Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_mig/"
+  Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/1patch/High_mig/"
   path <- paste0(Path,"gen","N",N,"g",gamma_ct_w,"b",beta_ct_w,"mw",
-                 mu_w_w,"b_new_1p", i,"sw",s_w_w,"mm",mu_m_w,"sm",s_m_w,".png")
+                 mu_w_w,"sw",s_w_w,"mm",mu_m_w,"sm",s_m_w,"_",count,".png")
   # path <- paste0(Path,"mod1patchtrans","N",N,"g",gamma_ct,"b",
   # beta_ct,"mw","bnew","14",
   # mu_w,"sw",s_w,"mm",mu_m,"sm",s_m,".png")
@@ -187,10 +189,11 @@ for(i in seq(0.001,20.001,0.1)){
   # dev.off()
 }
 
-library(gifski)
-png_files <- list.files("~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/", pattern = ".*png$", full.names = TRUE)
-gifski(png_files, gif_file = "~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/animation.gif", width = 800, height = 600, delay = 0.3)
+png_files <- list.files("~/Documents/PHD/2022/RMT_SIR/Plots/1patch/High_mig/", pattern = ".*png$", full.names = TRUE)
+gifski(png_files, gif_file = "~/Documents/PHD/2022/RMT_SIR/Plots/1patch/High_mig/animation.gif", width = 800, height = 600, delay = 0.3)
 
+png_files <- list.files("~/Documents/PHD/2022/RMT_SIR/Plots/1patch/", pattern = ".*png$", full.names = TRUE)
+gifski(png_files, gif_file = "~/Documents/PHD/2022/RMT_SIR/Plots/1patch/animation.gif", width = 800, height = 600, delay = 0.3)
 
 ggarrange(plot_inf_1_low, plot_inf_1_HALF, plot_inf_1_high)
 ggarrange(plot_inf_1_high, plot_inf_1_lim)
