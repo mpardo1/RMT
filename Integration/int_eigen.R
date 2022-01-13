@@ -117,7 +117,7 @@ mu_m_w <- format(round(mu_m,2), decimal.mark = ',')
 s_m_w <- format(round(s_m,2), decimal.mark = ',')
 # Integrate the system:
 count = 1
-for(i in seq(5,15,0.5)){
+for(i in seq(0,30,0.5)){
 
   print(paste0("New beta : ",i))
   bet_new <- i
@@ -177,8 +177,8 @@ for(i in seq(5,15,0.5)){
   count = count + 1
   
   print(paste0("N*(bet_cte*mu_w +mu_m): ", N*(bet_cte*mu_w +mu_m)))
-  Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_mig/"
-  Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/1patch/High_mig/"
+  Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_com/"
+  Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/1patch/High_com/"
   path <- paste0(Path,"gen","N",N,"g",gamma_ct_w,"b",beta_ct_w,"mw",
                  mu_w_w,"sw",s_w_w,"mm",mu_m_w,"sm",s_m_w,"_",count,".png")
   # path <- paste0(Path,"mod1patchtrans","N",N,"g",gamma_ct,"b",
@@ -189,8 +189,8 @@ for(i in seq(5,15,0.5)){
   # dev.off()
 }
 
-png_files <- list.files("~/Documents/PHD/2022/RMT_SIR/Plots/1patch/High_mig/", pattern = ".*png$", full.names = TRUE)
-gifski(png_files, gif_file = "~/Documents/PHD/2022/RMT_SIR/Plots/1patch/High_mig/animation.gif", width = 800, height = 600, delay = 0.3)
+png_files <- list.files("~/Documents/PHD/2022/RMT_SIR/Plots/1patch/High_com/", pattern = ".*png$", full.names = TRUE)
+gifski(png_files, gif_file = "~/Documents/PHD/2022/RMT_SIR/Plots/1patch/High_com/animation.gif", width = 800, height = 600, delay = 0.3)
 
 png_files <- list.files("~/Documents/PHD/2022/RMT_SIR/Plots/1patch/", pattern = ".*png$", full.names = TRUE)
 gifski(png_files, gif_file = "~/Documents/PHD/2022/RMT_SIR/Plots/1patch/animation.gif", width = 800, height = 600, delay = 0.3)
