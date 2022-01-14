@@ -48,7 +48,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   # bet <- abs(rnorm(N,2,5))  # Transmission rate
   d_vec <- rep(0.8, N) # Natural mortality rate
   thet <- rep(0.1, N) # Rate of loss of immunity
-  alp <- rep(0.6, N) # Rate of disease overcome
+  alp <- rep(0.02, N) # Rate of disease overcome
   delt <- rep(0, N) # Diseases related mortality rate
   
   # Changing transmission rate:
@@ -68,7 +68,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
 
 #-------------------- MOBILITY ------------------#
 ### Migration:
-  alp_m <- 0.01
+  alp_m <- 0.1
   bet_m <- 0.1
   
   # Compute mean and sd:
@@ -104,7 +104,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   
   print(paste0("beta - gamma:", bet[1] - (alp[1] + delt[1] + d_vec[1])))
 # End time integration:
-end_time <- 100
+end_time <- 30
 
 #-------------------------------------------------------------------------------#
 beta_ct = bet_cte  # gamma
@@ -117,7 +117,7 @@ mu_m_w <- format(round(mu_m,2), decimal.mark = ',')
 s_m_w <- format(round(s_m,2), decimal.mark = ',')
 # Integrate the system:
 count = 1
-for(i in seq(0,30,0.5)){
+for(i in seq(0,5,0.05)){
 
   print(paste0("New beta : ",i))
   bet_new <- i
@@ -173,12 +173,13 @@ for(i in seq(0,30,0.5)){
     scale_colour_manual(values = vec_col)
   
   plot_inf_1_lim <- plot_inf_1 + xlim(c(0,30)) + ggtitle(paste(expression(alpha),":",i))
+  + ylim(c(0,20000))
   
   count = count + 1
   
   print(paste0("N*(bet_cte*mu_w +mu_m): ", N*(bet_cte*mu_w +mu_m)))
-  Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_com/"
-  Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/1patch/High_com/"
+  Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both/"
+  # Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/1patch/High_com/"
   path <- paste0(Path,"gen","N",N,"g",gamma_ct_w,"b",beta_ct_w,"mw",
                  mu_w_w,"sw",s_w_w,"mm",mu_m_w,"sm",s_m_w,"_",count,".png")
   # path <- paste0(Path,"mod1patchtrans","N",N,"g",gamma_ct,"b",
@@ -189,11 +190,17 @@ for(i in seq(0,30,0.5)){
   # dev.off()
 }
 
-png_files <- list.files("~/Documents/PHD/2022/RMT_SIR/Plots/1patch/High_com/", pattern = ".*png$", full.names = TRUE)
-gifski(png_files, gif_file = "~/Documents/PHD/2022/RMT_SIR/Plots/1patch/High_com/animation.gif", width = 800, height = 600, delay = 0.3)
+# png_files <- list.files("~/Documents/PHD/2022/RMT_SIR/Plots/1patch/High_com/", pattern = ".*png$", full.names = TRUE)
+# gifski(png_files, gif_file = "~/Documents/PHD/2022/RMT_SIR/Plots/1patch/High_com/animation.gif", width = 800, height = 600, delay = 0.3)
 
-png_files <- list.files("~/Documents/PHD/2022/RMT_SIR/Plots/1patch/", pattern = ".*png$", full.names = TRUE)
-gifski(png_files, gif_file = "~/Documents/PHD/2022/RMT_SIR/Plots/1patch/animation.gif", width = 800, height = 600, delay = 0.3)
+png_files <- list.files("~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both/", pattern = ".*png$", full.names = TRUE)
+
+len <- length(png_files)
+for(i in c(1:len)){
+  png_files[i] <- paste0("/home/marta/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both///genN100g0,82b0mw0,5sw0,46mm0,5sm0,46_",i+1,".png")
+}
+gifski(png_files, gif_file = "~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both/animation.gif", width = 800, height = 600, delay = 0.3)
+
 
 ggarrange(plot_inf_1_low, plot_inf_1_HALF, plot_inf_1_high)
 ggarrange(plot_inf_1_high, plot_inf_1_lim)
