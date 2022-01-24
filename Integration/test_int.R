@@ -14,12 +14,8 @@ source("~/RMT/Integration/functions_eigen_int.R")
 #-------------------LOGIC-----------------#
 # Mobility parameter, 0: Just commuting, 1: just migration 2: migration & commuting.
 MOB <- 2
-# Integration parameter, 0: No integration, 1: integration.
-INT <- 1
 # Parameter for initial population. 0: No cte, 1: cte.
 CTE_POP <- 0
-# Parameter for transmission rate. 0: No cte, 1: cte.
-BETA_CTE <- 0
 # Parameter for initial infected ind. 0: No cte , 1: cte.
 CTE_INF <- 1
 
