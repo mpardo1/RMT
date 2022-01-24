@@ -162,12 +162,13 @@ sig = 3
 # delt <- rgamma(N,shape = (mu/sig)^2,rate = mu/(sig^2)) # Diseases related mortality rate
 
 # CTE parameters:
-del_N <- matrix(0.1, ncol = N, nrow = 1) # Birth rate
-bet <- matrix(1, ncol = N, nrow = 1)  # Transmission rate
+N = 2
+del_N <- matrix(0.6, ncol = N, nrow = 1) # Birth rate
+bet <- matrix( 0.00001, ncol = N, nrow = 1)  # Transmission rate
 d_vec <- matrix(0.8, ncol = N, nrow = 1) # Natural mortality rate
-thet <- matrix(0.001, ncol = N, nrow = 1) # Rate of loss of immunity
-alp <- matrix(0.31, ncol = N, nrow = 1) # Rate of disease overcome
-delt <- matrix(0.19, ncol = N, nrow = 1) # Diseases related mortality rate
+thet <- matrix(0.1, ncol = N, nrow = 1) # Rate of loss of immunity
+alp <- matrix(0.02, ncol = N, nrow = 1) # Rate of disease overcome
+delt <- matrix(0, ncol = N, nrow = 1) # Diseases related mortality rate
 
 print(paste0("gamma:", alp[1,1] + delt[1,1] + d_vec[1,1]))
 #--------------------MOBILITY PARAMETERS --------------------------
@@ -277,9 +278,10 @@ SIR_2 <- function(t, state, parameters) {
   }) 
 }
 
-times = seq(0, 0.5, 0.1)
+times = seq(0, 25, 0.1)
 # Toy model 2 patches:
-population <- c(S1 = 100, S2 = 100, I1 = 10, I2 = 10, R1= 0, R2 = 0 )
+population <- c(S1 = 100000, S2 = 100000, I1 = 100, I2 = 100, R1= 0, R2 = 0 )
 z <- ode(population, times, SIR_2, parameters)
-
+ sol <-  as.data.frame(z)
+ plot_inf_1 <- plot_int(N, sol, state)
 head(z)
