@@ -82,7 +82,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
 
   migrate_mat <- mat_conect(N,alp_m,bet_m,MOB)
 ### Commuting
-  alp_c <- 0.01
+  alp_c <- 0.1
   bet_c <- 0.1
   
   # Compute mean and sd:
@@ -106,6 +106,12 @@ source("~/RMT/Integration/functions_eigen_int.R")
   
   
   print(paste0("beta - gamma:", bet[1] - (alp[1] + delt[1] + d_vec[1])))
+  
+#-----------------POPULATION INIT----------------------#
+  # Number of initial individuals by compartments:
+  SUS_INIT <- 100000 #Susceptible
+  INF_INIT <- 100    #Infected
+
 # End time integration:
 end_time <- 30
 
@@ -128,9 +134,10 @@ for(i in alp_vec){
   print(paste0("New beta : ",i))
   bet_new <- i
   bet[ind] <- bet_cte + bet_new
+  
   sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
              commut_mat,migrate_mat,end_time,
-             MOB, CTE_POP, CTE_INF)
+             MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT)
    
   # Compute the time where the sum of infected individuals is maximum,
   inf_df <- sol_df[, c(1,(N+2):(2*N+1))]
@@ -213,6 +220,9 @@ gifski(png_files, gif_file = "~/Documents/PHD/2022/RMT_SIR/Plots/kpatch/High_bot
 
 # Random vec of betas:
 bet <- abs(rnorm(N,1,1))  # Transmission rate
+sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
+           commut_mat,migrate_mat,end_time,
+           MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT)
 sol_df <- as.data.frame(sol)
 sol_df <-  sol_df[,c(1,(N+2):(2*N+1))]
 vec <- as.character(c(1:N))

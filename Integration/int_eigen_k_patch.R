@@ -118,7 +118,7 @@ s_m_w <- format(round(s_m,2), decimal.mark = ',')
 # Integrate the system:
 count = 1
 max_n_patch <-  N
-k_vec <- seq(0,max_n_patch,5)
+k_vec <- seq(0,max_n_patch,1)
 l <-  length(k_vec) + 1
 mat_max_inf <-  matrix(0, ncol = 2, nrow = l)
 plot_list <- list()
@@ -128,7 +128,7 @@ for(i in k_vec){
   bet[1:i] <- bet_cte + bet_new
   sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
              commut_mat,migrate_mat,end_time,
-             MOB, CTE_POP, CTE_INF)
+             MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT)
   
   sol_df <- as.data.frame(sol)
   
@@ -161,17 +161,17 @@ for(i in k_vec){
 }
 
 png_files <-  c()
-for(i in c(1:51)){
+for(i in c(1:N)){
   # png_files[i] <- paste0("/home/marta/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both///genN100g0,82b0mw0,5sw0,46mm0,5sm0,46_",i+1,".png")
   plot_list[[i]] +
     scale_y_continuous(labels = function(x) format(x, scientific = TRUE), limits = c(0,450000))
   ggsave(paste0("~/Documents/PHD/2022/RMT_SIR/Plots/Kpaches/low_both/plot_",i,".png" ),
          plot = last_plot(), device = "png")
-  png_files[i] <-  paste0("~/Documents/PHD/2022/RMT_SIR/Plots/Kpaches/low_both/plot_",i,".png" )
+  png_files[i] <-  paste0("~/Documents/PHD/2022/RMT_SIR/Plots/Kpaches/High_both/plot_",i,".png" )
 }
 
 # gifski(png_files, gif_file = "~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both/animation.gif", width = 800, height = 600, delay = 0.3)
-gifski(png_files, gif_file = "~/Documents/PHD/2022/RMT_SIR/Plots/Kpaches/low_both/animation.gif", width = 800, height = 600, delay = 0.3)
+gifski(png_files, gif_file = "~/Documents/PHD/2022/RMT_SIR/Plots/Kpaches/High_both/animation.gif", width = 800, height = 600, delay = 0.3)
 
 mat_max_inf <-  as.data.frame(mat_max_inf)
 colnames(mat_max_inf) <-  c("Beta","time")

@@ -79,7 +79,7 @@ diff_f <- function(connect_mat,d,init_pop){
 }
 
 # function which integrate:
-int <- function(N, del_N,bet,d_vec,thet,alp,delt, commut_mat,connect_mat ,end_time, MOB, CTE_POP, CTE_INF){
+int <- function(N, del_N,bet,d_vec,thet,alp,delt, commut_mat,connect_mat ,end_time, MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT){
   # Create vector of parameters for ode function:
   parameters <- list(
     dim = N,
@@ -98,7 +98,7 @@ int <- function(N, del_N,bet,d_vec,thet,alp,delt, commut_mat,connect_mat ,end_ti
   pops <- c(matrix(0,ncol=3*N,nrow =1 ))
   # Initial value for infected individuals:
   if(CTE_INF == 1){
-    pops[(N+1):(2*N)] <- 100
+    pops[(N+1):(2*N)] <- INF_INIT
   }else{
     pops[(N+1):(2*N)] <- ceiling(abs(rnorm(N,100,60)))
   }
@@ -106,7 +106,7 @@ int <- function(N, del_N,bet,d_vec,thet,alp,delt, commut_mat,connect_mat ,end_ti
   
   if(CTE_POP == 0){
     print("No constant population")
-    pops[1:N] <- 100000
+    pops[1:N] <- SUS_INIT
   }else{
     print("Constant population")
     # Susceptible individuals:
