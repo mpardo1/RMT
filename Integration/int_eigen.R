@@ -1,15 +1,8 @@
 rm(list = ls())
-library("parallel")
 library("tidyverse")
 library("deSolve")
-library("ggpubr")
-library("ggsci")
-library("ggforce")
 library("ggplot2")
 library("gifski")
-library("animation")
-library("viridis")
-library("gplots")
 
 # Set up plots theme:
 # ggplot2::theme_set(ggplot2::theme_bw() %+replace% 
@@ -42,14 +35,14 @@ source("~/RMT/Integration/functions_eigen_int.R")
   
   
 #-------------------EPIDEMIOLOGICAL----------------------
-  N = 25 # Number of patches
+  N = 100 # Number of patches
   # CTE parameters:
   del_N <- rep(0.6, N) # Birth rate
   # bet_cte <- 6
-  bet_cte <-  0.001
-  # bet <- rep(bet_cte, N)  # Transmission rate
-  bet <- abs(rnorm(N,1,1))  # Transmission rate
-  d_vec <- rep(0.8, N) # Natural mortality rate
+  bet_cte <-  0.03
+  bet <- rep(bet_cte, N)  # Transmission rate
+  # bet <- abs(rnorm(N,1,1))  # Transmission rate
+  d_vec <- rep(0.2, N) # Natural mortality rate
   thet <- rep(0.1, N) # Rate of loss of immunity
   alp <- rep(0.02, N) # Rate of disease overcome
   delt <- rep(0, N) # Diseases related mortality rate
@@ -93,7 +86,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
 
   commut_mat <- mat_conect(N,alp_c,bet_c,MOB)
 
-  tau_ct <- 0
+tau_ct <- 0
   # Initial populations:
   init_pop <- matrix(100, nrow = N)
   if(CTE_POP == 1){
@@ -113,8 +106,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   INF_INIT <- 100    #Infected
 
 # End time integration:
-end_time <- 30
-
+end_time <- 100
 #-------------------------------------------------------------------------------#
 beta_ct = bet_cte  # gamma
 gamma_ct = alp[1] + delt[1] + d_vec[1]        # beta
@@ -130,54 +122,70 @@ alp_vec <- seq(0,4,0.1)
 l <-  length(alp_vec) + 1
 mat_max_inf <-  matrix(0, ncol = 2, nrow = l)
 plot_list <- list()
-for(i in alp_vec){
+# for(i in alp_vec){
   print(paste0("New beta : ",i))
-  bet_new <- i
-  bet[ind] <- bet_cte + bet_new
+  # bet_new <- i
+  # bet[ind] <- bet_cte + bet_new
   
   sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
              commut_mat,migrate_mat,end_time,
              MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT)
    
+  sol_df <-  as.data.frame(sol)
   # Compute the time where the sum of infected individuals is maximum,
   inf_df <- sol_df[, c(1,(N+2):(2*N+1))]
   inf_df$sum <- rowSums(inf_df[,2:(N+1)])
   t_max_inf <- inf_df$time[inf_df$sum==max(inf_df$sum)]
   mat_max_inf[count,] <- c(i, t_max_inf)
   
+  
   # Plot the susceptible, infected and recovered:
   state <- "INF"
   # Parameters:
   print(paste0("beta - gamma", beta_ct - gamma_ct))
   # 
-  # cond_gen(N, mu_m, s_m, mu_w, s_w, gamma_ct, beta_ct, tau_ct)
-  # # Make distribution: 
-  # jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_m, MOB)
-  # eig <- eigen_mat(jac)
+  cond_gen(N, mu_m, s_m, mu_w, s_w, gamma_ct, beta_ct, tau_ct)
+  # Make distribution:
+  # 3: means sum cij and $ 1/N sum cij:
+  jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_m, 3)
+  eig <- eigen_mat(jac)
+  
+  plot_eig <- ggplot(eig) + geom_point(aes(re,im), size = 0.05) 
+  plot_eig + coord_fixed() 
+  
+  # Predicted distribution:
+  rad <- pred_radius(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
+  cent <- pred_center(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
+  outl <- pred_outlier(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
+
+  a <- bet_cte*mu_w + mu_m
+  b <- bet_new
+  c <- bet_new*mu_w
+
+  outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+  outl2 <- (1/2)*(N*a + b - sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+  outl <- outl + (bet_cte*(1-mu_w) - N*mu_m - gamma_ct)
+  outl2 <- outl2 + (bet_cte*(1-mu_w) - N*mu_m - gamma_ct)
   # 
-  # # Predicted distribution:
-  # rad <- pred_radius(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
-  # cent <- pred_center(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
-  # outl <- pred_outlier(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
-  # 
-  # a <- bet_cte*mu_w + mu_m
-  # b <- bet_new
-  # c <- bet_new*mu_w
-  # 
-  # outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
-  # outl2 <- (1/2)*(N*a + b - sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
-  # outl <- outl + (bet_cte*(1-mu_w) - N*mu_m - gamma_ct)
-  # outl2 <- outl2 + (bet_cte*(1-mu_w) - N*mu_m - gamma_ct)
-  # 
-  plot_inf_1 <- plot_int(N, sol, state)
-  # If last parameter is 1 he outlier is jnoatj acjoajmputed:
-  # plot_eigen_1 <- plot_eigen(eig, cent, rad, outl, 1) +
-  #   geom_point(aes(outl2,0), colour = "blue",
-  #              show.legend = NA) + 
-  #   geom_point(aes(outl,0), colour = "blue",
-  #              show.legend = NA)
-  # 
+  plot_inf_1 <- plot_int(N, sol, state)  + theme(legend.position = "none")
+  # If last parameter is 1 he outlier is not computed:
+  plot_eigen_1 <- plot_eigen(eig, cent, rad, outl, MOB)
+  
+  jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_m, 3)
+  eig <- eigen_mat(jac)
+  plot_eigen_2 <- plot_eigen(eig, cent, rad, outl, 1)
+  
+  plot_eigen_outl <-  plot_eigen_1 + 
+    geom_point(aes(outl2,0), colour = "blue",
+               show.legend = NA) +
+    geom_point(aes(outl,0), colour = "blue",
+               show.legend = NA)
+
   # plot_eigen_1
+  # plot_inf_1
+  # 
+  ggar <-  ggarrange(plot_eigen_1, plot_eigen_2)
+  ggarrange(ggar,plot_inf_1, ncol = 1)
   
   vec_col <-  vector(mode="character", length=N)
   vec_col[1:N] <- "red4"
@@ -192,16 +200,9 @@ for(i in alp_vec){
     # scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
     ggtitle(paste(expression(alpha),":",i)) 
   
-  
-  # pltName <- paste( 'plot_inf_', i, sep = '' )
-  # assign(pltName, plot_inf_1 +
-  #          xlim(c(0,30)) +
-  #          scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
-  #          ggtitle(paste(expression(alpha),":",i)) , envir = .GlobalEnv ) 
-  
   plot_list[[count]] <-  plot_inf_1_lim
   count = count + 1
-}
+# }
 
 png_files <-  c()
 for(i in c(1:(count-1))){
@@ -218,7 +219,7 @@ for(i in c(1:(count-1))){
 gifski(png_files, gif_file = "~/Documents/PHD/2022/RMT_SIR/Plots/kpatch/High_both/animation.gif", width = 800, height = 600, delay = 0.3)
 
 
-# Random vec of betas:
+#---------------------RANDOM BETAS------------------------#
 bet <- abs(rnorm(N,1,1))  # Transmission rate
 sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
            commut_mat,migrate_mat,end_time,
@@ -253,49 +254,13 @@ ggplot(mat_max_inf) +
 ggarrange(plot_inf_1_low, plot_inf_1_HALF, plot_inf_1_high)
 ggarrange(plot_inf_1_high, plot_inf_1_lim)
 #--------------------------------------------------------------------------#
-plot_inf_1_lim <- plot_inf_1_lim + labs(title="a")
-plot_1 <- ggarrange(plot_inf_1_lim, plot_inf_2_lim)
-# plot_1 <- ggarrange(plot_inf_1,plot_inf_2, labels = c("a","b","c","d"))
-# plot_2 <- ggarrange(plot_eigen_1,plot_eigen_2, ncol = 2, labels = c("a","b","c","d"))
-plot_1 <- ggarrange(plot_inf_1_lim,
-                    plot_inf_2,
-                    plot_eigen_1,
-                    plot_eigen_2,
-                    nrow = 2,ncol = 2,
-                    label.x = 0,
-                    label.y = 1)
 
-plot_2 <- ggarrange(plot_inf_2,
-                  plot_inf_2_lim,
-                  nrow = 1,ncol = 2)
-
-plot_bet <- ggarrange(plot_2,plot_eigen_1,
-                  nrow = 2,ncol = 1)
-plot_bet
-
-plot_full <- ggarrange(plot,
-                       plot_bet,
-                       nrow = 1,
-                       ncol = 2)
 plot_inf_2_lim <- plot_inf_2_lim + labs(title="a")
 plot_inf_1 <- plot_inf_1 + labs(title="a")
 plot_inf_2 <- plot_inf_2 + labs(title="c")
 plot_eigen_1 <- plot_eigen_1 + labs(title="e")
 plot_eigen_2 <- plot_eigen_2 + labs(title="e")
 
-plot <- ggarrange(plot_inf_1, plot_inf_2,
-                  plot_eigen_1, plot_eigen_2,
-                  nrow = 2,ncol = 2,
-                  label.x = 0,
-                  label.y = 1)
-plot
-
-plot <- ggarrange(plot_inf_2_lim,
-                  plot_eigen_2,
-                  nrow = 2,ncol = 1,
-                  label.x = 0,
-                  label.y = 1)
-plot
 
 #-------------------SAVE FILE-------------------
 Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/"
@@ -315,4 +280,16 @@ png(file = path, width = 8000, height = 6000, res = 1100)
 plot_1
 dev.off()
 
+# -------------------CHECK ISSUE SUM CIJ ----------------------#
 
+# # Random matrix general, not bounded by [0,1]:
+commut_mat <- rand_mat(N,60 ,12,"gamma")
+migrate_mat <- rand_mat(N,1 ,0.01,"gamma")
+jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_m, 3)
+eig <- eigen_mat(jac)
+
+ind <-  which(eig$re == max(eig$re))
+eig <-  eig[-ind,]
+plot_eig <- ggplot(eig) + geom_point(aes(re,im), size = 0.05) 
+plot_eig + coord_fixed() 
+# plot_eig + xlim(c(-5,5))+ ylim(c(-5,5))

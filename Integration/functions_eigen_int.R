@@ -52,6 +52,18 @@ SIR <- function(t, y, parameters) {
   }) 
 }
 
+rand_mat <- function(N,mu,sig,distrib){
+  muln <- log(mu^2/sqrt(mu^2 + sig^2))
+  sdln <- sqrt(log(1+sig^2/mu^2))
+  rmatrix <- dplyr::case_when(
+    distrib == "gamma" ~ matrix(rgamma(N^2,shape = (mu/sig)^2,rate = mu/(sig^2)), nrow = N),
+    distrib == "lognormal" ~ matrix(rlnorm(N^2,meanlog = muln,sdlog = sdln), nrow = N),
+    TRUE ~ matrix(rep(0, N^2), nrow = N)
+  )
+  rmatrix <- matrix(rmatrix, nrow = N)
+  #return(rmatrix)
+}
+
 mat_conect <- function(N,alp,bet,MOB){
   rmatrix <- dplyr::case_when(
     MOB == 0 ~ matrix(0, nrow = N, ncol = N),
@@ -218,7 +230,7 @@ jacobian <- function(N,beta_ct,gamma_ct, commut_mat, connect_mat,mu_m, MOB){
     
     # diag(BIGT) <- rep(beta_ct - gamma_ct,N) - colSums(BIGT)
     jacobian <- BIGT
-  }else{
+  }else if(MOB == 2){
     print("Migration and commuting")
     # Generate de Jacobian:
     betas <- matrix(rep(0,N^2), nrow = N)
@@ -228,6 +240,32 @@ jacobian <- function(N,beta_ct,gamma_ct, commut_mat, connect_mat,mu_m, MOB){
     BIGT <- BIGT%*%betas
     BIGS <- connect_mat
     diag(BIGS) <- rep(-gamma_ct - mu_m*(N-1), N)
+    jacobian <- BIGT+BIGS
+  }else if(MOB == 3){
+    print("Migration and commuting with sum cij")
+    # Generate de Jacobian:
+    betas <- matrix(rep(0,N^2), nrow = N)
+    diag(betas) <- beta_ct
+    BIGT <- commut_mat
+    diag(BIGT) <- rep(1,N)
+    BIGT <- BIGT%*%betas
+    BIGS <- connect_mat
+    diag(connect_mat) <- 0
+    vec <-  -gamma_ct - rowSums(connect_mat)
+    diag(BIGS) <- vec
+    jacobian <- BIGT+BIGS
+  }else{
+    print("Migration and commuting with 1/N")
+    # Generate de Jacobian:
+    betas <- matrix(rep(0,N^2), nrow = N)
+    diag(betas) <- beta_ct
+    BIGT <- commut_mat
+    diag(BIGT) <- rep(1,N)
+    BIGT <- (1/N)*(BIGT%*%betas)
+    BIGS <- (1/N)*connect_mat
+    diag(connect_mat) <- 0
+    vec <-  -(1/N)*gamma_ct - (1/N)*rowSums(connect_mat)
+    diag(BIGS) <- vec
     jacobian <- BIGT+BIGS
   }
   return(jacobian)
