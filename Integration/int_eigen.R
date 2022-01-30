@@ -4,20 +4,6 @@ library("deSolve")
 library("ggplot2")
 library("gifski")
 
-# Set up plots theme:
-# ggplot2::theme_set(ggplot2::theme_bw() %+replace% 
-#                      ggplot2::theme(axis.ticks =
-#                                       element_line(color = 'black'),
-#                                     # axis.title = element_text(color = 'black', size = 15),
-#                                     # axis.text = element_text(color = 'black', size = 15),
-#                                     # legend.text = element_text(color = 'black', size = 15),
-#                                     # legend.title = element_text(color = 'black', size = 16),
-#                                     # plot.title = element_text(color = 'black', size = 18, face = 'bold'),
-#                                     # strip.text = element_text(color = 'black', size = 15),
-#                                     legend.position = "none"
-#                      ))
-
-
 #----------------------------------------------------------------------------#
 source("~/RMT/Integration/functions_eigen_int.R")
 #----------------PARAMETERS-----------------
@@ -35,7 +21,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   
   
 #-------------------EPIDEMIOLOGICAL----------------------
-  N = 100 # Number of patches
+  N = 50 # Number of patches
   # CTE parameters:
   del_N <- rep(0.6, N) # Birth rate
   # bet_cte <- 6
@@ -64,8 +50,8 @@ source("~/RMT/Integration/functions_eigen_int.R")
 
 #-------------------- MOBILITY ------------------#
 ### Migration:
-  alp_m <- 0.01
-  bet_m <- 0.1
+  alp_m <- 1.03
+  bet_m <- 0.01
   
   # Compute mean and sd:
   mu_m <- alp_m/(alp_m + bet_m)
@@ -107,9 +93,10 @@ tau_ct <- 0
 
 # End time integration:
 end_time <- 100
+
 #-------------------------------------------------------------------------------#
-beta_ct = bet_cte  # gamma
-gamma_ct = alp[1] + delt[1] + d_vec[1]        # beta
+beta_ct = bet_cte  # beta
+gamma_ct = alp[1] + delt[1] + d_vec[1]     # gamma   
 gamma_ct_w <- format(round(gamma_ct,2), decimal.mark = ',')
 beta_ct_w <- format(round(beta_ct,2), decimal.mark = ',')
 mu_w_w <- format(round(mu_w,2), decimal.mark = ',')
@@ -156,16 +143,16 @@ plot_list <- list()
   # Predicted distribution:
   rad <- pred_radius(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
   cent <- pred_center(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
-  outl <- pred_outlier(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
-
-  a <- bet_cte*mu_w + mu_m
-  b <- bet_new
-  c <- bet_new*mu_w
-
-  outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
-  outl2 <- (1/2)*(N*a + b - sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
-  outl <- outl + (bet_cte*(1-mu_w) - N*mu_m - gamma_ct)
-  outl2 <- outl2 + (bet_cte*(1-mu_w) - N*mu_m - gamma_ct)
+  outl <- pred_outlier(N, beta_ct, gamma_ct, mu_w, MOB)
+  
+  # a <- bet_cte*mu_w + mu_m
+  # b <- bet_new
+  # c <- bet_new*mu_w
+  # 
+  # outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+  # outl2 <- (1/2)*(N*a + b - sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+  # outl <- outl + (bet_cte*(1-mu_w) - N*mu_m - gamma_ct)
+  # outl2 <- outl2 + (bet_cte*(1-mu_w) - N*mu_m - gamma_ct)
   # 
   plot_inf_1 <- plot_int(N, sol, state)  + theme(legend.position = "none")
   # If last parameter is 1 he outlier is not computed:
@@ -280,16 +267,3 @@ png(file = path, width = 8000, height = 6000, res = 1100)
 plot_1
 dev.off()
 
-# -------------------CHECK ISSUE SUM CIJ ----------------------#
-
-# # Random matrix general, not bounded by [0,1]:
-commut_mat <- rand_mat(N,60 ,12,"gamma")
-migrate_mat <- rand_mat(N,1 ,0.01,"gamma")
-jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_m, 3)
-eig <- eigen_mat(jac)
-
-ind <-  which(eig$re == max(eig$re))
-eig <-  eig[-ind,]
-plot_eig <- ggplot(eig) + geom_point(aes(re,im), size = 0.05) 
-plot_eig + coord_fixed() 
-# plot_eig + xlim(c(-5,5))+ ylim(c(-5,5))

@@ -199,7 +199,7 @@ pred_center <- function(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
   return(radius)
 }
 
-pred_outlier <- function(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB){
+pred_outlier <- function(N, beta_ct, gamma_ct, mu_w, MOB){
   radius <- dplyr::case_when(
     MOB == 0 ~ beta_ct*(mu_w*(N-1)+1)-gamma_ct,
     MOB == 1 ~ 0,
@@ -313,4 +313,60 @@ cond_gen <- function(N, mu_c,s_c, mu_w,s_w, gam, bet, tau){
   cond1 <- (N-1)*mu_w - (gam/bet) + 1
   cond2 <- mu_w + sqrt(N*(s_w^2 + 2*(tau/bet)+(s_c/bet)^2))-(gam/bet) + 1 - N*(mu_c/bet)
   return(c(cond1,cond2))
+}
+
+check_outl <-  function(N,a,b,beta_ct,gamma_ct,alp_m,bet_m){
+  ### Migration:
+  # alp_m <- 1.03
+  # bet_m <- 0.01
+  # 
+  # # Compute mean and sd:
+  # mu_m <- alp_m/(alp_m + bet_m)
+  # s_m <-  sqrt((alp_m*bet_m)/(((alp_m + bet_m)^2)*(1+alp_m+bet_m)))
+  # print(paste0("mu :", mu_m))
+  # print(paste0("sigma :", s_m))
+  
+  migrate_mat <- mat_conect(N,alp_m,bet_m,MOB)
+  ### Commuting
+  alp_c <- a
+  bet_c <- b
+  
+  # Compute mean and sd:
+  # mu_w <- alp_c/(alp_c + bet_c)
+  # s_w <- sqrt((alp_c*bet_c)/((alp_c + bet_c)^2*(1+alp_c+bet_c)))
+  # print(paste0("mu :", mu_w))
+  # print(paste0("sigma :",s_w))
+  
+  commut_mat <- mat_conect(N,alp_c,bet_c,MOB)
+  
+  jac <- jacobian(N,beta_ct,gamma_ct, commut_mat, migrate_mat,mu_m, 3)
+  eig <- eigen_mat(jac)
+  
+  outl <- pred_outlier(N, beta_ct, gamma_ct, mu_w, MOB)
+  max_eig <-  eig$re[which(eig$re == max(eig$re))]   
+  diff <- abs(outl - max_eig)/abs(max_eig)
+  
+  return(diff)
+}
+
+# Function that validates the mu and sigma for a beta distribution:
+validate_mu_s <-  function(mu,sigma){
+  l <-  TRUE
+  c <- mu*(1-mu)
+  if( mu > 0 | sigma > 0.25 | c < sigma^2){
+    l <-  FALSE
+  }
+  return(l)
+}
+
+# Compute a and b from mu and sigma of a beta distribution:
+beta_a_b <-  function(mu, sigma){
+  l <-  validate_mu_s(mu, sigma)
+  if( l == TRUE){
+    a <-  mu*((mu/sigma^2)*(1-mu)-1)
+    b <- ((1-mu)/mu)*a
+  }else{
+    print("Problem with mu and sigma")
+  }
+  return(c(a,b))
 }
