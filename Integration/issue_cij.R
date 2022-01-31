@@ -6,8 +6,21 @@ library("gifski")
 
 #----------------------------------------------------------------------------#
 source("~/RMT/Integration/functions_eigen_int.R")
-
-# -------------------CHECK ISSUE SUM CIJ ----------------------#
+#-------------------EPIDEMIOLOGICAL----------------------
+N = 100 # Number of patches
+# CTE parameters:
+del_N <- rep(0.6, N) # Birth rate
+# bet_cte <- 6
+bet_cte <-  0.03
+bet <- rep(bet_cte, N)  # Transmission rate
+# bet <- abs(rnorm(N,1,1))  # Transmission rate
+d_vec <- rep(0.2, N) # Natural mortality rate
+thet <- rep(0.1, N) # Rate of loss of immunity
+alp <- rep(0.02, N) # Rate of disease overcome
+delt <- rep(0, N) # Diseases related mortality rate
+beta_ct = bet_cte  # beta
+gamma_ct = alp[1] + delt[1] + d_vec[1]     # gamma  
+# -------------------CHECK VISUALLY ----------------------#
 
 # # Random matrix general, not bounded by [0,1]:
 commut_mat <- rand_mat(N,60 ,12,"gamma")
@@ -22,38 +35,20 @@ plot_eig + coord_fixed()
 # plot_eig + xlim(c(-5,5))+ ylim(c(-5,5))
 
 #-----------------CHECK OUTLIER---------------#
-beta_ct = bet_cte  # beta
-gamma_ct = alp[1] + delt[1] + d_vec[1]     # gamma   
-
-a <-  2
-b <-  3
-diff <-  check_outl(N,a,b,beta_ct,gamma_ct)
-
-dim <- 1000
-a <- abs(rnorm(dim, 5.0, 10))
-b <- abs(rnorm(dim, 5.0, 10))
-
 # Compute mean and sd for migration coefficients:
-mu_w <- seq(0,1,0.01)
-
-appfunc <- function(mu){
-  s_w <- seq(0,0.25,0.01)
-  sapply(mu, beta_a_b, sigma = s_w)
+s_w <- seq(0,(1/4),0.001)
+l <- length(s_w)
+df = data.frame(mean = 0, sigma = 0, cond = FALSE)
+for(i in c(1:l)){
+  mu_w <- seq(0,1,0.01)
+  list <- sapply(mu_w, validate_mu_s, sigma = s_w[i])
+  df1 <- data.frame(mean = mu_w, sigma = s_w[i], cond = list)
+  df <- rbind(df,df1)
 }
 
-sapply(mu_w, appfunc)
+# Color map TRUE posible values for mu and sigma in a beta distribution.
+ggplot(df) + 
+  geom_point(aes(mean,sigma, colour = cond))
 
-alp_m <- 1.03
-bet_m <- 0.01
-mu_m <- alp_m/(alp_m + bet_m)
-s_m <-  sqrt((alp_m*bet_m)/(((alp_m + bet_m)^2)*(1+alp_m+bet_m)))
-print(paste0("mu :", mu_m))
-print(paste0("sigma :", s_m))
-
-vec <-  sapply(a,check_outl,N=N, b = b[1],beta_ct =beta_ct, gamma_ct= gamma_ct, a_m=a_m, b_m=bm)
-for(i in c(2:dim)){
-  vec1 <-  sapply(a,check_outl,N=N, b = b[i],beta_ct =beta_ct, gamma_ct= gamma_ct)
-  vec <-  c(vec,vec1)
-}
-sort(vec, decreasing = TRUE)
-mean(vec)
+# Compute sigma of the migration as lamba*s_w:
+df$s_c <- scale_sigma(N,beta_ct,df$sigma)

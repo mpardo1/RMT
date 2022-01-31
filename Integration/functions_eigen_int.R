@@ -1,11 +1,3 @@
-rm(list = ls())
-library("parallel")
-library("tidyverse")
-library("deSolve")
-library("ggpubr")
-library("ggsci")
-library("ggforce")
-
 #----------------FUNCTIONS-----------------
 # SIR multipatch model:
 SIR <- function(t, y, parameters) {
@@ -315,34 +307,14 @@ cond_gen <- function(N, mu_c,s_c, mu_w,s_w, gam, bet, tau){
   return(c(cond1,cond2))
 }
 
-check_outl <-  function(N,a,b,beta_ct,gamma_ct,alp_m,bet_m){
-  ### Migration:
-  # alp_m <- 1.03
-  # bet_m <- 0.01
-  # 
-  # # Compute mean and sd:
-  # mu_m <- alp_m/(alp_m + bet_m)
-  # s_m <-  sqrt((alp_m*bet_m)/(((alp_m + bet_m)^2)*(1+alp_m+bet_m)))
-  # print(paste0("mu :", mu_m))
-  # print(paste0("sigma :", s_m))
-  
-  migrate_mat <- mat_conect(N,alp_m,bet_m,MOB)
-  ### Commuting
-  alp_c <- a
-  bet_c <- b
-  
-  # Compute mean and sd:
-  # mu_w <- alp_c/(alp_c + bet_c)
-  # s_w <- sqrt((alp_c*bet_c)/((alp_c + bet_c)^2*(1+alp_c+bet_c)))
-  # print(paste0("mu :", mu_w))
-  # print(paste0("sigma :",s_w))
-  
-  commut_mat <- mat_conect(N,alp_c,bet_c,MOB)
-  
-  jac <- jacobian(N,beta_ct,gamma_ct, commut_mat, migrate_mat,mu_m, 3)
+# Check the difference between the outlier and the predicted one. 3 is because of
+# the model with the sum cij.
+# And 2: is to do the prediction with the commuting and migration.
+check_outl <-  function(N,beta_ct,gamma_ct,mig_mat, com_mat,mu_m){
+  jac <- jacobian(N,beta_ct,gamma_ct, com_mat, mig_mat,mu_m, 3)
   eig <- eigen_mat(jac)
   
-  outl <- pred_outlier(N, beta_ct, gamma_ct, mu_w, MOB)
+  outl <- pred_outlier(N, beta_ct, gamma_ct, mu_w, 2)
   max_eig <-  eig$re[which(eig$re == max(eig$re))]   
   diff <- abs(outl - max_eig)/abs(max_eig)
   
@@ -350,23 +322,30 @@ check_outl <-  function(N,a,b,beta_ct,gamma_ct,alp_m,bet_m){
 }
 
 # Function that validates the mu and sigma for a beta distribution:
+# ¡¡ Sigma siempre está al cuadrado en mis cálculos !!
 validate_mu_s <-  function(mu,sigma){
   l <-  TRUE
   c <- mu*(1-mu)
-  if( mu > 0 | sigma > 0.25 | c < sigma^2){
+  if( mu < 0 | mu > 1 | sigma > 0.25 | c < sigma){
     l <-  FALSE
   }
   return(l)
 }
 
 # Compute a and b from mu and sigma of a beta distribution:
+# ¡¡ Sigma siempre está al cuadrado en mis cálculos !!
 beta_a_b <-  function(mu, sigma){
   l <-  validate_mu_s(mu, sigma)
   if( l == TRUE){
-    a <-  mu*((mu/sigma^2)*(1-mu)-1)
+    a <-  mu*((mu/sigma)*(1-mu)-1)
     b <- ((1-mu)/mu)*a
   }else{
     print("Problem with mu and sigma")
   }
   return(c(a,b))
+}
+
+# Sigma for migration scale by lambda, see doc for more details:
+scale_sigma <- function(N, bet, sig){
+  ((bet*(N-1))/(sqrt(N-(N-1)^2)))*sig
 }
