@@ -310,10 +310,18 @@ cond_gen <- function(N, mu_c,s_c, mu_w,s_w, gam, bet, tau){
 # Check the difference between the outlier and the predicted one. 3 is because of
 # the model with the sum cij.
 # And 2: is to do the prediction with the commuting and migration.
-check_outl <-  function(N,beta_ct,gamma_ct,mig_mat, com_mat,mu_m){
-  jac <- jacobian(N,beta_ct,gamma_ct, com_mat, mig_mat,mu_m, 3)
+check_outl <-  function(N,beta_ct,gamma_ct,alp_c,bet_c, mu_w,alp_m,bet_m){
+  
+  # the 2 is to use the model with commuting and migration:
+  mig_mat <- mat_conect(N,alp_m,bet_m,2)
+  com_mat <- mat_conect(N,alp_c,bet_c,2)
+  
+  # The 0 its because we dont use the mean of migration in the jacobian as before.
+  # The 3 its to use the sum cij in the diagonal terms
+  jac <- jacobian(N,beta_ct,gamma_ct, com_mat, mig_mat,0, 3)
   eig <- eigen_mat(jac)
   
+  # the 2 is to use the model with commuting and migration:
   outl <- pred_outlier(N, beta_ct, gamma_ct, mu_w, 2)
   max_eig <-  eig$re[which(eig$re == max(eig$re))]   
   diff <- abs(outl - max_eig)/abs(max_eig)

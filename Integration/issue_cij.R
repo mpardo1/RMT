@@ -50,5 +50,39 @@ for(i in c(1:l)){
 ggplot(df) + 
   geom_point(aes(mean,sigma, colour = cond))
 
-# Compute sigma of the migration as lamba*s_w:
-df$s_c <- scale_sigma(N,beta_ct,df$sigma)
+# Filter the values where sigma = 0 and the beta dist properties holds.
+df_filt <- df %>% filter(sigma != 0 & cond == TRUE)
+
+beta_a_b_mat <- function(mat){
+  beta_a_b(mat[1], mat[2])
+}
+
+mat_ab <- as.matrix(df_filt[,c(1,2)])
+vec_ab <- apply(mat_ab,1, beta_a_b_mat)
+# df_filt a df with the possible values for the mean and variance of the beta distribution
+# with the respectives values for a and b (parameters of the beta distribution). 
+df_filt$a <- vec_ab[1,]
+df_filt$b <- vec_ab[2,]
+
+N = 100
+beta_ct = 0.3
+gamma_ct = 0.4
+
+mu_com <- 0.45
+sigma_com <- 0.24
+com <- df_filt[(df_filt$mean == mu_com & df_filt$sigma == sigma_com),]
+alp_c <- com$a
+bet_c <- com$b
+mu_w <-  com$mean
+
+check_mat <- function(mat){
+  print(paste0("a:", mat[1]))
+  print(paste0("b:", mat[2]))
+  diff <- check_outl(N,beta_ct,gamma_ct,alp_c,bet_c, mu_w,mat[1],mat[2])
+  print(paste0("diff:", diff))
+  return(diff)
+}
+mig <- as.matrix(df_filt[df_filt$mean == mu_w,c(4,5)])
+vec <- apply(mig, 1, check_mat)
+
+
