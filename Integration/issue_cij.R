@@ -76,13 +76,23 @@ bet_c <- com$b
 mu_w <-  com$mean
 
 check_mat <- function(mat){
-  print(paste0("a:", mat[1]))
-  print(paste0("b:", mat[2]))
+  # print(paste0("a:", mat[1]))
+  # print(paste0("b:", mat[2]))
   diff <- check_outl(N,beta_ct,gamma_ct,alp_c,bet_c, mu_w,mat[1],mat[2])
-  print(paste0("diff:", diff))
+  # print(paste0("diff:", diff))
   return(diff)
 }
-mig <- as.matrix(df_filt[df_filt$mean == mu_w,c(4,5)])
+mig <- as.matrix(df_filt[df_filt$mean == mu_w,])
 vec <- apply(mig, 1, check_mat)
-
-
+df <- as.data.frame(mig)
+df$diff <- vec*100
+high_diff <- df[df$diff > 0.5,]
+low_diff <-  df[df$diff < 0.5,]
+mean(high_diff$sigma)
+mean(low_diff$sigma)
+var(high_diff$sigma)
+var(low_diff$sigma)
+mean(high_diff$mean)
+mean(low_diff$mean)
+var(high_diff$mean)
+var(low_diff$mean)

@@ -83,7 +83,7 @@ diff_f <- function(connect_mat,d,init_pop){
 }
 
 # function which integrate:
-int <- function(N, del_N,bet,d_vec,thet,alp,delt, commut_mat,connect_mat ,end_time, MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT){
+int <- function(N, del_N,bet,d_vec,thet,alp,delt, commut_mat,connect_mat ,end_time, MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT, init_pop){
   # Create vector of parameters for ode function:
   parameters <- list(
     dim = N,
@@ -108,7 +108,7 @@ int <- function(N, del_N,bet,d_vec,thet,alp,delt, commut_mat,connect_mat ,end_ti
   }
   
   
-  if(CTE_POP == 0){
+  if(CTE_POP == 1){
     print("No constant population")
     pops[1:N] <- SUS_INIT
   }else{
@@ -234,7 +234,7 @@ jacobian <- function(N,beta_ct,gamma_ct, commut_mat, connect_mat,mu_m, MOB){
     diag(BIGS) <- rep(-gamma_ct - mu_m*(N-1), N)
     jacobian <- BIGT+BIGS
   }else if(MOB == 3){
-    print("Migration and commuting with sum cij")
+    # print("Migration and commuting with sum cij")
     # Generate de Jacobian:
     betas <- matrix(rep(0,N^2), nrow = N)
     diag(betas) <- beta_ct
@@ -311,9 +311,23 @@ cond_gen <- function(N, mu_c,s_c, mu_w,s_w, gam, bet, tau){
 # the model with the sum cij.
 # And 2: is to do the prediction with the commuting and migration.
 check_outl <-  function(N,beta_ct,gamma_ct,alp_c,bet_c, mu_w,alp_m,bet_m){
-  
   # the 2 is to use the model with commuting and migration:
   mig_mat <- mat_conect(N,alp_m,bet_m,2)
+  l <- length(which(is.na(mig_mat)))
+  count = 1
+  while(l > 0){
+    print("Migration matrix with NAN")
+    mig_mat <- mat_conect(N,alp_m,bet_m,2)
+    l <- length(which(is.na(mig_mat)))
+    if(count > 100 ){
+      print("Set mig_mt to 10000")
+      print(paste0("alp_m",alp_m))
+      print(paste0("bet_m",bet_m))
+      mig_mat <- matrix(10000, ncol = N, nrow= N)
+      break
+    }
+    count = count + 1
+  }
   com_mat <- mat_conect(N,alp_c,bet_c,2)
   
   # The 0 its because we dont use the mean of migration in the jacobian as before.

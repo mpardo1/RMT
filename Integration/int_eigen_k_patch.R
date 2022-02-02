@@ -31,7 +31,7 @@ MOB <- 2
 # Integration parameter, 0: No integration, 1: integration.
 INT <- 1
 # Parameter for initial population. 0: No cte, 1: cte.
-CTE_POP <- 0
+CTE_POP <- 1
 # Parameter for transmission rate. 0: No cte, 1: cte.
 BETA_CTE <- 0
 # Parameter for initial infected ind. 0: No cte , 1: cte.
@@ -128,7 +128,7 @@ for(i in k_vec){
   bet[1:i] <- bet_cte + bet_new
   sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
              commut_mat,migrate_mat,end_time,
-             MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT)
+             MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
   
   sol_df <- as.data.frame(sol)
   

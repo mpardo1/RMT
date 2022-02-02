@@ -13,7 +13,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   # Integration parameter, 0: No integration, 1: integration.
   INT <- 1
   # Parameter for initial population. 0: No cte, 1: cte.
-  CTE_POP <- 0
+  CTE_POP <- 1
   # Parameter for transmission rate. 0: No cte, 1: cte.
   BETA_CTE <- 0
   # Parameter for initial infected ind. 0: No cte , 1: cte.
@@ -116,7 +116,7 @@ plot_list <- list()
   
   sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
              commut_mat,migrate_mat,end_time,
-             MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT)
+             MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
    
   sol_df <-  as.data.frame(sol)
   # Compute the time where the sum of infected individuals is maximum,
@@ -210,7 +210,7 @@ gifski(png_files, gif_file = "~/Documents/PHD/2022/RMT_SIR/Plots/kpatch/High_bot
 bet <- abs(rnorm(N,1,1))  # Transmission rate
 sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
            commut_mat,migrate_mat,end_time,
-           MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT)
+           MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
 sol_df <- as.data.frame(sol)
 sol_df <-  sol_df[,c(1,(N+2):(2*N+1))]
 vec <- as.character(c(1:N))
