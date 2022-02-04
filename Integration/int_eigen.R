@@ -18,7 +18,8 @@ source("~/RMT/Integration/functions_eigen_int.R")
   BETA_CTE <- 0
   # Parameter for initial infected ind. 0: No cte , 1: cte.
   CTE_INF <- 1
-  
+  # Parameter for distribution, "normal", "beta", "gamma":
+  DIST <-  "beta"
   
 #-------------------EPIDEMIOLOGICAL----------------------
   N = 50 # Number of patches
@@ -59,7 +60,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   print(paste0("mu :", mu_m))
   print(paste0("sigma :", s_m))
 
-  migrate_mat <- mat_conect(N,alp_m,bet_m,MOB)
+  migrate_mat <- mat_conect(N,alp_m,bet_m,DIST)
 ### Commuting
   alp_c <- 0.1
   bet_c <- 0.1
@@ -70,7 +71,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   print(paste0("mu :", mu_w))
   print(paste0("sigma :",s_w))
 
-  commut_mat <- mat_conect(N,alp_c,bet_c,MOB)
+  commut_mat <- mat_conect(N,alp_c,bet_c,DIST)
 
 tau_ct <- 0
   # Initial populations:

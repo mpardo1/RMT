@@ -56,11 +56,11 @@ rand_mat <- function(N,mu,sig,distrib){
   #return(rmatrix)
 }
 
-mat_conect <- function(N,alp,bet,MOB){
+mat_conect <- function(N,alp,bet,DIST){
   rmatrix <- dplyr::case_when(
-    MOB == 0 ~ matrix(0, nrow = N, ncol = N),
-    MOB == 1 ~ matrix(rbeta(N^2, alp, bet, ncp = 0), nrow = N),
-    MOB == 2 ~ matrix(rbeta(N^2, alp, bet, ncp = 0), nrow = N),
+    DIST == "normal" ~ matrix(rnorm(N^2, alp, bet), nrow = N, ncol = N),
+    DIST == "gamma" ~ matrix(rgamma(N^2, alp, bet), nrow = N),
+    DIST == "beta" ~ matrix(rbeta(N^2, alp, bet, ncp = 0), nrow = N),
     TRUE ~ matrix(rep(0, N^2), nrow = N)
   )
   rmatrix <- matrix(rmatrix, nrow = N)
@@ -212,7 +212,7 @@ jacobian <- function(N,beta_ct,gamma_ct, commut_mat, migrate_mat,mu_c, MOB){
     diag(BIGT) <- rep(1,N)
     BIGT <- BIGT%*%betas
     BIGS <- matrix(rep(0,N^2), nrow = N)
-    diag(BIGS) <- rep(-gamma_ct, N)
+    diag(BIGS) <- -gamma_ct
     jacobian <- BIGT+BIGS
   }else if(MOB == 1){
     print("Just migration")
@@ -232,20 +232,21 @@ jacobian <- function(N,beta_ct,gamma_ct, commut_mat, migrate_mat,mu_c, MOB){
     diag(BIGS) <- -gamma_ct - colSums(migrate_mat)
     jacobian <- BIGT+BIGS
   }
-    # else if(MOB == 3){
-  #   # print("Migration and commuting with sum cij")
-  #   # Generate de Jacobian:
-  #   betas <- matrix(rep(0,N^2), nrow = N)
-  #   diag(betas) <- beta_ct
-  #   BIGT <- commut_mat
-  #   diag(BIGT) <- rep(1,N)
-  #   BIGT <- BIGT%*%betas
-  #   BIGS <- migrate_mat
-  #   diag(migrate_mat) <- 0
-  #   vec <-  -gamma_ct - colSums(migrate_mat)
-  #   diag(BIGS) <- vec
-  #   jacobian <- BIGT+BIGS
-  # }else{
+  else if(MOB == 3){
+    print("Migration and commuting with aprox sum cij")
+    # Generate de Jacobian:
+    betas <- matrix(rep(0,N^2), nrow = N)
+    diag(betas) <- beta_ct
+    BIGT <- commut_mat
+    diag(BIGT) <- rep(1,N)
+    BIGT <- BIGT%*%betas
+    BIGS <- migrate_mat
+    diag(migrate_mat) <- 0
+    vec <-  -gamma_ct - (N-1)*mu_c
+    diag(BIGS) <- vec
+    jacobian <- BIGT+BIGS
+  }
+  # else{
   #   print("Migration and commuting with 1/N")
   #   # Generate de Jacobian:
   #   betas <- matrix(rep(0,N^2), nrow = N)
@@ -308,74 +309,74 @@ cond_gen <- function(N, mu_c,s_c, mu_w,s_w, gam, bet, tau){
 
 # Check the difference between the outlier and the predicted one. 3 is because of
 # the model with the sum cij.
-# And 2: is to do the prediction with the commuting and migration.
-check_outl <-  function(N,beta_ct,gamma_ct,alp_w,bet_w, mu_w,alp_c,bet_c, MOB, df_filt){
-  # the 2 is to use the model with commuting and migration:
-  mig_mat <- mat_conect(N,alp_c,bet_c,MOB)
-  l <- length(which(is.na(mig_mat)))
-  count = 1
-  while(l > 0){
-    print("Migration matrix with NAN")
-    mig_mat <- mat_conect(N,alp_c,bet_c,MOB)
-    l <- length(which(is.na(mig_mat)))
-    if(count > 100 ){
-      print("Set mig_mt to 10000")
-      print(paste0("alp_m",alp_c))
-      print(paste0("bet_m",bet_c))
-      mig_mat <- matrix(10000, ncol = N, nrow= N)
-      break
-    }
-    count = count + 1
-  }
-  com_mat <- mat_conect(N,alp_w,bet_w,MOB)
-  
-  # The 0 its because we dont use the mean of migration in the jacobian as before.
-  # The 3 its to use the sum cij in the diagonal terms
-  jac <- jacobian(N,beta_ct,gamma_ct, com_mat, mig_mat,0, MOB)
-  eig <- eigen_mat(jac)
-  
-  # the 2 is to use the model with commuting and migration:
-  outl <- pred_outlier(N, beta_ct, gamma_ct, mu_w, MOB)
-  max_eig <-  eig$re[which(eig$re == max(eig$re))]   
-  diff <- abs(outl - max_eig)/abs(max_eig)
-  
-  
-  # Plot eigenvalues:
-  ind <-  which(eig$re == max(eig$re))
-  eig_filt <-  eig[-ind,]
-  mig <- df_filt[df_filt$mean == mu_w,]
-  
-  # Compute the mean and sigma for the migration
-  mu <- mig[which(mig$a == alp_c | mig$b == bet_c  ),1]
-  sig <- mig[which(mig$a == alp_c | mig$b == bet_c  ),2]
-  
-  # Compute the predicted radius and center
-  rad <- pred_radius(N, beta_ct, gamma_ct, 0, mu, sig, mu_w, sigma_w, MOB)
-  cent <- pred_center(N, beta_ct, gamma_ct, 0, mu, sig, mu_w, sigma_w, MOB)
-  
-  plot_eig_noout <- ggplot(eig) +
-    geom_point(aes(re,im), size = 0.05) + 
-    geom_circle(aes(x0 = cent,
-                    y0 = 0,
-                    r = rad), colour = "blue",
-                show.legend = NA,size = 0.2)+
-    coord_fixed() + 
-    ggtitle(paste0("Commuting param:", expression(mu),":", mu,", ", expression(sigma),":", sig))
-  
-  print("Param:")
-  print(paste0("N",N))
-  print(paste0("alp_c",alp_c))
-  print(paste0("bet_c",bet_c))
-  print(paste0("mu",mu))
-  print(paste0("sig",sig))
-  print(paste0("alp_w",alp_w))
-  print(paste0("bet_w",bet_w))
-  print(paste0("mu_w",mu_w))
-  print(paste0("sigma_w",sigma_w))
-  
-  
-  return(list(alp_c = alp_c, bet_c = bet_c, diff= diff, eigen = eig, plot = plot_eig_noout, com_mat = com_mat, mig_mat = mig_mat))
-}
+# # And 2: is to do the prediction with the commuting and migration.
+# check_outl <-  function(N,beta_ct,gamma_ct,alp_w,bet_w, mu_w,alp_c,bet_c, MOB, df_filt){
+#   # the 2 is to use the model with commuting and migration:
+#   mig_mat <- mat_conect(N,alp_c,bet_c,MOB)
+#   l <- length(which(is.na(mig_mat)))
+#   count = 1
+#   while(l > 0){
+#     print("Migration matrix with NAN")
+#     mig_mat <- mat_conect(N,alp_c,bet_c,MOB)
+#     l <- length(which(is.na(mig_mat)))
+#     if(count > 100 ){
+#       print("Set mig_mt to 10000")
+#       print(paste0("alp_m",alp_c))
+#       print(paste0("bet_m",bet_c))
+#       mig_mat <- matrix(10000, ncol = N, nrow= N)
+#       break
+#     }
+#     count = count + 1
+#   }
+#   com_mat <- mat_conect(N,alp_w,bet_w,MOB)
+#   
+#   # The 0 its because we dont use the mean of migration in the jacobian as before.
+#   # The 3 its to use the sum cij in the diagonal terms
+#   jac <- jacobian(N,beta_ct,gamma_ct, com_mat, mig_mat,0, MOB)
+#   eig <- eigen_mat(jac)
+#   
+#   # the 2 is to use the model with commuting and migration:
+#   outl <- pred_outlier(N, beta_ct, gamma_ct, mu_w, MOB)
+#   max_eig <-  eig$re[which(eig$re == max(eig$re))]   
+#   diff <- abs(outl - max_eig)/abs(max_eig)
+#   
+#   
+#   # Plot eigenvalues:
+#   ind <-  which(eig$re == max(eig$re))
+#   eig_filt <-  eig[-ind,]
+#   mig <- df_filt[df_filt$mean == mu_w,]
+#   
+#   # Compute the mean and sigma for the migration
+#   mu <- mig[which(mig$a == alp_c | mig$b == bet_c  ),1]
+#   sig <- mig[which(mig$a == alp_c | mig$b == bet_c  ),2]
+#   
+#   # Compute the predicted radius and center
+#   rad <- pred_radius(N, beta_ct, gamma_ct, 0, mu, sig, mu_w, sigma_w, MOB)
+#   cent <- pred_center(N, beta_ct, gamma_ct, 0, mu, sig, mu_w, sigma_w, MOB)
+#   
+#   plot_eig_noout <- ggplot(eig) +
+#     geom_point(aes(re,im), size = 0.05) + 
+#     geom_circle(aes(x0 = cent,
+#                     y0 = 0,
+#                     r = rad), colour = "blue",
+#                 show.legend = NA,size = 0.2)+
+#     coord_fixed() + 
+#     ggtitle(paste0("Commuting param:", expression(mu),":", mu,", ", expression(sigma),":", sig))
+#   
+#   print("Param:")
+#   print(paste0("N",N))
+#   print(paste0("alp_c",alp_c))
+#   print(paste0("bet_c",bet_c))
+#   print(paste0("mu",mu))
+#   print(paste0("sig",sig))
+#   print(paste0("alp_w",alp_w))
+#   print(paste0("bet_w",bet_w))
+#   print(paste0("mu_w",mu_w))
+#   print(paste0("sigma_w",sigma_w))
+#   
+#   
+#   return(list(alp_c = alp_c, bet_c = bet_c, diff= diff, eigen = eig, plot = plot_eig_noout, com_mat = com_mat, mig_mat = mig_mat))
+# }
 
 # Function that validates the mu and sigma for a beta distribution:
 # ¡¡ Sigma siempre está al cuadrado en mis cálculos !!

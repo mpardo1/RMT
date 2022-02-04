@@ -9,7 +9,7 @@ library("ggforce")
 source("~/RMT/Integration/functions_eigen_int.R")
 #-------------------LOGIC----------------------
 # Mobility parameter, 0: Just commuting, 1: just migration 2: migration & commuting.
-MOB <- 2
+MOB <- 0
 # Integration parameter, 0: No integration, 1: integration.
 INT <- 1
 # Parameter for initial population. 0: No cte, 1: cte.
@@ -21,7 +21,7 @@ CTE_INF <- 1
 
 #-----------------------------------------------------------------------------#
 
-sig <- seq(0,(1/4),0.001)
+sig <- seq(0,1/4,0.01)
 l <- length(sig)
 df = data.frame(mean = 0, sigma = 0, cond = FALSE)
 for(i in c(1:l)){
@@ -51,15 +51,15 @@ df_filt$b <- vec_ab[2,]
 
 # --------------------------BETA DIST WITH A & B-----------------------------#
 # Parameters:
-N = 100
-beta_ct = 0.3
+N = 300
+beta_ct = 0.01
 beta_ct <- rep(beta_ct,N)
-gamma_ct = 0.4
+gamma_ct = 1.4
 gamma_ct <- rep(gamma_ct,N)
-MOB <- 2
-a_w <- 0.45
-b_w <- 0.24
-vec <- c(8.9000,80.1000)
+MOB <- 0
+a_w <- 0.2651428571
+b_w <- 0.563428571
+vec<-  beta_a_b(0.001,0.00001)
 a_c <- vec[1]
 b_c <- vec[2]
 
@@ -71,8 +71,9 @@ s_c <-  sqrt((a_c*b_c)/(((a_c + b_c)^2)*(1+a_c+b_c)))
 mu_w <- a_w/(a_w + b_w)
 s_w <-  sqrt((a_w*b_w)/(((a_w + b_w)^2)*(1+a_w+b_w)))
 
-mig_mat <- mat_conect(N,a_c,b_c,MOB)
-com_mat <- mat_conect(N,a_w,b_w,MOB)
+DIST <-  "beta"
+mig_mat <- mat_conect(N,a_c,b_c,DIST)
+com_mat <- mat_conect(N,a_w,b_w,DIST)
 
 jac <- jacobian(N,beta_ct,gamma_ct, com_mat, mig_mat,0, MOB)
 eig <- eigen_mat(jac)
@@ -84,8 +85,10 @@ rad <- pred_radius(N, beta_ct[1], gamma_ct[1], 0, mu_c, s_c, mu_w, s_w, MOB)
 cent <- pred_center(N, beta_ct[1], gamma_ct[1], 0, mu_c, s_c, mu_w, s_w, MOB) 
 
 plot_eigen(eig, cent, rad, outl,MOB) +
-  ggtitle(paste0("Parameters:\n \n", "Migration:    ", expression(mu_c), ": ", round(mu_c, 2)," ",
-                 expression(Sigma_c), ": ",round(s_c, 2),"\n",
+  ggtitle(paste0("Parameters:\n \n", 
+                 "N: ",N,",", " gamma: ", gamma_ct[1],",", " beta: ", beta_ct[1], "\n",
+                 "Migration:    ", expression(mu_c), ": ", round(mu_c, 4),","," ",
+                 expression(Sigma_c), ": ",round(s_c, 4),"\n",
                  "Commuting:    ",expression(mu_w), ": ", round(mu_w, 2)," ",
                  expression(sigma_w), ": ", round(s_w, 2)))
 
@@ -95,3 +98,20 @@ colSums(mig_mat)
 mean(colSums(mig_mat))
 var(colSums(mig_mat))
 (N-1)*mu_c
+
+
+ind <-  which(eig$re == max(eig$re))
+eig_filt <-  eig[-ind,]
+plot_eig <- ggplot(eig_filt) + geom_point(aes(re,im), size = 0.05)  + 
+  geom_circle(aes(x0 = cent,
+                  y0 = 0,
+                  r = rad), colour = "blue",
+              show.legend = NA,size = 0.2) +
+  coord_fixed() +
+  ggtitle(paste0("Parameters:\n \n", 
+                 "N: ",N,",", " gamma: ", gamma_ct[1],",", " beta: ", beta_ct[1], "\n",
+                 "Migration:    ", expression(mu_c), ": ", round(mu_c, 4),","," ",
+                 expression(Sigma_c), ": ",round(s_c, 4),"\n",
+                 "Commuting:    ",expression(mu_w), ": ", round(mu_w, 2)," ",
+                 expression(sigma_w), ": ", round(s_w, 2)))
+plot_eig

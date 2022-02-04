@@ -36,7 +36,8 @@ CTE_POP <- 1
 BETA_CTE <- 0
 # Parameter for initial infected ind. 0: No cte , 1: cte.
 CTE_INF <- 1
-
+# Parameter for distribution, "normal", "beta", "gamma":
+DIST <-  "beta"
 
 #-------------------EPIDEMIOLOGICAL----------------------
 N = 50 # Number of patches
@@ -77,7 +78,7 @@ s_m <-  sqrt((alp_m*bet_m)/(((alp_m + bet_m)^2)*(1+alp_m+bet_m)))
 print(paste0("mu :", mu_m))
 print(paste0("sigma :", s_m))
 
-migrate_mat <- mat_conect(N,alp_m,bet_m,MOB)
+migrate_mat <- mat_conect(N,alp_m,bet_m,DIST)
 ### Commuting
 alp_c <- 0.1
 bet_c <- 0.1
@@ -88,7 +89,7 @@ s_w <- sqrt((alp_c*bet_c)/((alp_c + bet_c)^2*(1+alp_c+bet_c)))
 print(paste0("mu :", mu_w))
 print(paste0("sigma :",s_w))
 
-commut_mat <- mat_conect(N,alp_c,bet_c,MOB)
+commut_mat <- mat_conect(N,alp_c,bet_c,DIST)
 
 tau_ct <- 0
 # Initial populations:
