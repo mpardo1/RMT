@@ -4,6 +4,7 @@ library("deSolve")
 library("ggplot2")
 library("gifski")
 library("ggforce")
+library("ggpubr")
 
 #----------------------------------------------------------------------------#
 source("~/RMT/Integration/functions_eigen_int.R")
@@ -51,15 +52,20 @@ df_filt$b <- vec_ab[2,]
 
 # --------------------------BETA DIST WITH A & B-----------------------------#
 # Parameters:
-N = 300
-beta_ct = 0.01
+N = 200
+beta_ct = 0.5
 beta_ct <- rep(beta_ct,N)
 gamma_ct = 1.4
 gamma_ct <- rep(gamma_ct,N)
-MOB <- 0
-a_w <- 0.2651428571
-b_w <- 0.563428571
-vec<-  beta_a_b(0.001,0.00001)
+MOB <- 2
+mu_w <- 0.1 
+s_w <- 0.01
+vec<-  beta_a_b(mu_w,s_w)
+a_w <- vec[1]
+b_w <- vec[2]
+mu_c <- 0.01 
+s_c <- 0.000001
+vec<-  beta_a_b(mu_c,s_c)
 a_c <- vec[1]
 b_c <- vec[2]
 
@@ -115,3 +121,23 @@ plot_eig <- ggplot(eig_filt) + geom_point(aes(re,im), size = 0.05)  +
                  "Commuting:    ",expression(mu_w), ": ", round(mu_w, 2)," ",
                  expression(sigma_w), ": ", round(s_w, 2)))
 plot_eig
+
+plot_no_circ <- plot_no_circ + labs(title="a")
+plot_circ <- plot_circ + labs(title="b")
+ggarrange(plot_no_circ,plot_circ, ncol = 1, nrow = 2)
+
+gamma_ct_w <- format(round(gamma_ct,2), decimal.mark = ',')
+beta_ct_w <- format(round(beta_ct,2), decimal.mark = ',')
+mu_w_w <- format(round(mu_w,2), decimal.mark = ',')
+s_w_w <- format(round(s_w,2), decimal.mark = ',')
+mu_c_w <- format(round(mu_c,2), decimal.mark = ',')
+s_c_w <- format(round(s_c,2), decimal.mark = ',')
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/cij_issue/"
+path <- paste0(Path,"N",N,"g",gamma_ct_w,"b",beta_ct_w,"mw",
+               mu_w_w,"sw",s_w_w,"mc",mu_c_w,"sc","0.0316","sc_b","0,001",".png")
+# path <- paste0(Path,"mod1patchtrans","N",N,"g",gamma_ct,"b",
+# beta_ct,"mw","bnew","14",
+# mu_w,"sw",s_w,"mm",mu_m,"sm",s_m,".png")
+png(file = path, width = 8000, height = 6000, res = 1100)
+ggarrange(plot_no_circ,plot_circ, ncol = 1, nrow = 2)
+dev.off()
