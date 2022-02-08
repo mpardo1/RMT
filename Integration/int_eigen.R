@@ -14,6 +14,8 @@ source("~/RMT/Integration/functions_eigen_int.R")
   INT <- 1
   # Parameter for initial population. 0: No cte, 1: cte.
   CTE_POP <- 1
+  # Parameter for constant population at each patch. 0: No cte, 1: cte.
+  CTE_POP_Patch <- 0
   # Parameter for transmission rate. 0: No cte, 1: cte.
   BETA_CTE <- 0
   # Parameter for initial infected ind. 0: No cte , 1: cte.
@@ -22,61 +24,48 @@ source("~/RMT/Integration/functions_eigen_int.R")
   DIST <-  "beta"
   
 #-------------------EPIDEMIOLOGICAL----------------------
-  N = 50 # Number of patches
+  N = 100 # Number of patches
   # CTE parameters:
   del_N <- rep(0.6, N) # Birth rate
   # bet_cte <- 6
-  bet_cte <-  0.03
+  bet_cte <-  0.1
   bet <- rep(bet_cte, N)  # Transmission rate
   # bet <- abs(rnorm(N,1,1))  # Transmission rate
-  d_vec <- rep(0.2, N) # Natural mortality rate
-  thet <- rep(0.1, N) # Rate of loss of immunity
-  alp <- rep(0.02, N) # Rate of disease overcome
+  d_vec <- rep(0.6, N) # Natural mortality rate
+  thet <- rep(0.6, N) # Rate of loss of immunity
+  alp <- rep(1, N) # Rate of disease overcome
   delt <- rep(0, N) # Diseases related mortality rate
-  
-  # Changing transmission rate:
-  # mu = 0.5
-  # sig = 4
-  # ind <- sample(1:N,1)
-  bet_new <- 4
-  # bet_new <-  0.001
-  # bet[ind] <- bet_new
-  # size <- sample(1:N,1)
-  # vec_rand <- sample(1:N,size)
-  # vec_rand <- seq(1,round(N/4),1)
-  # bet[vec_rand] <- bet_new
-  # 
+  gamma_ct <-  alp[1] + delt[1] + d_vec[1]
   print(paste0("gamma:", alp[1] + delt[1] + d_vec[1]))
   print(paste0("beta - gamma:", bet[1] - (alp[1] + delt[1] + d_vec[1])))
 
 #-------------------- MOBILITY ------------------#
 ### Migration:
-  alp_m <- 1.03
-  bet_m <- 0.01
-  
+  mu_c <- 0.01
+  s_c <- 0.00001
+  alp_c <- beta_a_b(mu_c, s_c)[1]
+  bet_c <- beta_a_b(mu_c, s_c)[2]
   # Compute mean and sd:
-  mu_m <- alp_m/(alp_m + bet_m)
-  s_m <-  sqrt((alp_m*bet_m)/(((alp_m + bet_m)^2)*(1+alp_m+bet_m)))
-  print(paste0("mu :", mu_m))
-  print(paste0("sigma :", s_m))
+  print(paste0("mu :", mu_c))
+  print(paste0("sigma :", s_c))
 
-  migrate_mat <- mat_conect(N,alp_m,bet_m,DIST)
+  migrate_mat <- mat_conect(N,alp_c,bet_c,DIST)
 ### Commuting
-  alp_c <- 0.1
-  bet_c <- 0.1
+  mu_w <- 0.1
+  s_w <- 0.01
+  alp_w <- beta_a_b(mu_w, s_w)[1]
+  bet_w <- beta_a_b(mu_w, s_w)[2]
   
   # Compute mean and sd:
-  mu_w <- alp_c/(alp_c + bet_c)
-  s_w <- sqrt((alp_c*bet_c)/((alp_c + bet_c)^2*(1+alp_c+bet_c)))
   print(paste0("mu :", mu_w))
   print(paste0("sigma :",s_w))
 
-  commut_mat <- mat_conect(N,alp_c,bet_c,DIST)
+  commut_mat <- mat_conect(N,alp_w,bet_w,DIST)
 
 tau_ct <- 0
   # Initial populations:
   init_pop <- matrix(100, nrow = N)
-  if(CTE_POP == 1){
+  if(CTE_POP_Patch == 1){
     list_param <- diff_f(migrate_mat,d_vec[1,1],init_pop)
     d_vec[1,1] <- list_param[1]
     del_N <- list_param[2:(N+1)]
@@ -94,103 +83,187 @@ tau_ct <- 0
 
 # End time integration:
 end_time <- 100
+#----------------------------CTE BETA------------------------------------#
+bet <- rep(bet_cte, N)  # Transmission rate
+sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
+           commut_mat,migrate_mat,end_time,
+           MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
 
-#-------------------------------------------------------------------------------#
+sol_df <-  as.data.frame(sol)
+# Compute the time where the sum of infected individuals is maximum,
+inf_df <- sol_df[, c(1,(N+2):(2*N+1))]
+inf_df$sum <- rowSums(inf_df[,2:(N+1)])
+t_max_inf <- inf_df$time[inf_df$sum==max(inf_df$sum)]
+mat_max_inf[count,] <- c(i, t_max_inf)
+
+
+# Plot the susceptible, infected and recovered:
+state <- "INF"
+# Parameters:
+print(paste0("beta - gamma", beta_ct - gamma_ct))
+# 
+cond_gen(N, mu_c, s_c, mu_w, s_w, gamma_ct, beta_ct, tau_ct)
+# Make distribution:
+jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_c, MOB)
+eig <- eigen_mat(jac)
+
+plot_eig <- ggplot(eig) + geom_point(aes(re,im), size = 0.05) 
+plot_eig + coord_fixed() 
+
+# Predicted distribution for constant beta: 
+rad <- pred_radius(N, beta_ct, gamma_ct, tau_ct, mu_c, sqrt(s_c), mu_w, sqrt(s_w), MOB)
+cent <- pred_center(N, beta_ct, gamma_ct, tau_ct, mu_c, sqrt(s_c), mu_w,sqrt( s_w), MOB)
+outl <- pred_outlier(N, beta_ct, gamma_ct, mu_w, MOB)
+
+plot_eigen_1 <- plot_eigen(eig, cent, rad, outl, 1)+
+  geom_point(aes(outl,0), colour =  "blue",
+             show.legend = NA)
+plot_eigen_1 + ggtitle(paste0("N: ",N,"\n", "gamma: ", gamma_ct, ", beta:", bet_cte,"\n",
+                              "mu_w: ", mu_w, ", s_w: ", s_w,"\n",
+                              "mu_c: ", mu_c, ", s_c: ", s_c))
+
+# Plot integration:
+state <- "INF"
+plot_inf_1 <- plot_int(N, sol, state) + 
+  theme_bw() + xlim(c(0,20))
+
+plot_inf_1
+#-----------------------------------------------------------------------#
+# Influence of alpha in outlier:
+bet[ind] <- bet_cte + alp
+max_alp <- 10
+vec_alp <- seq(0,max_alp,0.1)
+vec <- sapply(vec_alp, outl_1patch, bet_cte , N, mu_w, mu_c, gamma_ct)
+alp_df <- data.frame(alp = vec_alp, outl <- vec[1,])
+
+plot_alp_R0  <- ggplot(df_plot) + 
+    geom_line(aes( alp, outl))  +
+    ylab(expression(R[0])) + xlab(expression(alpha)) +
+    geom_segment(aes(x = 0, y = 0, xend = max_alp, yend =0,
+                   colour = "segment"), linetype=2, 
+                   show.legend = FALSE) +
+    theme_bw()
+
+plot_alp_R0 
+
+
+#-----------------------TIME FOR MAX INFECTED---------------------------#
+bet <- rep(bet_cte, N)  # Transmission rate
+count = 1
+alp_vec <- seq(0,10,0.1)
+l <-  length(alp_vec) + 1
+mat_max_inf <-  matrix(0, ncol = 2, nrow = l)
+ind <- sample(1:N,1)
+for(i in alp_vec){
+  print(paste0("New beta : ",i))
+  bet_new <- i
+  bet[ind] <- bet_cte + bet_new
+  
+  sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
+             commut_mat,migrate_mat,end_time,
+             MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
+  
+  sol_df <-  as.data.frame(sol)
+  # Compute the time where the sum of infected individuals is maximum,
+  inf_df <- sol_df[, c(1,(N+2):(2*N+1))]
+  inf_df$sum <- rowSums(inf_df[,2:(N+1)])
+  t_max_inf <- inf_df$time[inf_df$sum==max(inf_df$sum)]
+  if(length(t_max_inf) > 1){
+    t_max_inf <- t_max_inf[1]
+  }
+  mat_max_inf[count,] <- c(i, t_max_inf)
+ 
+  count = count + 1
+}
+
+
+#--------------------------CHANGING BETA--------------------------------#
+# Change parameters to characters with decimal coma:
 beta_ct = bet_cte  # beta
 gamma_ct = alp[1] + delt[1] + d_vec[1]     # gamma   
 gamma_ct_w <- format(round(gamma_ct,2), decimal.mark = ',')
 beta_ct_w <- format(round(beta_ct,2), decimal.mark = ',')
 mu_w_w <- format(round(mu_w,2), decimal.mark = ',')
 s_w_w <- format(round(s_w,2), decimal.mark = ',')
-mu_m_w <- format(round(mu_m,2), decimal.mark = ',')
-s_m_w <- format(round(s_m,2), decimal.mark = ',')
-# Integrate the system:
+mu_c_w <- format(round(mu_c,2), decimal.mark = ',')
+s_c_w <- format(round(s_c,2), decimal.mark = ',')
+
+# Reinitialize the beta to cte vector:
+bet <- rep(bet_cte, N)  # Transmission rate
 count = 1
-alp_vec <- seq(0,4,0.1)
+alp_vec <- seq(0,10,0.1)
 l <-  length(alp_vec) + 1
-mat_max_inf <-  matrix(0, ncol = 2, nrow = l)
 plot_list <- list()
-# for(i in alp_vec){
+ind <- sample(1:N,1)
+for(i in alp_vec){
   print(paste0("New beta : ",i))
-  # bet_new <- i
-  # bet[ind] <- bet_cte + bet_new
+  bet_new <- i
+  bet[ind] <- bet_cte + bet_new
   
   sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
              commut_mat,migrate_mat,end_time,
              MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
    
   sol_df <-  as.data.frame(sol)
-  # Compute the time where the sum of infected individuals is maximum,
-  inf_df <- sol_df[, c(1,(N+2):(2*N+1))]
-  inf_df$sum <- rowSums(inf_df[,2:(N+1)])
-  t_max_inf <- inf_df$time[inf_df$sum==max(inf_df$sum)]
-  mat_max_inf[count,] <- c(i, t_max_inf)
   
   
   # Plot the susceptible, infected and recovered:
   state <- "INF"
+  plot_inf_1 <- plot_int(N, sol, state) +
+    theme_bw() + xlim(c(0,20))
+  plot_inf_1
+
   # Parameters:
   print(paste0("beta - gamma", beta_ct - gamma_ct))
-  # 
-  cond_gen(N, mu_m, s_m, mu_w, s_w, gamma_ct, beta_ct, tau_ct)
+   
+  cond_gen(N, mu_c, s_c, mu_w, s_w, gamma_ct, beta_ct, tau_ct)
   # Make distribution:
-  # 3: means sum cij and $ 1/N sum cij:
-  jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_m, 3)
+  jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_c, MOB)
   eig <- eigen_mat(jac)
-  
-  plot_eig <- ggplot(eig) + geom_point(aes(re,im), size = 0.05) 
-  plot_eig + coord_fixed() 
-  
-  # Predicted distribution:
-  rad <- pred_radius(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
-  cent <- pred_center(N, beta_ct, gamma_ct, tau_ct, mu_m, s_m, mu_w, s_w, MOB)
-  outl <- pred_outlier(N, beta_ct, gamma_ct, mu_w, MOB)
-  
-  # a <- bet_cte*mu_w + mu_m
-  # b <- bet_new
-  # c <- bet_new*mu_w
-  # 
-  # outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
-  # outl2 <- (1/2)*(N*a + b - sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
-  # outl <- outl + (bet_cte*(1-mu_w) - N*mu_m - gamma_ct)
-  # outl2 <- outl2 + (bet_cte*(1-mu_w) - N*mu_m - gamma_ct)
-  # 
-  plot_inf_1 <- plot_int(N, sol, state)  + theme(legend.position = "none")
+
+  plot_eig <- ggplot(eig) + geom_point(aes(re,im), size = 0.05)
+  plot_eig + coord_fixed()
+
+  # Compute the outliers, center and radius:
+  a <- bet_cte*mu_w + mu_c
+  b <- bet_new
+  c <- bet_new*mu_w
+  rad <- pred_radius(N, beta_ct, gamma_ct, tau_ct, mu_c, sqrt(s_c), mu_w, sqrt(s_w), MOB)
+  cent <- pred_center(N, beta_ct, gamma_ct, tau_ct, mu_c, sqrt(s_c), mu_w,sqrt( s_w), MOB)
+
+  outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+  outl2 <- (1/2)*(N*a + b - sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+  outl <- outl + (bet_cte*(1-mu_w) - N*mu_c - gamma_ct)
+  outl2 <- outl2 + (bet_cte*(1-mu_w) - N*mu_c - gamma_ct)
+
+
   # If last parameter is 1 he outlier is not computed:
-  plot_eigen_1 <- plot_eigen(eig, cent, rad, outl, MOB)
-  
-  jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_m, 3)
-  eig <- eigen_mat(jac)
-  plot_eigen_2 <- plot_eigen(eig, cent, rad, outl, 1)
-  
-  plot_eigen_outl <-  plot_eigen_1 + 
-    geom_point(aes(outl2,0), colour = "blue",
+  plot_eigen_1 <- plot_eigen(eig, cent, rad, outl, 1)+
+    geom_point(aes(outl,0), colour =  "blue",
                show.legend = NA) +
-    geom_point(aes(outl,0), colour = "blue",
+    geom_point(aes(outl2,0), colour =  "blue",
                show.legend = NA)
 
-  # plot_eigen_1
-  # plot_inf_1
-  # 
-  ggar <-  ggarrange(plot_eigen_1, plot_eigen_2)
-  ggarrange(ggar,plot_inf_1, ncol = 1)
-  
+  plot_eigen_1
+
+  # Create a vector to colour differently the time series related to the patch with
+  # different beta:
   vec_col <-  vector(mode="character", length=N)
   vec_col[1:N] <- "red4"
   # vec_col[vec_rand] <- "royalblue3"
   vec_col[ind] <- "royalblue3"
-  
+
   plot_inf_1 <-  plot_inf_1 +
     scale_colour_manual(values = vec_col)
-  
+
   plot_inf_1_lim <- plot_inf_1 +
     xlim(c(0,30)) +
     # scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
-    ggtitle(paste(expression(alpha),":",i)) 
-  
+    ggtitle(paste(expression(alpha),":",i))
+
   plot_list[[count]] <-  plot_inf_1_lim
   count = count + 1
-# }
+}
 
 png_files <-  c()
 for(i in c(1:(count-1))){
@@ -257,13 +330,13 @@ gamma_ct_w <- format(round(gamma_ct,2), decimal.mark = ',')
 beta_ct_w <- format(round(beta_ct,2), decimal.mark = ',')
 mu_w_w <- format(round(mu_w,2), decimal.mark = ',')
 s_w_w <- format(round(s_w,2), decimal.mark = ',')
-mu_m_w <- format(round(mu_m,2), decimal.mark = ',')
-s_m_w <- format(round(s_m,2), decimal.mark = ',')
+mu_c_w <- format(round(mu_c,2), decimal.mark = ',')
+s_c_w <- format(round(s_c,2), decimal.mark = ',')
 path <- paste0(Path,"gen","N",N_w,"g",gamma_ct_w,"b",beta_ct_w,"mw",
-       mu_w_w,"b_new_1p", i,"sw",s_w_w,"mm",mu_m_w,"sm",s_m_w,".png")
+       mu_w_w,"b_new_1p", i,"sw",s_w_w,"mm",mu_c_w,"sm",s_c_w,".png")
 # path <- paste0(Path,"mod1patchtrans","N",N,"g",gamma_ct,"b",
                # beta_ct,"mw","bnew","14",
-               # mu_w,"sw",s_w,"mm",mu_m,"sm",s_m,".png")
+               # mu_w,"sw",s_w,"mm",mu_c,"sm",s_c,".png")
 png(file = path, width = 8000, height = 6000, res = 1100)
 plot_1
 dev.off()

@@ -144,20 +144,20 @@ plot_int <- function(N, z, state){
     # Filter Susceptibles:
     df_sus <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "S")
     plot  <- ggplot(df_sus,aes(time, value)) + 
-      geom_line(aes( colour = variable))  +
+      geom_line(aes( colour = variable), show.legend = FALSE)  +
       ylab("Number of individuals")  + 
       ggtitle("Susceptible individuals")
   }else if( state == "INF"){
     # Filter Infected:
     df_inf <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "I")
     plot  <- ggplot(df_inf,aes(time, value)) + 
-      geom_line(aes( colour = variable))  +
+      geom_line(aes( colour = variable), show.legend = FALSE)  +
       ylab("Number of infected individuals") 
   }else if( state == "REC"){
     # Filter Recovered:
     df_rec <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "R")
     plot  <- ggplot(df_rec,aes(time, value)) + 
-      geom_line(aes( colour = variable))  +
+      geom_line(aes( colour = variable), show.legend = FALSE)  +
       ylab("Number of individuals") +
       ggtitle("Recovered individuals")
   }
@@ -246,20 +246,6 @@ jacobian <- function(N,beta_ct,gamma_ct, commut_mat, migrate_mat,mu_c, MOB){
     diag(BIGS) <- vec
     jacobian <- BIGT+BIGS
   }
-  # else{
-  #   print("Migration and commuting with 1/N")
-  #   # Generate de Jacobian:
-  #   betas <- matrix(rep(0,N^2), nrow = N)
-  #   diag(betas) <- beta_ct
-  #   BIGT <- commut_mat
-  #   diag(BIGT) <- rep(1,N)
-  #   BIGT <- (1/N)*(BIGT%*%betas)
-  #   BIGS <- (1/N)*migrate_mat
-  #   diag(migrate_mat) <- 0
-  #   vec <-  -(1/N)*gamma_ct - (1/N)*colSums(migrate_mat)
-  #   diag(BIGS) <- vec
-  #   jacobian <- BIGT+BIGS
-  # }
   return(jacobian)
 }
 
@@ -307,76 +293,6 @@ cond_gen <- function(N, mu_c,s_c, mu_w,s_w, gam, bet, tau){
   return(c(cond1,cond2))
 }
 
-# Check the difference between the outlier and the predicted one. 3 is because of
-# the model with the sum cij.
-# # And 2: is to do the prediction with the commuting and migration.
-# check_outl <-  function(N,beta_ct,gamma_ct,alp_w,bet_w, mu_w,alp_c,bet_c, MOB, df_filt){
-#   # the 2 is to use the model with commuting and migration:
-#   mig_mat <- mat_conect(N,alp_c,bet_c,MOB)
-#   l <- length(which(is.na(mig_mat)))
-#   count = 1
-#   while(l > 0){
-#     print("Migration matrix with NAN")
-#     mig_mat <- mat_conect(N,alp_c,bet_c,MOB)
-#     l <- length(which(is.na(mig_mat)))
-#     if(count > 100 ){
-#       print("Set mig_mt to 10000")
-#       print(paste0("alp_m",alp_c))
-#       print(paste0("bet_m",bet_c))
-#       mig_mat <- matrix(10000, ncol = N, nrow= N)
-#       break
-#     }
-#     count = count + 1
-#   }
-#   com_mat <- mat_conect(N,alp_w,bet_w,MOB)
-#   
-#   # The 0 its because we dont use the mean of migration in the jacobian as before.
-#   # The 3 its to use the sum cij in the diagonal terms
-#   jac <- jacobian(N,beta_ct,gamma_ct, com_mat, mig_mat,0, MOB)
-#   eig <- eigen_mat(jac)
-#   
-#   # the 2 is to use the model with commuting and migration:
-#   outl <- pred_outlier(N, beta_ct, gamma_ct, mu_w, MOB)
-#   max_eig <-  eig$re[which(eig$re == max(eig$re))]   
-#   diff <- abs(outl - max_eig)/abs(max_eig)
-#   
-#   
-#   # Plot eigenvalues:
-#   ind <-  which(eig$re == max(eig$re))
-#   eig_filt <-  eig[-ind,]
-#   mig <- df_filt[df_filt$mean == mu_w,]
-#   
-#   # Compute the mean and sigma for the migration
-#   mu <- mig[which(mig$a == alp_c | mig$b == bet_c  ),1]
-#   sig <- mig[which(mig$a == alp_c | mig$b == bet_c  ),2]
-#   
-#   # Compute the predicted radius and center
-#   rad <- pred_radius(N, beta_ct, gamma_ct, 0, mu, sig, mu_w, sigma_w, MOB)
-#   cent <- pred_center(N, beta_ct, gamma_ct, 0, mu, sig, mu_w, sigma_w, MOB)
-#   
-#   plot_eig_noout <- ggplot(eig) +
-#     geom_point(aes(re,im), size = 0.05) + 
-#     geom_circle(aes(x0 = cent,
-#                     y0 = 0,
-#                     r = rad), colour = "blue",
-#                 show.legend = NA,size = 0.2)+
-#     coord_fixed() + 
-#     ggtitle(paste0("Commuting param:", expression(mu),":", mu,", ", expression(sigma),":", sig))
-#   
-#   print("Param:")
-#   print(paste0("N",N))
-#   print(paste0("alp_c",alp_c))
-#   print(paste0("bet_c",bet_c))
-#   print(paste0("mu",mu))
-#   print(paste0("sig",sig))
-#   print(paste0("alp_w",alp_w))
-#   print(paste0("bet_w",bet_w))
-#   print(paste0("mu_w",mu_w))
-#   print(paste0("sigma_w",sigma_w))
-#   
-#   
-#   return(list(alp_c = alp_c, bet_c = bet_c, diff= diff, eigen = eig, plot = plot_eig_noout, com_mat = com_mat, mig_mat = mig_mat))
-# }
 
 # Function that validates the mu and sigma for a beta distribution:
 # ¡¡ Sigma siempre está al cuadrado en mis cálculos !!
@@ -395,6 +311,7 @@ beta_a_b <-  function(mu, sigma){
   l <-  validate_mu_s(mu, sigma)
   if( l == TRUE){
     a <-  mu*((mu/sigma)*(1-mu)-1)
+    print(paste0("a: ",a))
     b <- ((1-mu)/mu)*a
   }else{
     print("Problem with mu and sigma")
@@ -409,4 +326,17 @@ comp_mean_var <- function(vec){
   mean <-a/(a+b)
   var <- a*b/((a+b)^2*(a+b+1))
   return(c(mean, var))
+}
+
+# Functions which compute the outlier when varying beta in 1 patch:
+outl_1patch <- function(alp, bet_cte, N, mu_w, mu_c, gamma_ct){
+  a <- bet_cte*mu_w + mu_c
+  b <- alp
+  c <- alp*mu_w
+  
+  outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+  outl2 <- (1/2)*(N*a + b - sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+  outl <- outl + (bet_cte*(1-mu_w) - N*mu_c - gamma_ct)
+  outl2 <- outl2 + (bet_cte*(1-mu_w) - N*mu_c - gamma_ct)
+  return(c(outl,outl2))
 }
