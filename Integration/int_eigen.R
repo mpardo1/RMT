@@ -3,6 +3,9 @@ library("tidyverse")
 library("deSolve")
 library("ggplot2")
 library("gifski")
+library("ggpubr")
+library("ggforce")
+library("stats")
 
 #----------------------------------------------------------------------------#
 source("~/RMT/Integration/functions_eigen_int.R")
@@ -24,7 +27,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   DIST <-  "beta"
   
 #-------------------EPIDEMIOLOGICAL----------------------
-  N = 100 # Number of patches
+  N = 50 # Number of patches
   # CTE parameters:
   del_N <- rep(0.6, N) # Birth rate
   # bet_cte <- 6
@@ -84,21 +87,17 @@ tau_ct <- 0
 # End time integration:
 end_time <- 100
 #----------------------------CTE BETA------------------------------------#
+beta_ct = bet_cte  # beta
+gamma_ct = alp[1] + delt[1] + d_vec[1]     # gamma   
 bet <- rep(bet_cte, N)  # Transmission rate
 sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
            commut_mat,migrate_mat,end_time,
            MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
 
 sol_df <-  as.data.frame(sol)
-# Compute the time where the sum of infected individuals is maximum,
-inf_df <- sol_df[, c(1,(N+2):(2*N+1))]
-inf_df$sum <- rowSums(inf_df[,2:(N+1)])
-t_max_inf <- inf_df$time[inf_df$sum==max(inf_df$sum)]
-mat_max_inf[count,] <- c(i, t_max_inf)
-
-
 # Plot the susceptible, infected and recovered:
 state <- "INF"
+
 # Parameters:
 print(paste0("beta - gamma", beta_ct - gamma_ct))
 # 
@@ -107,38 +106,42 @@ cond_gen(N, mu_c, s_c, mu_w, s_w, gamma_ct, beta_ct, tau_ct)
 jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_c, MOB)
 eig <- eigen_mat(jac)
 
-plot_eig <- ggplot(eig) + geom_point(aes(re,im), size = 0.05) 
-plot_eig + coord_fixed() 
+plot_eig_cte <- ggplot(eig) + geom_point(aes(re,im), size = 0.05) 
+plot_eig_cte + coord_fixed() 
 
 # Predicted distribution for constant beta: 
 rad <- pred_radius(N, beta_ct, gamma_ct, tau_ct, mu_c, sqrt(s_c), mu_w, sqrt(s_w), MOB)
 cent <- pred_center(N, beta_ct, gamma_ct, tau_ct, mu_c, sqrt(s_c), mu_w,sqrt( s_w), MOB)
 outl <- pred_outlier(N, beta_ct, gamma_ct, mu_w, MOB)
 
-plot_eigen_1 <- plot_eigen(eig, cent, rad, outl, 1)+
+plot_eigen_cte_pred <- plot_eigen(eig, cent, rad, outl, 1) +
   geom_point(aes(outl,0), colour =  "blue",
              show.legend = NA)
-plot_eigen_1 + ggtitle(paste0("N: ",N,"\n", "gamma: ", gamma_ct, ", beta:", bet_cte,"\n",
+plot_eigen_cte_pred + ggtitle(paste0("N: ",N,"\n", "gamma: ", gamma_ct, ", beta:", bet_cte,"\n",
                               "mu_w: ", mu_w, ", s_w: ", s_w,"\n",
                               "mu_c: ", mu_c, ", s_c: ", s_c))
 
 # Plot integration:
 state <- "INF"
-plot_inf_1 <- plot_int(N, sol, state) + 
+plot_inf_cte <- plot_int(N, sol, state) + 
   theme_bw() + xlim(c(0,20))
 
-plot_inf_1
+plot_inf_cte
 #-----------------------------------------------------------------------#
 # Influence of alpha in outlier:
-bet[ind] <- bet_cte + alp
-max_alp <- 10
+alp_vet <- 3
+ind <- sample(1:N,1)
+beta_ct = bet_cte  # beta
+gamma_ct = alp[1] + delt[1] + d_vec[1] # gamma   
+bet[ind] <- bet_cte + alp_vet
+max_alp <- 5
 vec_alp <- seq(0,max_alp,0.1)
 vec <- sapply(vec_alp, outl_1patch, bet_cte , N, mu_w, mu_c, gamma_ct)
-alp_df <- data.frame(alp = vec_alp, outl <- vec[1,])
+alp_df <- data.frame(alp_bet = vec_alp, outl <- vec[1,])
 
-plot_alp_R0  <- ggplot(df_plot) + 
-    geom_line(aes( alp, outl))  +
-    ylab(expression(R[0])) + xlab(expression(alpha)) +
+plot_alp_R0  <- ggplot(alp_df) + 
+    geom_line(aes( alp_bet, outl))  +
+    ylab("Rigth most eigenvalue") + xlab(expression(alpha)) +
     geom_segment(aes(x = 0, y = 0, xend = max_alp, yend =0,
                    colour = "segment"), linetype=2, 
                    show.legend = FALSE) +
@@ -148,11 +151,25 @@ plot_alp_R0
 
 
 #-----------------------TIME FOR MAX INFECTED---------------------------#
+alpha_r0_1 <-  function(alp_p){
+  a <- bet_cte*mu_w + mu_c
+  b <- alp_p
+  c <- alp_p*mu_w
+  outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+  outl <- outl + (bet_cte*(1-mu_w) - N*mu_c - gamma_ct)
+  return(outl[1])
+}
+
+# Compute the value of alpha for the bifurcationn point,
+uni <- uniroot(alpha_r0_1, c(1.5, 3))$root
+
 bet <- rep(bet_cte, N)  # Transmission rate
+beta_ct = bet_cte  # beta
+gamma_ct = alp[1] + delt[1] + d_vec[1]     # gamma   
 count = 1
-alp_vec <- seq(0,10,0.1)
+alp_vec <- seq(uni,5,0.1)
 l <-  length(alp_vec) + 1
-mat_max_inf <-  matrix(0, ncol = 2, nrow = l)
+mat_max_inf <-  matrix(0, ncol = 3, nrow = l)
 ind <- sample(1:N,1)
 for(i in alp_vec){
   print(paste0("New beta : ",i))
@@ -171,12 +188,28 @@ for(i in alp_vec){
   if(length(t_max_inf) > 1){
     t_max_inf <- t_max_inf[1]
   }
-  mat_max_inf[count,] <- c(i, t_max_inf)
- 
+  mat_max_inf[count,] <- c(i, t_max_inf,max(inf_df$sum))
+  print(paste0("alp , time:",mat_max_inf[count,]))
   count = count + 1
 }
 
+len <- length(alp_vec)
+mat_max_inf_df <-  data.frame(alp = alp_vec ,time = mat_max_inf[1:len,2]
+                               ,max_inf = mat_max_inf[1:len,3])
+plot_time <- ggplot() + 
+  geom_line(data = mat_max_inf_df,aes(alp,time)) +
+  # geom_line(data = mat_max_inf_df,aes(alp,max_inf)) +
+  geom_line(data = alp_df, aes( alp_bet, outl), colour = "blue")  +
+  geom_segment(aes(x = 0, y = 0, xend = max_alp, yend =0,
+                   colour = "segment"), linetype=2,
+               show.legend = FALSE) +
+  ylab("Time") + xlab(expression(alpha)) + theme_bw() 
+plot_time
 
+plot_max_inf <- ggplot(mat_max_inf_df) + 
+  geom_line(aes(alp,max_inf)) + theme_bw() 
+  
+plot_max_inf
 #--------------------------CHANGING BETA--------------------------------#
 # Change parameters to characters with decimal coma:
 beta_ct = bet_cte  # beta
@@ -194,7 +227,6 @@ count = 1
 alp_vec <- seq(0,10,0.1)
 l <-  length(alp_vec) + 1
 plot_list <- list()
-ind <- sample(1:N,1)
 for(i in alp_vec){
   print(paste0("New beta : ",i))
   bet_new <- i
@@ -256,6 +288,7 @@ for(i in alp_vec){
   plot_inf_1 <-  plot_inf_1 +
     scale_colour_manual(values = vec_col)
 
+  plot_inf_1
   plot_inf_1_lim <- plot_inf_1 +
     xlim(c(0,30)) +
     # scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
