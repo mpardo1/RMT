@@ -36,7 +36,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   # bet <- abs(rnorm(N,1,1))  # Transmission rate
   d_vec <- rep(0.6, N) # Natural mortality rate
   thet <- rep(0.6, N) # Rate of loss of immunity
-  alp <- rep(1, N) # Rate of disease overcome
+  alp <- rep(2, N) # Rate of disease overcome
   delt <- rep(0, N) # Diseases related mortality rate
   gamma_ct <-  alp[1] + delt[1] + d_vec[1]
   print(paste0("gamma:", alp[1] + delt[1] + d_vec[1]))
@@ -54,7 +54,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
 
   migrate_mat <- mat_conect(N,alp_c,bet_c,DIST)
 ### Commuting
-  mu_w <- 0.1
+  mu_w <- 0.2
   s_w <- 0.01
   alp_w <- beta_a_b(mu_w, s_w)[1]
   bet_w <- beta_a_b(mu_w, s_w)[2]
@@ -127,28 +127,67 @@ plot_inf_cte <- plot_int(N, sol, state) +
   theme_bw() + xlim(c(0,20))
 
 plot_inf_cte
-#-----------------------------------------------------------------------#
+#----------------------AREA of STAB muw vs alp------------------------------------#
 # Influence of alpha in outlier:
-alp_vet <- 3
+# alp_vet <- 3
+bet_vec <- seq(0.01,2,0.01)
+len_vec <- length(bet_vec)
+plot_list_area <- list()
 ind <- sample(1:N,1)
-beta_ct = bet_cte  # beta
 gamma_ct = alp[1] + delt[1] + d_vec[1] # gamma   
-bet[ind] <- bet_cte + alp_vet
-max_alp <- 5
-vec_alp <- seq(0,max_alp,0.1)
+for(i in c(1:len_vec)){
+  # beta_ct = bet_cte  # beta
+  # bet[ind] <- bet_cte + alp_vet
+  max_alp <- 5
+  vec_alp <- seq(0,max_alp,0.01)
+  mu_w_vec <- seq(0.01,1.01,0.01)
+  len <- length(mu_w_vec)
+  df_mu_w_slp <- data.frame(alp = 0, mu_w = 0, outl1 = 0, outl2 = 0)
+  for(j in c(1:len)){
+    vec <- sapply(vec_alp, outl_1patch, bet_vec[i] , N, mu_w_vec[j], mu_c, gamma_ct)
+    df <- data.frame(alp =vec_alp, mu_w =mu_w_vec[j], outl1 = vec[1,], outl2 = vec[2,])
+    df_mu_w_slp <- rbind(df_mu_w_slp,df)
+  }
+  
+  df_mu_w_slp <- df_mu_w_slp[-1,]
+  df_mu_w_slp$stability <- ifelse((df_mu_w_slp$outl1 > 0 | df_mu_w_slp$outl2 > 0) , FALSE, TRUE)
+  plot_list_area[[i]] <- ggplot(df_mu_w_slp) + 
+    geom_point(aes(alp, mu_w, colour = stability)) +
+    xlab(expression(alpha)) + 
+    ylab(~ paste( mu [w])) +
+    theme_bw() +
+    ggtitle(paste0("beta_cte:",  bet_vec[i] ))
+}
+
+plot_list_area[[1]]
+plot_list_area[[4]]
+
+png_files <-  c()
+for(i in c(1:len_vec)){
+  # png_files[i] <- paste0("/home/marta/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both///genN100g0,82b0mw0,5sw0,46mm0,5sm0,46_",i+1,".png")
+  
+  ggsave(paste0("~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/plot_",i,".png" ),
+         plot = plot_list_area[[i]], device = "png")
+  png_files[i] <-  paste0("~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/plot_",i,".png" )
+}
+
+# png_files <- list.files("~/Documents/PHD/2022/RMT_SIR/Plots/1patch/test/", pattern = ".*png$", full.names = TRUE)
+# gifski(png_files, gif_file = "~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both/animation.gif", width = 800, height = 600, delay = 0.3)
+gifski(png_files, gif_file = "~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/animation.gif", width = 800, height = 600, delay = 0.3)
+
+# Compute the right most eigenvalue vs alpha:
 vec <- sapply(vec_alp, outl_1patch, bet_cte , N, mu_w, mu_c, gamma_ct)
 alp_df <- data.frame(alp_bet = vec_alp, outl <- vec[1,])
 
-plot_alp_R0  <- ggplot(alp_df) + 
+plot_alp_max_eigen  <- ggplot(alp_df) + 
     geom_line(aes( alp_bet, outl))  +
     ylab("Rigth most eigenvalue") + xlab(expression(alpha)) +
     geom_segment(aes(x = 0, y = 0, xend = max_alp, yend =0,
                    colour = "segment"), linetype=2, 
                    show.legend = FALSE) +
-    theme_bw()
+    theme_bw() 
 
-plot_alp_R0 
-
+plot_alp_max_eigen 
 
 #-----------------------TIME FOR MAX INFECTED---------------------------#
 alpha_r0_1 <-  function(alp_p){
@@ -161,13 +200,14 @@ alpha_r0_1 <-  function(alp_p){
 }
 
 # Compute the value of alpha for the bifurcationn point,
-uni <- uniroot(alpha_r0_1, c(1.5, 3))$root
+# The numbers inside de c() are the interval to look for roots:
+uni <- uniroot(alpha_r0_1, c(0, 20))$root
 
 bet <- rep(bet_cte, N)  # Transmission rate
 beta_ct = bet_cte  # beta
 gamma_ct = alp[1] + delt[1] + d_vec[1]     # gamma   
 count = 1
-alp_vec <- seq(uni,5,0.1)
+alp_vec <- seq(uni,50,1)
 l <-  length(alp_vec) + 1
 mat_max_inf <-  matrix(0, ncol = 3, nrow = l)
 ind <- sample(1:N,1)
@@ -196,19 +236,106 @@ for(i in alp_vec){
 len <- length(alp_vec)
 mat_max_inf_df <-  data.frame(alp = alp_vec ,time = mat_max_inf[1:len,2]
                                ,max_inf = mat_max_inf[1:len,3])
+
+write.csv(mat_max_inf_df,"~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Alpha.csv", row.names = TRUE)
+
 plot_time <- ggplot() + 
-  geom_line(data = mat_max_inf_df,aes(alp,time)) +
+  geom_line(data = mat_max_inf_df,aes(alp,time)) + theme_bw() +
   # geom_line(data = mat_max_inf_df,aes(alp,max_inf)) +
-  geom_line(data = alp_df, aes( alp_bet, outl), colour = "blue")  +
-  geom_segment(aes(x = 0, y = 0, xend = max_alp, yend =0,
-                   colour = "segment"), linetype=2,
-               show.legend = FALSE) +
+  # geom_line(data = alp_df, aes( alp_bet, outl), colour = "blue")  +
+  # geom_segment(aes(x = 0, y = 0, xend = max_alp, yend =0,
+  #                  colour = "segment"), linetype=2,
+  #              show.legend = FALSE) +
+  ylab("Time of maximum infected individuals") + xlab(expression(alpha)) +
+  ggtitle(paste0("N: ",N,"\n", "gamma: ", gamma_ct, ", beta:", bet_cte,"\n", 
+                 "mu_w: ", s_w, ", s_w: ", s_w,"\n",
+                 "mu_c: ", mu_c, ", s_c: ", s_c))
+  
+plot_time
+
+plot_max_inf <- ggplot(mat_max_inf_df) + 
+  geom_line(aes(alp,max_inf)) + theme_bw() +
+  ylab("Number of maximum infected individuals") + xlab(expression(alpha))
+  
+plot_max_inf
+
+#---------------------S_w vs MAX INF -----------------------------------#
+count = 1
+s_w_vec <- seq(0.01,0.24,0.01)
+l <-  length(s_w_vec) + 1
+mat_max_inf <-  matrix(0, ncol = 3, nrow = l)
+plot_list <- list()
+
+for(i in c(1:l)){
+  alp_w <- beta_a_b(mu_w, s_w_vec[i])[1]
+  bet_w <- beta_a_b(mu_w, s_w_vec[i])[2]
+  
+  # Compute mean and sd:
+  print(paste0("mu :", mu_w))
+  print(paste0("sigma :", s_w_vec[i]))
+  
+  commut_mat <- mat_conect(N,alp_w,bet_w,DIST)
+  sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
+             commut_mat,migrate_mat,end_time,
+             MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
+  
+  sol_df <-  as.data.frame(sol)
+  # Compute the time where the sum of infected individuals is maximum,
+  inf_df <- sol_df[, c(1,(N+2):(2*N+1))]
+  inf_df$sum <- rowSums(inf_df[,2:(N+1)])
+  t_max_inf <- inf_df$time[inf_df$sum==max(inf_df$sum)]
+  if(length(t_max_inf) > 1){
+    t_max_inf <- t_max_inf[1]
+  }
+  mat_max_inf[i,] <- c(s_w_vec[i], t_max_inf,max(inf_df$sum))
+  print(paste0("sigma:",mat_max_inf[i,1], "  "," time:",mat_max_inf[i,2], 
+               " "," max_inf:",mat_max_inf[i,3]))
+  
+  jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_c, MOB)
+  eig <- eigen_mat(jac)
+  
+  plot_eig_cte <- ggplot(eig) + geom_point(aes(re,im), size = 0.05) 
+  plot_eig_cte + coord_fixed() 
+  
+  # Predicted distribution for constant beta: 
+  rad <- pred_radius(N, beta_ct, gamma_ct, tau_ct, mu_c, sqrt(s_c), mu_w, sqrt(s_w_vec[i]), MOB)
+  cent <- pred_center(N, beta_ct, gamma_ct, tau_ct, mu_c, sqrt(s_c), mu_w,sqrt( s_w_vec[i]), MOB)
+  outl <- pred_outlier(N, beta_ct, gamma_ct, mu_w, MOB)
+  
+  plot_eigen_pred <- plot_eigen(eig, cent, rad, outl, 1) +
+    geom_point(aes(outl,0), colour =  "blue",
+               show.legend = NA) +
+    ggtitle((paste("mu[w]", ": ",s_w_vec[i])))
+  plot_eigen_pred + ggtitle(paste0("N: ",N,"\n", "gamma: ", gamma_ct, ", beta:", bet_cte,"\n",
+                                       "mu_w: ", s_w_vec[i], ", s_w: ", s_w,"\n",
+                                       "mu_c: ", mu_c, ", s_c: ", s_c))
+  
+  state <- "INF"
+  plot_inf <- plot_int(N, sol, state) + 
+    theme_bw() + xlim(c(0,20)) + ylim(c(0,90000))
+  
+  plot_list[[i]] <- ggarrange(plot_eigen_pred, plot_inf, nrow = 2, ncol = 1) 
+   
+  count = count + 1
+}
+
+ggarrange(plot_list[[1]],  plot_list[[24]])
+len <- length(s_w_vec)
+mat_max_inf_df <-  data.frame(sig_w = s_w_vec ,time = mat_max_inf[1:len,2]
+                              ,max_inf = mat_max_inf[1:len,3])
+plot_time <- ggplot() + 
+  geom_line(data = mat_max_inf_df,aes(sig_w,time)) +
+  # # geom_line(data = mat_max_inf_df,aes(alp,max_inf)) +
+  # geom_line(data = alp_df, aes( sig_w, outl), colour = "blue")  +
+  # geom_segment(aes(x = 0, y = 0, xend = max_alp, yend =0,
+  #                  colour = "segment"), linetype=2,
+  #              show.legend = FALSE) +
   ylab("Time") + xlab(expression(alpha)) + theme_bw() 
 plot_time
 
 plot_max_inf <- ggplot(mat_max_inf_df) + 
-  geom_line(aes(alp,max_inf)) + theme_bw() 
-  
+  geom_line(aes(sig_w,max_inf)) + theme_bw() 
+
 plot_max_inf
 #--------------------------CHANGING BETA--------------------------------#
 # Change parameters to characters with decimal coma:

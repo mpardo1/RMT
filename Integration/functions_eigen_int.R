@@ -334,6 +334,10 @@ outl_1patch <- function(alp, bet_cte, N, mu_w, mu_c, gamma_ct){
   b <- alp
   c <- alp*mu_w
   
+  # print(paste("bet_cte: ",bet_cte))
+  # print(paste("alp: ", alp))
+  # print(paste("mu_w: ", mu_w))
+  
   outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
   outl2 <- (1/2)*(N*a + b - sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
   outl <- outl + (bet_cte*(1-mu_w) - N*mu_c - gamma_ct)
