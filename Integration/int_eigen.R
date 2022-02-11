@@ -31,12 +31,12 @@ source("~/RMT/Integration/functions_eigen_int.R")
   # CTE parameters:
   del_N <- rep(0.6, N) # Birth rate
   # bet_cte <- 6
-  bet_cte <-  0.1
+  bet_cte <-  0.5
   bet <- rep(bet_cte, N)  # Transmission rate
   # bet <- abs(rnorm(N,1,1))  # Transmission rate
-  d_vec <- rep(0.6, N) # Natural mortality rate
+  d_vec <- rep(1.6, N) # Natural mortality rate
   thet <- rep(0.6, N) # Rate of loss of immunity
-  alp <- rep(2, N) # Rate of disease overcome
+  alp <- rep(1, N) # Rate of disease overcome
   delt <- rep(0, N) # Diseases related mortality rate
   gamma_ct <-  alp[1] + delt[1] + d_vec[1]
   print(paste0("gamma:", alp[1] + delt[1] + d_vec[1]))
@@ -160,20 +160,20 @@ for(i in c(1:len_vec)){
 }
 
 plot_list_area[[1]]
-plot_list_area[[4]]
+plot_list_area[[3]]
 
 png_files <-  c()
 for(i in c(1:len_vec)){
   # png_files[i] <- paste0("/home/marta/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both///genN100g0,82b0mw0,5sw0,46mm0,5sm0,46_",i+1,".png")
   
-  ggsave(paste0("~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/plot_",i,".png" ),
+  ggsave(paste0("~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/Low_gam/plot_gam_2,6_",i,".png" ),
          plot = plot_list_area[[i]], device = "png")
-  png_files[i] <-  paste0("~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/plot_",i,".png" )
+  png_files[i] <-  paste0("~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/Low_gam/plot_gam_2,6_",i,".png" )
 }
 
 # png_files <- list.files("~/Documents/PHD/2022/RMT_SIR/Plots/1patch/test/", pattern = ".*png$", full.names = TRUE)
 # gifski(png_files, gif_file = "~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both/animation.gif", width = 800, height = 600, delay = 0.3)
-gifski(png_files, gif_file = "~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/animation.gif", width = 800, height = 600, delay = 0.3)
+gifski(png_files, gif_file = "~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/Low_gam/animation_gam_2,6.gif", width = 800, height = 600, delay = 0.3)
 
 # Compute the right most eigenvalue vs alpha:
 vec <- sapply(vec_alp, outl_1patch, bet_cte , N, mu_w, mu_c, gamma_ct)
@@ -248,7 +248,7 @@ plot_time <- ggplot() +
   #              show.legend = FALSE) +
   ylab("Time of maximum infected individuals") + xlab(expression(alpha)) +
   ggtitle(paste0("N: ",N,"\n", "gamma: ", gamma_ct, ", beta:", bet_cte,"\n", 
-                 "mu_w: ", s_w, ", s_w: ", s_w,"\n",
+                 "mu_w: ",mu_w, ", s_w: ", s_w,"\n",
                  "mu_c: ", mu_c, ", s_c: ", s_c))
   
 plot_time
