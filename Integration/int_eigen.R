@@ -31,12 +31,12 @@ source("~/RMT/Integration/functions_eigen_int.R")
   # CTE parameters:
   del_N <- rep(0.6, N) # Birth rate
   # bet_cte <- 6
-  bet_cte <-  0.5
+  bet_cte <-  0.1
   bet <- rep(bet_cte, N)  # Transmission rate
   # bet <- abs(rnorm(N,1,1))  # Transmission rate
   d_vec <- rep(1.6, N) # Natural mortality rate
   thet <- rep(0.6, N) # Rate of loss of immunity
-  alp <- rep(1, N) # Rate of disease overcome
+  alp <- rep(6.4, N) # Rate of disease overcome
   delt <- rep(0, N) # Diseases related mortality rate
   gamma_ct <-  alp[1] + delt[1] + d_vec[1]
   print(paste0("gamma:", alp[1] + delt[1] + d_vec[1]))
@@ -130,11 +130,12 @@ plot_inf_cte
 #----------------------AREA of STAB muw vs alp------------------------------------#
 # Influence of alpha in outlier:
 # alp_vet <- 3
-bet_vec <- seq(0.01,2,0.01)
+gamma_ct <- 3.5
+bet_vec <- seq(0.01,5,0.01)
 len_vec <- length(bet_vec)
 plot_list_area <- list()
 ind <- sample(1:N,1)
-gamma_ct = alp[1] + delt[1] + d_vec[1] # gamma   
+# gamma_ct = alp[1] + delt[1] + d_vec[1] # gamma   
 for(i in c(1:len_vec)){
   # beta_ct = bet_cte  # beta
   # bet[ind] <- bet_cte + alp_vet
@@ -156,24 +157,26 @@ for(i in c(1:len_vec)){
     xlab(expression(alpha)) + 
     ylab(~ paste( mu [w])) +
     theme_bw() +
-    ggtitle(paste0("beta_cte:",  bet_vec[i] ))
+    ggtitle(paste0("beta_cte*mu_w - gamma :",  bet_vec[i] - gamma_ct ))
 }
 
-plot_list_area[[1]]
-plot_list_area[[3]]
+plot_bet_0.01 <- plot_list_area[[1]] + ggtitle("") +
+  labs(title="a")+ theme(legend.position = "none")
+plot_bet_0.18 <- plot_list_area[[18]]+ labs(title="b")
 
+ggarra <- ggarrange(plot_bet_0.01, plot_bet_0.18, common.legend = TRUE)
 png_files <-  c()
 for(i in c(1:len_vec)){
   # png_files[i] <- paste0("/home/marta/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both///genN100g0,82b0mw0,5sw0,46mm0,5sm0,46_",i+1,".png")
   
-  ggsave(paste0("~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/Low_gam/plot_gam_2,6_",i,".png" ),
+  ggsave(paste0("~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/Mid_gam/plot_gam_",gamma_ct,"_",i,".png" ),
          plot = plot_list_area[[i]], device = "png")
-  png_files[i] <-  paste0("~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/Low_gam/plot_gam_2,6_",i,".png" )
+  png_files[i] <-  paste0("~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/Mid_gam/plot_gam_",gamma_ct,"_",i,".png" )
 }
 
 # png_files <- list.files("~/Documents/PHD/2022/RMT_SIR/Plots/1patch/test/", pattern = ".*png$", full.names = TRUE)
 # gifski(png_files, gif_file = "~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both/animation.gif", width = 800, height = 600, delay = 0.3)
-gifski(png_files, gif_file = "~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/Low_gam/animation_gam_2,6.gif", width = 800, height = 600, delay = 0.3)
+gifski(png_files, gif_file = "~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/Mid_gam/animation_gam_",gamma_ct,".gif", width = 800, height = 600, delay = 0.3)
 
 # Compute the right most eigenvalue vs alpha:
 vec <- sapply(vec_alp, outl_1patch, bet_cte , N, mu_w, mu_c, gamma_ct)
@@ -203,11 +206,12 @@ alpha_r0_1 <-  function(alp_p){
 # The numbers inside de c() are the interval to look for roots:
 uni <- uniroot(alpha_r0_1, c(0, 20))$root
 
+bet_cte = 0.1
 bet <- rep(bet_cte, N)  # Transmission rate
 beta_ct = bet_cte  # beta
-gamma_ct = alp[1] + delt[1] + d_vec[1]     # gamma   
+gamma_ct = 2    # gamma   
 count = 1
-alp_vec <- seq(uni,50,1)
+alp_vec <- seq(0,10,0.1)
 l <-  length(alp_vec) + 1
 mat_max_inf <-  matrix(0, ncol = 3, nrow = l)
 ind <- sample(1:N,1)
@@ -241,11 +245,6 @@ write.csv(mat_max_inf_df,"~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Alpha.cs
 
 plot_time <- ggplot() + 
   geom_line(data = mat_max_inf_df,aes(alp,time)) + theme_bw() +
-  # geom_line(data = mat_max_inf_df,aes(alp,max_inf)) +
-  # geom_line(data = alp_df, aes( alp_bet, outl), colour = "blue")  +
-  # geom_segment(aes(x = 0, y = 0, xend = max_alp, yend =0,
-  #                  colour = "segment"), linetype=2,
-  #              show.legend = FALSE) +
   ylab("Time of maximum infected individuals") + xlab(expression(alpha)) +
   ggtitle(paste0("N: ",N,"\n", "gamma: ", gamma_ct, ", beta:", bet_cte,"\n", 
                  "mu_w: ",mu_w, ", s_w: ", s_w,"\n",
