@@ -130,7 +130,7 @@ plot_inf_cte
 #----------------------AREA of STAB muw vs alp------------------------------------#
 # Influence of alpha in outlier:
 # alp_vet <- 3
-gamma_ct <- 3.5
+gamma_ct <- 2
 bet_vec <- seq(0.01,5,0.01)
 len_vec <- length(bet_vec)
 plot_list_area <- list()
@@ -161,10 +161,12 @@ for(i in c(1:len_vec)){
 }
 
 plot_bet_0.01 <- plot_list_area[[1]] + ggtitle("") +
-  labs(title="a")+ theme(legend.position = "none")
-plot_bet_0.18 <- plot_list_area[[18]]+ labs(title="b")
+  labs(title="c")+ theme(legend.position = "none")
+plot_bet_0.18 <- plot_list_area[[18]]+ labs(title="d")
 
-ggarra <- ggarrange(plot_bet_0.01, plot_bet_0.18, common.legend = TRUE)
+ggarra1 <- ggarrange(plot_bet_0.01, plot_bet_0.18, common.legend = TRUE)
+
+ggarrange(ggarra, ggarra1, common.legend = TRUE, ncol = 1, nrow = 2)
 png_files <-  c()
 for(i in c(1:len_vec)){
   # png_files[i] <- paste0("/home/marta/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both///genN100g0,82b0mw0,5sw0,46mm0,5sm0,46_",i+1,".png")
