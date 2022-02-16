@@ -344,3 +344,20 @@ outl_1patch <- function(alp, bet_cte, N, mu_w, mu_c, gamma_ct){
   outl2 <- outl2 + (bet_cte*(1-mu_w) - N*mu_c - gamma_ct)
   return(c(outl,outl2))
 }
+
+out_gen <-  function(N,beta_ct,  mu_w, gamma_ct){
+  out <-  beta_ct*(mu_w*(N-1) + 1) - gamma_ct
+  return(out)
+}
+
+outl_Kpatch <- function(K, alp, bet_cte, N, mu_w, mu_c, gamma_ct){
+  a <- bet_cte*mu_w +mu_c
+  b <- alp
+  c <- alp*mu_w
+  
+  outl <- (1/2)*(N*a + b + (K-1)*c + sqrt((N*a)^2 - (2*N-4*K)*a*b +
+                                            (2*(K+1)*N-4*K)*a*c + b^2 + (2*K-2)*b*c + (K-1)^2*c^2))
+  outl <- outl + (bet_cte*(1-mu_w) - N*mu_c - gamma_ct)
+  
+  return(outl)
+}

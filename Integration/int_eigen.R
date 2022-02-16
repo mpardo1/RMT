@@ -27,22 +27,22 @@ source("~/RMT/Integration/functions_eigen_int.R")
   DIST <-  "beta"
   
 #-------------------EPIDEMIOLOGICAL----------------------
-  N = 50 # Number of patches
+  N = 100 # Number of patches
   # CTE parameters:
   del_N <- rep(0.6, N) # Birth rate
   # bet_cte <- 6
-  bet_cte <-  0.1
+  bet_cte <-  1
   bet <- rep(bet_cte, N)  # Transmission rate
   # bet <- abs(rnorm(N,1,1))  # Transmission rate
-  d_vec <- rep(1.6, N) # Natural mortality rate
+  d_vec <- rep(1, N) # Natural mortality rate
   thet <- rep(0.6, N) # Rate of loss of immunity
-  alp <- rep(6.4, N) # Rate of disease overcome
+  alp <- rep(1, N) # Rate of disease overcome
   delt <- rep(0, N) # Diseases related mortality rate
   gamma_ct <-  alp[1] + delt[1] + d_vec[1]
   print(paste0("gamma:", alp[1] + delt[1] + d_vec[1]))
   print(paste0("beta - gamma:", bet[1] - (alp[1] + delt[1] + d_vec[1])))
 
-#-------------------- MOBILITY ------------------#
+#-------------------- MOBILITY ------------------
 ### Migration:
   mu_c <- 0.01
   s_c <- 0.00001
@@ -54,8 +54,8 @@ source("~/RMT/Integration/functions_eigen_int.R")
 
   migrate_mat <- mat_conect(N,alp_c,bet_c,DIST)
 ### Commuting
-  mu_w <- 0.2
-  s_w <- 0.01
+  mu_w <- 0.4
+  s_w <- 0.2
   alp_w <- beta_a_b(mu_w, s_w)[1]
   bet_w <- beta_a_b(mu_w, s_w)[2]
   
@@ -86,7 +86,7 @@ tau_ct <- 0
 
 # End time integration:
 end_time <- 100
-#----------------------------CTE BETA------------------------------------#
+#----------------------------CTE BETA------------------------------------
 beta_ct = bet_cte  # beta
 gamma_ct = alp[1] + delt[1] + d_vec[1]     # gamma   
 bet <- rep(bet_cte, N)  # Transmission rate
@@ -124,13 +124,46 @@ plot_eigen_cte_pred + ggtitle(paste0("N: ",N,"\n", "gamma: ", gamma_ct, ", beta:
 # Plot integration:
 state <- "INF"
 plot_inf_cte <- plot_int(N, sol, state) + 
-  theme_bw() + xlim(c(0,20))
+  theme_bw() + xlim(c(0,10))
 
 plot_inf_cte
-#----------------------AREA of STAB muw vs alp------------------------------------#
+
+plot_eigen_cte_pred_sw_0.05 <- plot_eigen_cte_pred_sw_0.05 + ggtitle("") +
+  labs(title="a" )+ theme(legend.position = "none") + xlab("real")
+plot_inf_cte_sw_0.05 <- plot_inf_cte_sw_0.05 + ggtitle("") +
+  labs(title="c" )+ theme(legend.position = "none") + xlab("time")
+
+
+plot_eigen_cte_pred <- plot_eigen_cte_pred + ggtitle("") +
+  labs(title="b" )+ theme(legend.position = "none") + xlab("real") + ylab("")
+plot_inf_cte <- plot_inf_cte + ggtitle("") +
+  labs(title="d" )+ theme(legend.position = "none")+ ylab("")
+
+ggarr1 <-  ggarrange(plot_inf_cte_sw_0.05,plot_inf_cte, ncol = 2, nrow = 1)
+ggarr2 <-  ggarrange(plot_eigen_cte_pred_sw_0.05,plot_eigen_cte_pred, ncol = 2, nrow = 1)
+gg_full <-  ggarrange(ggarr2,ggarr1, ncol = , nrow = 2)
+#--------------------------SAVE FILE--------------------------------#
+gamma_ct_w <- format(round(gamma_ct,2), decimal.mark = ',')
+beta_ct_w <- format(round(beta_ct,2), decimal.mark = ',')
+mu_w_w <- format(round(mu_w,2), decimal.mark = ',')
+s_w_w <- format(round(s_w,2), decimal.mark = ',')
+mu_c_w <- format(round(mu_c,2), decimal.mark = ',')
+s_c_w <- format(round(s_c,2), decimal.mark = ',')
+
+
+Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/"
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/"
+
+path <- paste0(Path,"sigma_radius","N",N,"g",gamma_ct_w,"b",beta_ct_w,"mw",
+               mu_w_w,"sw1",s_w_w,"sw2","0.05","mm",mu_c_w,"sm",s_c_w,".png")
+ggsave(path,
+       plot =gg_full, device = "png")
+
+#---------------------------------------------------------------------#
+#----------------------AREA of STAB muw vs alp-------------------------
 # Influence of alpha in outlier:
 # alp_vet <- 3
-gamma_ct <- 2
+gamma_ct <- 5
 bet_vec <- seq(0.01,5,0.01)
 len_vec <- length(bet_vec)
 plot_list_area <- list()
@@ -160,13 +193,35 @@ for(i in c(1:len_vec)){
     ggtitle(paste0("beta_cte*mu_w - gamma :",  bet_vec[i] - gamma_ct ))
 }
 
-plot_bet_0.01 <- plot_list_area[[1]] + ggtitle("") +
-  labs(title="c")+ theme(legend.position = "none")
-plot_bet_0.18 <- plot_list_area[[18]]+ labs(title="d")
+st <- 1
+end <- 18
+plot_bet_0.01 <- plot_list_area[[st]] + ggtitle("") +
+  labs(title="a")+ theme(legend.position = "none")
+plot_bet_0.18 <- plot_list_area[[end]]+ labs(title="b")+ theme(legend.position = "none")
 
-ggarra1 <- ggarrange(plot_bet_0.01, plot_bet_0.18, common.legend = TRUE)
+ggarra <- ggarrange(plot_bet_0.01, plot_bet_0.18, common.legend = FALSE)
 
-ggarrange(ggarra, ggarra1, common.legend = TRUE, ncol = 1, nrow = 2)
+gg_full <-  ggarrange(ggarra, ggarra1, common.legend = TRUE, ncol = 1, nrow = 2)
+
+#--------------------------SAVE FILE--------------------------------#
+gamma_ct_w <- format(round(gamma_ct,2), decimal.mark = ',')
+beta_ct_1 <- format(round(bet_vec[st],2), decimal.mark = ',')
+beta_ct_2 <- format(round(bet_vec[end],2), decimal.mark = ',')
+mu_w_w <- format(round(mu_w,2), decimal.mark = ',')
+s_w_w <- format(round(s_w,2), decimal.mark = ',')
+mu_c_w <- format(round(mu_c,2), decimal.mark = ',')
+s_c_w <- format(round(s_c,2), decimal.mark = ',')
+
+
+Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/Area/"
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/epi_param/Area/"
+
+path <- paste0(Path,"Area","N",N,"g1_2","g2_",gamma_ct_w,"b1",beta_ct_1,"b2",beta_ct_2,"mw",
+               mu_w_w,"sw",s_w_w,"mm",mu_c_w,"sm",s_c_w,".png")
+ggsave(path,
+       plot =gg_full, device = "png")
+
+#---------------------------------------------------------------------#
 png_files <-  c()
 for(i in c(1:len_vec)){
   # png_files[i] <- paste0("/home/marta/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both///genN100g0,82b0mw0,5sw0,46mm0,5sm0,46_",i+1,".png")
@@ -193,8 +248,96 @@ plot_alp_max_eigen  <- ggplot(alp_df) +
     theme_bw() 
 
 plot_alp_max_eigen 
+#----------------------AREA of STAB muw vs N-----------------------------------
+# Influence of alpha in outlier:
+# alp_vet <- 3
+gamma_ct <- 10.4
+N_vec = seq(50,250,1)
+len_vec <- length(N_vec)
+plot_list_area <- list()
+ind <- sample(1:N,1)
+# gamma_ct = alp[1] + delt[1] + d_vec[1] # gamma   
+for(i in c(1:len_vec)){
+  max_bet <- 5
+  vec_bet <- seq(0,max_bet,0.01)
+  mu_w_vec <- seq(0.01,1.01,0.01)
+  len <- length(mu_w_vec)
+  df_mu_w_slp <- data.frame(N = 0, mu_w = 0, outl = 0)
+  for(j in c(1:len)){
+    vec <- sapply(N_vec, out_gen, vec_bet[i], mu_w_vec[j], gamma_ct)
+    df <- data.frame(N =N_vec, mu_w =mu_w_vec[j], outl= vec)
+    df_mu_w_slp <- rbind(df_mu_w_slp,df)
+  }
+  
+  df_mu_w_slp <- df_mu_w_slp[-1,]
+  df_mu_w_slp$stability <- ifelse((df_mu_w_slp$outl > 0) , FALSE, TRUE)
+  plot_list_area[[i]] <- ggplot(df_mu_w_slp) + 
+    geom_point(aes(N, mu_w, colour = stability)) +
+    xlab("Number of patches") + 
+    ylab(~ paste( mu [w])) +
+    theme_bw() +
+    ggtitle(paste("gamma: ",gamma_ct))
+}
 
-#-----------------------TIME FOR MAX INFECTED---------------------------#
+st <- 1
+end <- 18
+plot_bet_0.01 <- plot_list_area[[st]] + ggtitle("") +
+  labs(title="a")+ theme(legend.position = "none")
+plot_bet_0.18 <- plot_list_area[[end]]+ labs(title="b")+ theme(legend.position = "none")
+
+ggarra <- ggarrange(plot_bet_0.01, plot_bet_0.18, common.legend = FALSE)
+
+gg_full <-  ggarrange(ggarra, ggarra1, common.legend = TRUE, ncol = 1, nrow = 2)
+
+gg_arr <-  ggarrange(plot_gen_1,plot_gen_2,
+                     plot_gen_3,plot_gen_4,
+                     nrow = 2, ncol = 2, common.legend = TRUE)
+#--------------------------SAVE FILE--------------------------------#
+gamma_ct_w <- format(round(gamma_ct,2), decimal.mark = ',')
+beta_ct_1 <- format(round(bet_vec[st],2), decimal.mark = ',')
+beta_ct_2 <- format(round(bet_vec[end],2), decimal.mark = ',')
+mu_w_w <- format(round(mu_w,2), decimal.mark = ',')
+s_w_w <- format(round(s_w,2), decimal.mark = ',')
+mu_c_w <- format(round(mu_c,2), decimal.mark = ',')
+s_c_w <- format(round(s_c,2), decimal.mark = ',')
+
+Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/Gen/Area/"
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/Area/"
+
+path <- paste0(Path,"Area","N",N,"g1_2","g2_",gamma_ct_w,"b1",beta_ct_1,"b2",beta_ct_2,"mw",
+               mu_w_w,"sw",s_w_w,"mm",mu_c_w,"sm",s_c_w,".png")
+ggsave(path,
+       plot =gg_full, device = "png")
+
+#---------------------------------------------------------------------#
+png_files <-  c()
+for(i in c(1:len_vec)){
+  # png_files[i] <- paste0("/home/marta/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both///genN100g0,82b0mw0,5sw0,46mm0,5sm0,46_",i+1,".png")
+  
+  ggsave(paste0("~/Documents/PHD/2022/RMT_SIR/Plots/Gen/Area/High_gam/plot_gam_",gamma_ct,"_",i,".png" ),
+         plot = plot_list_area[[i]], device = "png")
+  png_files[i] <-  paste0("~/Documents/PHD/2022/RMT_SIR/Plots/Gen/Area/High_gam/plot_gam_",gamma_ct,"_",i,".png" )
+}
+
+# png_files <- list.files("~/Documents/PHD/2022/RMT_SIR/Plots/1patch/test/", pattern = ".*png$", full.names = TRUE)
+# gifski(png_files, gif_file = "~/Documentos/PHD/2022/RMT_SIR/Plots/1patch/High_both/animation.gif", width = 800, height = 600, delay = 0.3)
+gifski(png_files, gif_file = "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/Area/High_gam/animation_gam_",gamma_ct,".gif", width = 800, height = 600, delay = 0.3)
+
+# Compute the right most eigenvalue vs alpha:
+vec <- sapply(vec_alp, outl_1patch, bet_cte , N, mu_w, mu_c, gamma_ct)
+alp_df <- data.frame(alp_bet = vec_alp, outl <- vec[1,])
+
+plot_alp_max_eigen  <- ggplot(alp_df) + 
+  geom_line(aes( alp_bet, outl))  +
+  ylab("Rigth most eigenvalue") + xlab(expression(alpha)) +
+  geom_segment(aes(x = 0, y = 0, xend = max_alp, yend =0,
+                   colour = "segment"), linetype=2, 
+               show.legend = FALSE) +
+  theme_bw() 
+
+plot_alp_max_eigen 
+
+#-----------------------TIME FOR MAX INFECTED---------------------------
 alpha_r0_1 <-  function(alp_p){
   a <- bet_cte*mu_w + mu_c
   b <- alp_p
@@ -211,7 +354,11 @@ uni <- uniroot(alpha_r0_1, c(0, 20))$root
 bet_cte = 0.1
 bet <- rep(bet_cte, N)  # Transmission rate
 beta_ct = bet_cte  # beta
-gamma_ct = 2    # gamma   
+d_vec <- rep(1, N) # Natural mortality rate
+alp <- rep(1, N) # Rate of disease overcome
+delt <- rep(0, N) # Diseases related mortality rate
+
+gamma_ct = d_vec[1] + alp[1] +  delt[1]   # gamma   
 count = 1
 alp_vec <- seq(0,10,0.1)
 l <-  length(alp_vec) + 1
@@ -260,13 +407,17 @@ plot_max_inf <- ggplot(mat_max_inf_df) +
   
 plot_max_inf
 
-#---------------------S_w vs MAX INF -----------------------------------#
+#---------------------S_w vs MAX INF ----------------------------------
 count = 1
 s_w_vec <- seq(0.01,0.24,0.01)
 l <-  length(s_w_vec) + 1
 mat_max_inf <-  matrix(0, ncol = 3, nrow = l)
 plot_list <- list()
+d_vec <- rep(1, N) # Natural mortality rate
+alp <- rep(1, N) # Rate of disease overcome
+delt <- rep(0, N) # Diseases related mortality rate
 
+gamma_ct = d_vec[1] + alp[1] +  delt[1]   # gamma   
 for(i in c(1:l)){
   alp_w <- beta_a_b(mu_w, s_w_vec[i])[1]
   bet_w <- beta_a_b(mu_w, s_w_vec[i])[2]
@@ -338,7 +489,7 @@ plot_max_inf <- ggplot(mat_max_inf_df) +
   geom_line(aes(sig_w,max_inf)) + theme_bw() 
 
 plot_max_inf
-#--------------------------CHANGING BETA--------------------------------#
+#--------------------------CHANGING BETA-------------------------------
 # Change parameters to characters with decimal coma:
 beta_ct = bet_cte  # beta
 gamma_ct = alp[1] + delt[1] + d_vec[1]     # gamma   
@@ -350,11 +501,19 @@ mu_c_w <- format(round(mu_c,2), decimal.mark = ',')
 s_c_w <- format(round(s_c,2), decimal.mark = ',')
 
 # Reinitialize the beta to cte vector:
+d_vec <- rep(1.2, N) # Natural mortality rate
+alp <- rep(0.5, N) # Rate of disease overcome
+delt <- rep(0, N) # Diseases related mortality rate
+gamma_ct = d_vec[1] + alp[1] +  delt[1]   # gamma   
+
 bet <- rep(bet_cte, N)  # Transmission rate
+
+print(paste0("beta-gamma:", bet_cte - gamma_ct))
 count = 1
 alp_vec <- seq(0,10,0.1)
 l <-  length(alp_vec) + 1
 plot_list <- list()
+ind <-  sample(1:N,1)
 for(i in alp_vec){
   print(paste0("New beta : ",i))
   bet_new <- i
@@ -441,7 +600,7 @@ for(i in c(1:(count-1))){
 gifski(png_files, gif_file = "~/Documents/PHD/2022/RMT_SIR/Plots/kpatch/High_both/animation.gif", width = 800, height = 600, delay = 0.3)
 
 
-#---------------------RANDOM BETAS------------------------#
+#---------------------RANDOM BETAS------------------------
 bet <- abs(rnorm(N,1,1))  # Transmission rate
 sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
            commut_mat,migrate_mat,end_time,
@@ -475,7 +634,7 @@ ggplot(mat_max_inf) +
 
 ggarrange(plot_inf_1_low, plot_inf_1_HALF, plot_inf_1_high)
 ggarrange(plot_inf_1_high, plot_inf_1_lim)
-#--------------------------------------------------------------------------#
+#---------------------------------------------------------------------
 
 plot_inf_2_lim <- plot_inf_2_lim + labs(title="a")
 plot_inf_1 <- plot_inf_1 + labs(title="a")

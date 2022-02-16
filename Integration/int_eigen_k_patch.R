@@ -39,6 +39,9 @@ CTE_INF <- 1
 # Parameter for distribution, "normal", "beta", "gamma":
 DIST <-  "beta"
 
+# Number of initial individuals by compartments:
+SUS_INIT <- 100000 #Susceptible
+INF_INIT <- 100    #Infected
 #-------------------EPIDEMIOLOGICAL----------------------
 N = 50 # Number of patches
 # CTE parameters:
@@ -118,12 +121,12 @@ mu_m_w <- format(round(mu_m,2), decimal.mark = ',')
 s_m_w <- format(round(s_m,2), decimal.mark = ',')
 # Integrate the system:
 count = 1
-max_n_patch <-  N
+max_n_patch <-  6
 k_vec <- seq(0,max_n_patch,1)
 l <-  length(k_vec) + 1
 mat_max_inf <-  matrix(0, ncol = 2, nrow = l)
 plot_list <- list()
-bet_new <- 6
+bet_new <- 1
 for(i in k_vec){
   print(paste0("New beta : ",i))
   bet[1:i] <- bet_cte + bet_new
@@ -181,50 +184,6 @@ ggplot(mat_max_inf) +
 
 ggarrange(plot_inf_1_low, plot_inf_1_HALF, plot_inf_1_high)
 ggarrange(plot_inf_1_high, plot_inf_1_lim)
-#--------------------------------------------------------------------------#
-plot_inf_1_lim <- plot_inf_1_lim + labs(title="a")
-plot_1 <- ggarrange(plot_inf_1_lim, plot_inf_2_lim)
-# plot_1 <- ggarrange(plot_inf_1,plot_inf_2, labels = c("a","b","c","d"))
-# plot_2 <- ggarrange(plot_eigen_1,plot_eigen_2, ncol = 2, labels = c("a","b","c","d"))
-plot_1 <- ggarrange(plot_inf_1_lim,
-                    plot_inf_2,
-                    plot_eigen_1,
-                    plot_eigen_2,
-                    nrow = 2,ncol = 2,
-                    label.x = 0,
-                    label.y = 1)
-
-plot_2 <- ggarrange(plot_inf_2,
-                    plot_inf_2_lim,
-                    nrow = 1,ncol = 2)
-
-plot_bet <- ggarrange(plot_2,plot_eigen_1,
-                      nrow = 2,ncol = 1)
-plot_bet
-
-plot_full <- ggarrange(plot,
-                       plot_bet,
-                       nrow = 1,
-                       ncol = 2)
-plot_inf_2_lim <- plot_inf_2_lim + labs(title="a")
-plot_inf_1 <- plot_inf_1 + labs(title="a")
-plot_inf_2 <- plot_inf_2 + labs(title="c")
-plot_eigen_1 <- plot_eigen_1 + labs(title="e")
-plot_eigen_2 <- plot_eigen_2 + labs(title="e")
-
-plot <- ggarrange(plot_inf_1, plot_inf_2,
-                  plot_eigen_1, plot_eigen_2,
-                  nrow = 2,ncol = 2,
-                  label.x = 0,
-                  label.y = 1)
-plot
-
-plot <- ggarrange(plot_inf_2_lim,
-                  plot_eigen_2,
-                  nrow = 2,ncol = 1,
-                  label.x = 0,
-                  label.y = 1)
-plot
 
 #-------------------SAVE FILE-------------------
 Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/"
@@ -243,5 +202,51 @@ path <- paste0(Path,"gen","N",N_w,"g",gamma_ct_w,"b",beta_ct_w,"mw",
 png(file = path, width = 8000, height = 6000, res = 1100)
 plot_1
 dev.off()
+
+#--------------------------------------------------------------------#
+#----------------------AREA of STAB muw vs N-----------------------------------
+# Influence of alpha in outlier:
+# alp_vet <- 3
+gamma_ct <- 10.4
+N_vec = seq(50,250,1)
+len_vec <- length(N_vec)
+plot_list_area <- list()
+ind <- sample(1:N,1)
+# gamma_ct = alp[1] + delt[1] + d_vec[1] # gamma   
+for(i in c(1:len_vec)){
+  max_bet <- 5
+  vec_bet <- seq(0,max_bet,0.01)
+  mu_w_vec <- seq(0.01,1.01,0.01)
+  len <- length(mu_w_vec)
+  df_mu_w_slp <- data.frame(N = 0, mu_w = 0, outl = 0)
+  for(j in c(1:len)){
+    vec <- sapply(N_vec, out_gen, vec_bet[i], mu_w_vec[j], gamma_ct)
+    df <- data.frame(N =N_vec, mu_w =mu_w_vec[j], outl= vec)
+    df_mu_w_slp <- rbind(df_mu_w_slp,df)
+  }
+  
+  df_mu_w_slp <- df_mu_w_slp[-1,]
+  df_mu_w_slp$stability <- ifelse((df_mu_w_slp$outl > 0) , FALSE, TRUE)
+  plot_list_area[[i]] <- ggplot(df_mu_w_slp) + 
+    geom_point(aes(N, mu_w, colour = stability)) +
+    xlab("Number of patches") + 
+    ylab(~ paste( mu [w])) +
+    theme_bw() +
+    ggtitle(paste("gamma: ",gamma_ct))
+}
+
+st <- 1
+end <- 18
+plot_bet_0.01 <- plot_list_area[[st]] + ggtitle("") +
+  labs(title="a")+ theme(legend.position = "none")
+plot_bet_0.18 <- plot_list_area[[end]]+ labs(title="b")+ theme(legend.position = "none")
+
+ggarra <- ggarrange(plot_bet_0.01, plot_bet_0.18, common.legend = FALSE)
+
+gg_full <-  ggarrange(ggarra, ggarra1, common.legend = TRUE, ncol = 1, nrow = 2)
+
+gg_arr <-  ggarrange(plot_gen_1,plot_gen_2,
+                     plot_gen_3,plot_gen_4,
+                     nrow = 2, ncol = 2, common.legend = TRUE)
 
 
