@@ -69,8 +69,6 @@ source("~/RMT/Integration/functions_eigen_int.R")
 
 #----------Change 1 patch or change K patches with alpha/k----------
 #--------------------------1 PATCH----------------------------------
-  
-  
   thet <- rep(0.6, N) # Rate of loss of immunity
   # Exit Rates:
   d_vec <- rep(1, N) # Natural mortality rate
@@ -82,23 +80,23 @@ source("~/RMT/Integration/functions_eigen_int.R")
   #Transmission rate:
   bet_cte <-  1
   bet <- rep(bet_cte, N)  # Transmission rate
-  bet_new <- 2
+  bet_new <- 5
   ind <-  sample(1:N,1)
-  K <- 70 # Number of patches to change transmission rate.
+  K <- 18 # Number of patches to change transmission rate.
   bet[ind] <-( bet_cte + K*bet_new)
   
-  # sol <- int(N, del_N,bet,d_vec,thet,alp.vec,delt,
-  #            commut_mat,migrate_mat,end_time,
-  #            MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
-  # 
-  # sol_df <-  as.data.frame(sol)
+  sol <- int(N, del_N,bet,d_vec,thet,alp.vec,delt,
+             commut_mat,migrate_mat,end_time,
+             MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
+
+  sol_df <-  as.data.frame(sol)
   
   
   # Plot the susceptible, infected and recovered:
-  # state <- "INF"
-  # plot_inf_1 <- plot_int(N, sol, state) +
-  #   theme_bw() + xlim(c(0,20))
-  # plot_inf_1
+  state <- "INF"
+  plot_inf_1 <- plot_int(N, sol, state) +
+    theme_bw() + xlim(c(0,20))
+  plot_inf_1
   
   # Make distribution:
   jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_c, MOB)
@@ -135,18 +133,18 @@ source("~/RMT/Integration/functions_eigen_int.R")
   bet.k <- rep(bet_cte, N)  # Transmission rate
   bet.k[ind] <- bet_cte + bet_new
   
-  # sol.k <- int(N, del_N,bet.k,d_vec,thet,alp.vec,delt,
-  #            commut_mat,migrate_mat,end_time,
-  #            MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
-  # 
-  # sol.k.df <-  as.data.frame(sol.k)
-  # 
+  sol.k <- int(N, del_N,bet.k,d_vec,thet,alp.vec,delt,
+             commut_mat,migrate_mat,end_time,
+             MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
+
+  sol.k.df <-  as.data.frame(sol.k)
+
   
   # Plot the infected :
-  # state <- "INF"
-  # plot_inf_k <- plot_int(N, sol.k, state) +
-  #   theme_bw() + xlim(c(0,20))
-  # plot_inf_k
+  state <- "INF"
+  plot_inf_k <- plot_int(N, sol.k, state) +
+    theme_bw() + xlim(c(0,20))
+  plot_inf_k
   
   # Compute the jacobian matrix:
   jac.k <- jacobian(N,bet.k,gamma_ct, commut_mat, migrate_mat,mu_c, MOB)
