@@ -319,12 +319,12 @@ mu_c_w <- format(round(mu_c,2), decimal.mark = ',')
 s_c_w <- format(round(s_c,2), decimal.mark = ',')
 
 
-Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/"
+Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/epi_param/"
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/epi_param/"
 
 path <- paste0(Path,"pred_real_k_1","N",N,"g",gamma_ct_w,"b",beta_ct_w,
                "bet_mew", bet_new,
                "mw",mu_w_w,"sw",s_w_w,"mm",mu_c_w,"sm",s_c_w,".png")
-ggarrange(ggarr1,plot, ncol=1, nrow =2)
+gg_full <- ggarrange(ggarr1,plot, ncol=1, nrow =2)
 ggsave(path,
        plot =gg_full, device = "png")
