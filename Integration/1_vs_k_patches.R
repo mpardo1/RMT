@@ -30,17 +30,6 @@ source("~/RMT/Integration/functions_eigen_int.R")
   N = 100 # Number of patches
   # CTE parameters:
   del_N <- rep(0.6, N) # Birth rate
-  # bet_cte <- 6
-  bet_cte <-  1
-  bet <- rep(bet_cte, N)  # Transmission rate
-  # bet <- abs(rnorm(N,1,1))  # Transmission rate
-  d_vec <- rep(1, N) # Natural mortality rate
-  thet <- rep(0.6, N) # Rate of loss of immunity
-  alp <- rep(1, N) # Rate of disease overcome
-  delt <- rep(0, N) # Diseases related mortality rate
-  gamma_ct <-  alp[1] + delt[1] + d_vec[1]
-  print(paste0("gamma:", alp[1] + delt[1] + d_vec[1]))
-  print(paste0("beta - gamma:", bet[1] - (alp[1] + delt[1] + d_vec[1])))
 
 #-------------------- MOBILITY ---------------------------
   ### Migration:
@@ -72,7 +61,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
 
 #-----------------POPULATION INIT----------------------#
   # Number of initial individuals by compartments:
-  SUS_INIT <- 100000 #Susceptible
+  SUS_INIT <- 100000000 #Susceptible
   INF_INIT <- 100    #Infected
   
   # End time integration:
@@ -80,26 +69,36 @@ source("~/RMT/Integration/functions_eigen_int.R")
 
 #----------Change 1 patch or change K patches with alpha/k----------
 #--------------------------1 PATCH----------------------------------
+  
+  
+  thet <- rep(0.6, N) # Rate of loss of immunity
+  # Exit Rates:
+  d_vec <- rep(1, N) # Natural mortality rate
+  alp.vec <- rep(1, N) # Rate of disease overcome
+  delt <- rep(0, N) # Diseases related mortality rate
+  gamma_ct <-  alp.vec[1] + delt[1] + d_vec[1]
+  print(paste0("gamma_ct:", gamma_ct))
+  
+  #Transmission rate:
   bet_cte <-  1
-  gamma_ct <- 2
   bet <- rep(bet_cte, N)  # Transmission rate
-  count = 1
-  bet_new <- 8
+  bet_new <- 2
   ind <-  sample(1:N,1)
-  bet[ind] <- bet_cte + bet_new
+  K <- 70 # Number of patches to change transmission rate.
+  bet[ind] <-( bet_cte + K*bet_new)
   
-  sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
-             commut_mat,migrate_mat,end_time,
-             MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
-  
-  sol_df <-  as.data.frame(sol)
+  # sol <- int(N, del_N,bet,d_vec,thet,alp.vec,delt,
+  #            commut_mat,migrate_mat,end_time,
+  #            MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
+  # 
+  # sol_df <-  as.data.frame(sol)
   
   
   # Plot the susceptible, infected and recovered:
-  state <- "INF"
-  plot_inf_1 <- plot_int(N, sol, state) +
-    theme_bw() + xlim(c(0,20))
-  plot_inf_1
+  # state <- "INF"
+  # plot_inf_1 <- plot_int(N, sol, state) +
+  #   theme_bw() + xlim(c(0,20))
+  # plot_inf_1
   
   # Make distribution:
   jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_c, MOB)
@@ -110,11 +109,11 @@ source("~/RMT/Integration/functions_eigen_int.R")
   
   # Compute the outliers, center and radius:
   a <- bet_cte*mu_w + mu_c
-  b <- bet_new
-  c <- bet_new*mu_w
+  b <- K*bet_new
+  c <- K*bet_new*mu_w
   beta_ct <-  bet_cte
   rad <- pred_radius(N, beta_ct, gamma_ct, tau_ct, mu_c, sqrt(s_c), mu_w, sqrt(s_w), MOB)
-  cent <- pred_center(N, beta_ct, gamma_ct, tau_ct, mu_c, sqrt(s_c), mu_w,sqrt( s_w), MOB)
+  cent <- pred_center(N, beta_ct, gamma_ct, tau_ct, mu_c, sqrt(s_c), mu_w, sqrt( s_w), MOB)
   
   outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
   outl2 <- (1/2)*(N*a + b - sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
@@ -123,7 +122,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   
   
   # If last parameter is 1 he outlier is not computed:
-  plot_eigen_1 <- plot_eigen(eig, cent, rad, outl, 1)+
+  plot_eigen_1 <- plot_eigen(eig, cent, rad, outl, 1) +
     geom_point(aes(outl,0), colour =  "blue",
                show.legend = NA) +
     geom_point(aes(outl2,0), colour =  "blue",
@@ -132,34 +131,32 @@ source("~/RMT/Integration/functions_eigen_int.R")
   plot_eigen_1
   
   #--------------------------K PATCH-----------------------------------
-  K <- 50 # Number of patches to change transmission rate.
-  bet_new <- bet_new/K
   ind <- sample(1:N,K)
-  bet <- rep(bet_cte, N)  # Transmission rate
-  bet[ind] <- bet_cte + bet_new
+  bet.k <- rep(bet_cte, N)  # Transmission rate
+  bet.k[ind] <- bet_cte + bet_new
   
-  sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
-             commut_mat,migrate_mat,end_time,
-             MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
-  
-  sol_df <-  as.data.frame(sol)
-  
+  # sol.k <- int(N, del_N,bet.k,d_vec,thet,alp.vec,delt,
+  #            commut_mat,migrate_mat,end_time,
+  #            MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
+  # 
+  # sol.k.df <-  as.data.frame(sol.k)
+  # 
   
   # Plot the infected :
-  state <- "INF"
-  plot_inf_k <- plot_int(N, sol, state) +
-    theme_bw() + xlim(c(0,20))
-  plot_inf_k
+  # state <- "INF"
+  # plot_inf_k <- plot_int(N, sol.k, state) +
+  #   theme_bw() + xlim(c(0,20))
+  # plot_inf_k
   
   # Compute the jacobian matrix:
-  jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_c, MOB)
-  eig <- eigen_mat(jac)
+  jac.k <- jacobian(N,bet.k,gamma_ct, commut_mat, migrate_mat,mu_c, MOB)
+  eig.k <- eigen_mat(jac.k)
   
-  plot_eig_k <- ggplot(eig) + geom_point(aes(re,im), size = 0.05)
+  plot_eig_k <- ggplot(eig.k) + geom_point(aes(re,im), size = 0.05)
   plot_eig_k + coord_fixed()
   
   # Compute outliers:
-  a <- bet_cte*mu_w +mu_c
+  a <- bet_cte*mu_w + mu_c
   b <- bet_new
   c <- bet_new*mu_w
   
@@ -173,11 +170,14 @@ source("~/RMT/Integration/functions_eigen_int.R")
   outl2 <- outl2 + (bet_cte*(1-mu_w) - N*mu_c - gamma_ct)
   outl3 <- outl3 + (bet_cte*(1-mu_w) - N*mu_c - gamma_ct)
   
-  rad <- pred_radius(N, mean(bet), gamma_ct, tau_ct, mu_c, sqrt(s_c), mu_w, sqrt(s_w), MOB)
-  cent <- pred_center(N, mean(bet), gamma_ct, tau_ct, mu_c, sqrt(s_c), mu_w,sqrt( s_w), MOB)
+  rad.k <- pred_radius(N, bet_cte, gamma_ct[1], tau_ct, mu_c, sqrt(s_c), mu_w, sqrt(s_w), MOB)
+  cent.k <- pred_center(N, bet_cte, gamma_ct[1], tau_ct, mu_c, sqrt(s_c), mu_w,sqrt(s_w), MOB)
+  
+  rad.k <- pred_radius(N, bet_new, gamma_ct[1], tau_ct, mu_c, sqrt(s_c), mu_w, sqrt(s_w), MOB)
+  cent.k <- pred_center(N, bet_new, gamma_ct[1], tau_ct, mu_c, sqrt(s_c), mu_w,sqrt(s_w), MOB)
   
   
-  plot_eigen_k <- plot_eigen(eig, cent, rad, outl, 1)+
+  plot_eigen_k <- plot_eigen(eig.k, cent.k, rad.k, outl, 1) +
     geom_point(aes(outl,0), colour =  "blue",
                show.legend = NA) +
     geom_point(aes(outl2,0), colour =  "blue",
@@ -187,9 +187,9 @@ source("~/RMT/Integration/functions_eigen_int.R")
   
   plot_eigen_k
 #--------------------------------------------------------------------#
-  ggarrange(plot_eigen_1, plot_eigen_k,
-            plot_inf_1, plot_inf_k,
-            ncol = 2, nrow= 2)
+  # ggarrange(plot_eigen_1, plot_eigen_k,
+  #           plot_inf_1, plot_inf_k,
+  #           ncol = 2, nrow= 2)
 #--------------------------------------------------------------------#
   Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/"
   Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/"
@@ -218,15 +218,16 @@ source("~/RMT/Integration/functions_eigen_int.R")
   # Compute outliers:
   N = 100
   bet_cte <-  3
-  alp <-  6
   mat.pred <- matrix(0, ncol = 3, nrow = N) 
   for(i in c(1:N)){
+    print(paste0("i: ",i))
+    print(paste0("alp: ",alp))
+    alp <- abs(rnorm(1,10,9))
     out.pred.1 <- max(outl_1patch(alp, bet_cte, N,
                                   mu_w, mu_c, gamma_ct))
     out.pred.k <- outl_Kpatch(i, alp/i, bet_cte,
                               N, mu_w, mu_c, gamma_ct)
     mat.pred[i,] <-  c(i,out.pred.1, out.pred.k)
-    
   }
   
   df.Kpatch <-  data.frame(num_patches = mat.pred[,1],
@@ -237,42 +238,48 @@ source("~/RMT/Integration/functions_eigen_int.R")
   
   plot  <- ggplot(df.plot,aes(num_patches, value)) + 
     geom_line(aes( colour = variable))  +
-    ylab("Real part")+
-    theme(legend.position="right") 
+    ylab("Real part") + xlab("Number of patches") 
   
-  plot
+  plot_k.alp <- plot + theme_bw() +
+    theme(legend.position="none")
+  plot_k.alp 
   
+  plot_k_alp <- plot + theme_bw() +
+    theme(legend.position="none")
+  plot_k_alp
   # ------------------COMPARISON RIGHT MOST----------------------------
   # Check if the right most eigenvalue is the same for many iterations:
   d_vec <- rep(1, N) # Natural mortality rate
   thet <- rep(0.6, N) # Rate of loss of immunity
-  alp <- rep(1, N) # Rate of disease overcome
+  alp.vec <- rep(1, N) # Rate of disease overcome
   delt <- rep(0, N) # Diseases related mortality rate
-  gamma_ct <-  alp[1] + delt[1] + d_vec[1]
+  gamma_ct <-  alp.vec[1] + delt[1] + d_vec[1]
   
   ind <-  sample(1:N,1)
   bet_cte <- 1
-  alp <- 0.5
+  bet_new <- 5
+  alp <- bet_new
   mat.comp <-  matrix(0, ncol = 6, nrow = N)
   for(i in c(1:N)){
     # Compute  right most eigenvalue for 1 patch:
     bet <-  rep(bet_cte,N)
-    bet[ind] <- bet[ind] + alp
+    bet[ind] <- bet[ind] + i*alp
     # Compute the jacobian matrix:
     jac <- jacobian(N, bet, gamma_ct, commut_mat, migrate_mat, mu_c, MOB)
     eig <- eigen_mat(jac)
     out1 <-  max(eig$re)
-    out.pred.1 <- max(outl_1patch(alp, bet_cte, N, mu_w, mu_c, gamma_ct))
+    out.pred.1 <- max(outl_1patch(alp*i, bet_cte, N, mu_w, mu_c, gamma_ct))
       
     # Compute  right most eigenvalue for K patches:
     bet <-  rep(bet_cte,N)
-    bet[1:i] <- bet[ind] + alpha/i
+    bet[1:i] <- bet[ind] + alp
     # Compute the jacobian matrix:
     jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_c, MOB)
     eig <- eigen_mat(jac)
     outk <-  max(eig$re)
-    out.pred.k <- outl_Kpatch(i, alpha/i, bet_cte, N, mu_w, mu_c, gamma_ct)
-      
+    out.pred.k <- outl_Kpatch(i, alp, bet_cte, N, mu_w, mu_c, gamma_ct)
+    
+    print(paste0("i:",i))
     mat.comp[i,] = c(i, out1, outk,
                      abs((outk -out1)/outk),out.pred.1, out.pred.k )
   }
@@ -284,6 +291,40 @@ colnames(df.comp) <-  c("N.patches","out1","outk","diff",
 df.comp$diff.1 <- abs(df.comp$out1 - df.comp$out.pred.1)/df.comp$out1
 df.comp$diff.k <- abs(df.comp$outk - df.comp$out.pred.k)/df.comp$outk
 df.comp$diff.pred <- abs(df.comp$out.pred.1 - df.comp$out.pred.k)/df.comp$out.pred.k
+df.comp$K.alp <- df.comp$N.patches * alp
 
 df.comp.round <- round(df.comp,2)
 max(df.comp$diff)
+
+df.comp.filt <- df.comp[,c(1,2,3,5,6)]
+colnames(df.comp.filt) <- c("N.patches","Real outlier 1 patch", "Real outlier k patches",
+                            "Predicted outlier 1 patch",
+                            "Predicted outlier k patches")
+df.plot <- reshape2::melt(df.comp.filt, id.vars = c("N.patches"))
+plot.pred.real  <- ggplot(df.plot,aes(N.patches, value)) + 
+  geom_line(aes( colour = variable))  +
+  ylab("Real part") + xlab("Number of patches") + 
+  scale_fill_continuous(name = FALSE,
+                      labels = ) + theme_bw() 
+plot.pred.real
+
+ggarr1 <- ggarrange(plot_k.alp, plot_k_alp)
+ggarrange(ggarr1,plot, ncol=1, nrow =2)
+
+gamma_ct_w <- format(round(gamma_ct,2), decimal.mark = ',')
+beta_ct_w <- format(round(beta_ct,2), decimal.mark = ',')
+mu_w_w <- format(round(mu_w,2), decimal.mark = ',')
+s_w_w <- format(round(s_w,2), decimal.mark = ',')
+mu_c_w <- format(round(mu_c,2), decimal.mark = ',')
+s_c_w <- format(round(s_c,2), decimal.mark = ',')
+
+
+Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/"
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/epi_param/"
+
+path <- paste0(Path,"pred_real_k_1","N",N,"g",gamma_ct_w,"b",beta_ct_w,
+               "bet_mew", bet_new,
+               "mw",mu_w_w,"sw",s_w_w,"mm",mu_c_w,"sm",s_c_w,".png")
+ggarrange(ggarr1,plot, ncol=1, nrow =2)
+ggsave(path,
+       plot =gg_full, device = "png")

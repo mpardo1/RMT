@@ -11,10 +11,10 @@ library("ggplot2")
 # 1 patch:
 # Parameters: 
 dim <- 400
-bet <- 123
-mu_w <- 220
-mu_c <- 2.4
-alp <- 2323
+bet <- 1
+mu_w <- 0.6
+mu_c <- 0.01
+alp <- 700*45
 mat <- matrix(0, nrow = dim, ncol = dim)
 
 a <- bet*mu_w +mu_c
@@ -49,10 +49,10 @@ plot_eig +
 # K patches:
 # Parameters: 
 dim <- 100
-bet <- 123
-mu_w <- 220
-mu_c <- 2.4
-alp <- 2323
+bet <- 1
+mu_w <- 0.6
+mu_c <- 0.01
+alp <- 700
 mat <- matrix(0, nrow = dim, ncol = dim)
 k <-  45
 
