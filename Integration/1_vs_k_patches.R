@@ -29,7 +29,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
 #-------------------EPIDEMIOLOGICAL----------------------
   N = 100 # Number of patches
   # CTE parameters:
-  del_N <- rep(0.6, N) # Birth rate
+  del_N <- rep(0.7, N) # Birth rate
 
 #-------------------- MOBILITY ---------------------------
   ### Migration:
@@ -61,7 +61,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
 
 #-----------------POPULATION INIT----------------------#
   # Number of initial individuals by compartments:
-  SUS_INIT <- 100000000 #Susceptible
+  SUS_INIT <- 10000 #Susceptible
   INF_INIT <- 100    #Infected
   
   # End time integration:
@@ -71,8 +71,8 @@ source("~/RMT/Integration/functions_eigen_int.R")
 #--------------------------1 PATCH----------------------------------
   thet <- rep(0.6, N) # Rate of loss of immunity
   # Exit Rates:
-  d_vec <- rep(1, N) # Natural mortality rate
-  alp.vec <- rep(1, N) # Rate of disease overcome
+  d_vec <- rep(0.7, N) # Natural mortality rate
+  alp.vec <- rep(0.72, N) # Rate of disease overcome
   delt <- rep(0, N) # Diseases related mortality rate
   gamma_ct <-  alp.vec[1] + delt[1] + d_vec[1]
   print(paste0("gamma_ct:", gamma_ct))
@@ -82,7 +82,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   bet <- rep(bet_cte, N)  # Transmission rate
   bet_new <- 5
   ind <-  sample(1:N,1)
-  K <- 18 # Number of patches to change transmission rate.
+  K <- 48 # Number of patches to change transmission rate.
   bet[ind] <-( bet_cte + K*bet_new)
   
   sol <- int(N, del_N,bet,d_vec,thet,alp.vec,delt,
@@ -185,9 +185,9 @@ source("~/RMT/Integration/functions_eigen_int.R")
   
   plot_eigen_k
 #--------------------------------------------------------------------#
-  # ggarrange(plot_eigen_1, plot_eigen_k,
-  #           plot_inf_1, plot_inf_k,
-  #           ncol = 2, nrow= 2)
+  ggarrange(plot_eigen_1, plot_eigen_k,
+            plot_inf_1, plot_inf_k,
+            ncol = 2, nrow= 2)
 #--------------------------------------------------------------------#
   Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/"
   Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/"
@@ -246,18 +246,19 @@ source("~/RMT/Integration/functions_eigen_int.R")
     theme(legend.position="none")
   plot_k_alp
   # ------------------COMPARISON RIGHT MOST----------------------------
-  # Check if the right most eigenvalue is the same for many iterations:
-  d_vec <- rep(1, N) # Natural mortality rate
-  thet <- rep(0.6, N) # Rate of loss of immunity
-  alp.vec <- rep(1, N) # Rate of disease overcome
+  d_vec <- rep(0.7, N) # Natural mortality rate
+  alp.vec <- rep(0.72, N) # Rate of disease overcome
   delt <- rep(0, N) # Diseases related mortality rate
+  # Check if the right most eigenvalue is the same for many iterations:
+  
+  thet <- rep(0.6, N) # Rate of loss of immunity
   gamma_ct <-  alp.vec[1] + delt[1] + d_vec[1]
   
   ind <-  sample(1:N,1)
   bet_cte <- 1
   bet_new <- 5
   alp <- bet_new
-  mat.comp <-  matrix(0, ncol = 6, nrow = N)
+  mat.comp <-  matrix(0, ncol = 8, nrow = N)
   for(i in c(1:N)){
     # Compute  right most eigenvalue for 1 patch:
     bet <-  rep(bet_cte,N)
@@ -267,7 +268,11 @@ source("~/RMT/Integration/functions_eigen_int.R")
     eig <- eigen_mat(jac)
     out1 <-  max(eig$re)
     out.pred.1 <- max(outl_1patch(alp*i, bet_cte, N, mu_w, mu_c, gamma_ct))
-      
+    
+    sol <- int(N, del_N,bet,d_vec,thet,alp.vec,delt,
+               commut_mat,migrate_mat,5,
+               MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
+    
     # Compute  right most eigenvalue for K patches:
     bet <-  rep(bet_cte,N)
     bet[1:i] <- bet[ind] + alp
@@ -277,19 +282,27 @@ source("~/RMT/Integration/functions_eigen_int.R")
     outk <-  max(eig$re)
     out.pred.k <- outl_Kpatch(i, alp, bet_cte, N, mu_w, mu_c, gamma_ct)
     
+    sol.k <- int(N, del_N,bet,d_vec,thet,alp.vec,delt,
+               commut_mat,migrate_mat,5,
+               MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
+    
     print(paste0("i:",i))
     mat.comp[i,] = c(i, out1, outk,
-                     abs((outk -out1)/outk),out.pred.1, out.pred.k )
+                     abs((outk -out1)/outk),out.pred.1,
+                     out.pred.k, max(sol[,c((N+2):(2*N+1))]),
+                     max(sol.k[,c((N+2):(2*N+1))]))
   }
   
 df.comp <-  as.data.frame(mat.comp)
 colnames(df.comp) <-  c("N.patches","out1","outk","diff",
-                        "out.pred.1", "out.pred.k")
+                        "out.pred.1", "out.pred.k", "max.inf.1","max.inf.k")
 
 df.comp$diff.1 <- abs(df.comp$out1 - df.comp$out.pred.1)/df.comp$out1
 df.comp$diff.k <- abs(df.comp$outk - df.comp$out.pred.k)/df.comp$outk
 df.comp$diff.pred <- abs(df.comp$out.pred.1 - df.comp$out.pred.k)/df.comp$out.pred.k
 df.comp$K.alp <- df.comp$N.patches * alp
+df.comp$diff.inf.abs <- df.comp$max.inf.1 - df.comp$max.inf.k
+df.comp$diff.inf <- abs(df.comp$diff.inf.abs)/max(df.comp$max.inf.1,df.comp$max.inf.k)
 
 df.comp.round <- round(df.comp,2)
 max(df.comp$diff)

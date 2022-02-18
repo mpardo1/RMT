@@ -31,11 +31,10 @@ source("~/RMT/Integration/functions_eigen_int.R")
   # CTE parameters:
   del_N <- rep(0.6, N) # Birth rate
   # bet_cte <- 6
-  bet_cte <-  1
-  bet <- rep(bet_cte, N)  # Transmission rate
+  
   # bet <- abs(rnorm(N,1,1))  # Transmission rate
   d_vec <- rep(1, N) # Natural mortality rate
-  thet <- rep(0.6, N) # Rate of loss of immunity
+  thet <- rep(2.6, N) # Rate of loss of immunity
   alp <- rep(1, N) # Rate of disease overcome
   delt <- rep(0, N) # Diseases related mortality rate
   gamma_ct <-  alp[1] + delt[1] + d_vec[1]
@@ -85,8 +84,18 @@ tau_ct <- 0
   INF_INIT <- 100    #Infected
 
 # End time integration:
-end_time <- 100
+end_time <- 50
 #----------------------------CTE BETA------------------------------------
+bet_cte <-  0.3
+bet <- rep(bet_cte, N)  # Transmission rate
+d_vec <- rep(0.8, N) # Natural mortality rate
+del_N <- rep(0.6, N) # Birth rate
+thet <- rep(0.6, N) # Rate of loss of immunity
+alp <- rep(0.5, N) # Rate of disease overcome
+delt <- rep(0, N) # Diseases related mortality rate
+gamma_ct <-  alp[1] + delt[1] + d_vec[1]
+print(paste0("gamma:", alp[1] + delt[1] + d_vec[1]))
+print(paste0("beta - gamma:", bet[1] - (alp[1] + delt[1] + d_vec[1])))
 beta_ct = bet_cte  # beta
 gamma_ct = alp[1] + delt[1] + d_vec[1]     # gamma   
 bet <- rep(bet_cte, N)  # Transmission rate
@@ -123,10 +132,51 @@ plot_eigen_cte_pred + ggtitle(paste0("N: ",N,"\n", "gamma: ", gamma_ct, ", beta:
 
 # Plot integration:
 state <- "INF"
+plot_int(N, sol, state) + 
+  theme_bw() 
 plot_inf_cte <- plot_int(N, sol, state) + 
-  theme_bw() + xlim(c(0,10))
+  theme_bw()
+# + xlim(c(0,10))
 
-plot_inf_cte
+# plot_inf_cte_del_4.4 <-  plot_inf_cte
+#  
+# gg.d <- ggarrange(plot_inf_d_0.4,plot_inf_d_1.8)
+# gg_d_inf <-  ggarrange(gg.d,plot_inf_d_8.8, ncol = 1)
+
+#STOP#
+
+plot_inf_cte_alp_0.5 <-  plot_inf_cte +
+  ggtitle("alpha:0.5") +
+  xlim(c(0,5))
+
+plot_inf_ct_alp_2.4 <-  plot_inf_cte_del_2.4 +
+  ggtitle("alpha:2.4") +
+  xlim(c(0,5))
+
+plot_inf_cte_alp_4.4 <-  plot_inf_cte_del_4.4 +
+  ggtitle("alpha:4.4") +
+  xlim(c(0,5))
+
+plot_inf_cte_alp_8.4 <-  plot_inf_cte_del_8.4 +
+  ggtitle("alpha:8.4") +
+  xlim(c(0,5))
+
+
+plot_inf_cte_del_0.6 <-  plot_inf_cte_del_0.6 +
+  ggtitle("delta:0.6") +
+  xlim(c(0,5))
+
+plot_inf_cte_del_4.4 <-  plot_inf_cte_del_4.4 +
+  ggtitle("delta:4.4") +
+  xlim(c(0,5))
+
+plot_inf_cte_del_8.4 <-  plot_inf_cte_del_8.4 +
+  ggtitle("delta:8.4") +
+  xlim(c(0,5))
+
+gg.d <- ggarrange(plot_inf_cte_del_0.6,plot_inf_cte_del_4.4)
+gg_del_inf <-  ggarrange(gg.d,plot_inf_cte_del_8.4, ncol = 1)
+
 
 plot_eigen_cte_pred_sw_0.05 <- plot_eigen_cte_pred_sw_0.05 + ggtitle("") +
   labs(title="a" )+ theme(legend.position = "none") + xlab("real")
