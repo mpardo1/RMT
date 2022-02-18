@@ -88,10 +88,10 @@ end_time <- 50
 #----------------------------CTE BETA------------------------------------
 bet_cte <-  0.3
 bet <- rep(bet_cte, N)  # Transmission rate
-d_vec <- rep(0.8, N) # Natural mortality rate
+d_vec <- rep(0.6, N) # Natural mortality rate
 del_N <- rep(0.6, N) # Birth rate
-thet <- rep(0.6, N) # Rate of loss of immunity
-alp <- rep(0.5, N) # Rate of disease overcome
+thet <- rep(0.3, N) # Rate of loss of immunity
+alp <- rep(11.6, N) # Rate of disease overcome
 delt <- rep(0, N) # Diseases related mortality rate
 gamma_ct <-  alp[1] + delt[1] + d_vec[1]
 print(paste0("gamma:", alp[1] + delt[1] + d_vec[1]))
@@ -140,14 +140,15 @@ plot_inf_cte <- plot_int(N, sol, state) +
 
 # plot_inf_cte_del_4.4 <-  plot_inf_cte
 #  
-# gg.d <- ggarrange(plot_inf_d_0.4,plot_inf_d_1.8)
-# gg_d_inf <-  ggarrange(gg.d,plot_inf_d_8.8, ncol = 1)
+gg.alp1 <- ggarrange(plot_inf_cte_alp_0.2,plot_inf_cte_alp_1.9)
+gg.alp2 <- ggarrange(plot_inf_cte_alp_4.9,plot_inf_cte_alp_9.9)
+gg_alp_inf <-  ggarrange(gg.alp1,gg.alp2, ncol = 1)
 
 #STOP#
-
-plot_inf_cte_alp_0.5 <-  plot_inf_cte +
-  ggtitle("alpha:0.5") +
-  xlim(c(0,5))
+alp
+plot_inf_cte_alp_11.9 <-  plot_inf_cte +
+  ggtitle("alpha:11.9") +
+  xlim(c(0,20))
 
 plot_inf_ct_alp_2.4 <-  plot_inf_cte_del_2.4 +
   ggtitle("alpha:2.4") +
