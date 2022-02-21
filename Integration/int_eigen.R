@@ -86,19 +86,19 @@ tau_ct <- 0
 # End time integration:
 end_time <- 50
 #----------------------------CTE BETA------------------------------------
-bet_cte <-  0.3
-bet <- rep(bet_cte, N)  # Transmission rate
+bet_cte <- 19.7445
+bet <- abs(rnorm(N,0.05,8)) #rep(bet_cte, N)  # Transmission rate
 d_vec <- rep(0.6, N) # Natural mortality rate
 del_N <- rep(0.6, N) # Birth rate
-thet <- rep(0.3, N) # Rate of loss of immunity
-alp <- rep(11.6, N) # Rate of disease overcome
+thet <-  rep(0.6, N)# Rate of loss of immunity
+alp <-  rep(0.4, N)# Rate of disease overcome
 delt <- rep(0, N) # Diseases related mortality rate
 gamma_ct <-  alp[1] + delt[1] + d_vec[1]
 print(paste0("gamma:", alp[1] + delt[1] + d_vec[1]))
 print(paste0("beta - gamma:", bet[1] - (alp[1] + delt[1] + d_vec[1])))
 beta_ct = bet_cte  # beta
 gamma_ct = alp[1] + delt[1] + d_vec[1]     # gamma   
-bet <- rep(bet_cte, N)  # Transmission rate
+# bet <- rep(bet_cte, N)  # Transmission rate
 sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
            commut_mat,migrate_mat,end_time,
            MOB, CTE_POP, CTE_INF,SUS_INIT, INF_INIT,init_pop)
@@ -133,48 +133,89 @@ plot_eigen_cte_pred + ggtitle(paste0("N: ",N,"\n", "gamma: ", gamma_ct, ", beta:
 # Plot integration:
 state <- "INF"
 plot_int(N, sol, state) + 
-  theme_bw() 
-plot_inf_cte <- plot_int(N, sol, state) + 
-  theme_bw()
+  theme_bw() + xlim(c(0,10))
+
+#-----------------------RANDOM PARAMETERS-------------------------#
+plot_inf_d <- plot_int(N, sol, state) + 
+  theme_bw() +
+  xlim(c(0,4)) + ggtitle(""*mu[d]~": , "*sigma[d]~": 4 ") 
+
+plot_inf_theta <- plot_int(N, sol, state) + 
+  theme_bw() +
+  xlim(c(0,4)) + ggtitle(""*mu[theta]~": , "*sigma[theta]~": 4 ") 
+
+plot_inf_alp <- plot_int(N, sol, state) + 
+  theme_bw() +
+  xlim(c(0,6)) + ggtitle(""*mu[alpha]~": , "*sigma[alpha]~": 4 ") 
+
+plot_inf_delt <- plot_int(N, sol, state) + 
+  theme_bw() +
+  xlim(c(0,6)) + ggtitle(""*mu[delta]~": , "*sigma[delta]~": 4 ")
+
+plot_inf_beta <- plot_int(N, sol, state) + 
+  theme_bw() +
+  xlim(c(0,10)) + ggtitle(""*mu[beta]~": , "*sigma[beta]~": 4 ")
+
+gg_random <- ggarrange(plot_inf_d + xlab(""),plot_inf_theta  + xlab("") +ylab(""),
+          plot_inf_alp   ,plot_inf_delt +ylab("")) +
+  ggtitle("Random parameters")
+#-----------------------PLOT EXIT RATES----------------------------##
+plot_inf_cte_delt_4.6 <-  plot_inf_cte +
+  ggtitle(paste0("delta",":4.6")) +
+  xlim(c(0,20))  
 # + xlim(c(0,10))
 
 # plot_inf_cte_del_4.4 <-  plot_inf_cte
 #  
-gg.alp1 <- ggarrange(plot_inf_cte_alp_0.2,plot_inf_cte_alp_1.9)
-gg.alp2 <- ggarrange(plot_inf_cte_alp_4.9,plot_inf_cte_alp_9.9)
-gg_alp_inf <-  ggarrange(gg.alp1,gg.alp2, ncol = 1)
+# gg.alp1 <- ggarrange(plot_inf_cte_alp_0.6,plot_inf_cte_alp_1.6)
+# gg.alp2 <- ggarrange(plot_inf_cte_alp_10.6,plot_inf_cte_alp_11.6)
+# gg_alp_inf <-  ggarrange(gg.alp1,gg.alp2, ncol = 1)
+
+# gg.delt1 <- ggarrange(plot_inf_cte_delt_0,plot_inf_cte_delt_0.6)
+# gg.delt2 <- ggarrange(plot_inf_cte_delt_6.6,plot_inf_cte_delt_11.6)
+# gg_delt_inf <-  ggarrange(gg.delt1,gg.delt2, ncol = 1)
+
+# gg.d1 <- ggarrange(plot_inf_cte_d_0.6,plot_inf_cte_d_1.6)
+# gg.d2 <- ggarrange(plot_inf_cte_d_4.6,plot_inf_cte_d_11.6)
+# gg_d_inf <-  ggarrange(gg.d1,gg.d2, ncol = 1)
+
+gg.theta1 <- ggarrange(plot_inf_cte_theta_0.006,
+                       plot_inf_cte_theta_0.6)
+gg.theta2 <- ggarrange(plot_inf_cte_theta_1.6,
+                       plot_inf_cte_theta_4.6)
+gg_theta_inf <-  ggarrange(gg.theta1,gg.theta2, ncol = 1)
 
 #STOP#
-alp
-plot_inf_cte_alp_11.9 <-  plot_inf_cte +
-  ggtitle("alpha:11.9") +
-  xlim(c(0,20))
+plot_inf_cte_d_1 <- plot_inf_cte_d_0.6 + 
+  xlim(c(0,5)) + ggtitle("d: 0.6") + xlab("")
+plot_inf_cte_d_2 <- plot_inf_cte_d_4.6 + 
+  xlim(c(0,5)) + ggtitle("d: 4.6") + xlab("") + ylab("")
 
-plot_inf_ct_alp_2.4 <-  plot_inf_cte_del_2.4 +
-  ggtitle("alpha:2.4") +
-  xlim(c(0,5))
+plot_inf_cte_alp_1 <- plot_inf_cte_alp_0.6 + 
+  xlim(c(0,5)) + ggtitle(""*alpha~": 0.6") + xlab("")
+plot_inf_cte_alp_2 <- plot_inf_cte_alp_4.6 + 
+  xlim(c(0,5)) + ggtitle(""*alpha~": 4.6") + xlab("") + ylab("")
 
-plot_inf_cte_alp_4.4 <-  plot_inf_cte_del_4.4 +
-  ggtitle("alpha:4.4") +
-  xlim(c(0,5))
-
-plot_inf_cte_alp_8.4 <-  plot_inf_cte_del_8.4 +
-  ggtitle("alpha:8.4") +
-  xlim(c(0,5))
+plot_inf_cte_delt_1 <- plot_inf_cte_delt_0.6 + 
+  xlim(c(0,5)) + ggtitle(""*delta~": 0.6")
+plot_inf_cte_delt_2 <- plot_inf_cte_delt_4.6  + ylab("") +
+  xlim(c(0,5)) + ggtitle(""*delta~": 4.6")
 
 
-plot_inf_cte_del_0.6 <-  plot_inf_cte_del_0.6 +
-  ggtitle("delta:0.6") +
-  xlim(c(0,5))
+gg_exit <- ggarrange(plot_inf_cte_d_1,plot_inf_cte_d_2,
+          plot_inf_cte_alp_1,plot_inf_cte_alp_2,
+          plot_inf_cte_delt_1,plot_inf_cte_delt_2,
+        ncol = 2, nrow = 3)
 
-plot_inf_cte_del_4.4 <-  plot_inf_cte_del_4.4 +
-  ggtitle("delta:4.4") +
-  xlim(c(0,5))
+#---------------------THETA-------------------------------#
+plot_inf_cte_thet_1 <- plot_inf_cte_theta_0.006 + 
+  xlim(c(0,5)) + ggtitle(""*theta~":0.006") 
+plot_inf_cte_thet_2 <- plot_inf_cte_theta_1.6 + 
+  xlim(c(0,5)) + ggtitle(""*theta~":1.6") + ylab("")
 
-plot_inf_cte_del_8.4 <-  plot_inf_cte_del_8.4 +
-  ggtitle("delta:8.4") +
-  xlim(c(0,5))
+ggtheta <- ggarrange(plot_inf_cte_thet_1,plot_inf_cte_thet_2 )
 
+#---------------------------------------------------------#
 gg.d <- ggarrange(plot_inf_cte_del_0.6,plot_inf_cte_del_4.4)
 gg_del_inf <-  ggarrange(gg.d,plot_inf_cte_del_8.4, ncol = 1)
 
@@ -193,6 +234,7 @@ plot_inf_cte <- plot_inf_cte + ggtitle("") +
 ggarr1 <-  ggarrange(plot_inf_cte_sw_0.05,plot_inf_cte, ncol = 2, nrow = 1)
 ggarr2 <-  ggarrange(plot_eigen_cte_pred_sw_0.05,plot_eigen_cte_pred, ncol = 2, nrow = 1)
 gg_full <-  ggarrange(ggarr2,ggarr1, ncol = , nrow = 2)
+
 #--------------------------SAVE FILE--------------------------------#
 gamma_ct_w <- format(round(gamma_ct,2), decimal.mark = ',')
 beta_ct_w <- format(round(beta_ct,2), decimal.mark = ',')
@@ -203,12 +245,12 @@ s_c_w <- format(round(s_c,2), decimal.mark = ',')
 
 
 Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/"
-Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/"
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/ExitRates/"
 
-path <- paste0(Path,"sigma_radius","N",N,"g",gamma_ct_w,"b",beta_ct_w,"mw",
-               mu_w_w,"sw1",s_w_w,"sw2","0.05","mm",mu_c_w,"sm",s_c_w,".png")
+path <- paste0(Path,"rand_param","N",N,"b",beta_ct_w,"mw",
+               mu_w_w,"sw1",s_w_w,"mm",mu_c_w,"sm",s_c_w,".png")
 ggsave(path,
-       plot =gg_full, device = "png")
+       plot =gg_random, device = "png")
 
 #---------------------------------------------------------------------#
 #
@@ -536,3 +578,32 @@ png(file = path, width = 8000, height = 6000, res = 1100)
 plot_1
 dev.off()
 
+#-------------------EIGEN vs MAGNITUDE EPI----------------------
+bet_vec <- seq(0,10,0.1)
+leng <-  length(bet_vec)
+mat.bet <-  matrix(0, ncol = 4, nrow = leng)
+for(i in c(1:N)){
+  # Compute  right most eigenvalue for 1 patch:
+  bet_cte <-  bet_vec[i]
+  bet <-  rep(bet_cte,N)
+  # Compute the jacobian matrix:
+  jac <- jacobian(N, bet, gamma_ct, commut_mat, migrate_mat, mu_c, MOB)
+  eig <- eigen_mat(jac)
+  out1 <-  max(eig$re)
+  
+  sol <- int(N, del_N,bet,d_vec,thet,alp,delt,
+             commut_mat,migrate_mat,10,MOB, CTE_POP,
+             CTE_INF,SUS_INIT, INF_INIT,init_pop)
+  
+  print(paste0("i:",i))
+  max_inf <- max(sum(sol[,c((N+2):(2*N+1))])) 
+  time_max <-  sol[which(sum(sol[,c((N+2):(2*N+1))]) == max_inf),1]
+  mat.bet[i,] = c(bet_cte, out1, max_inf, time_max)
+}
+
+df.bet <-  as.data.frame(mat.bet)
+colnames(df.bet) <- c("beta", "outlier","max_inf", "time_max")
+
+plot_eigen <- ggplot(df.bet) + geom_line(aes(beta,outlier))
+plot_inf <- ggplot(df.bet) + geom_line(aes(beta,max_inf))
+ggarrange(plot_eigen,plot_inf)
