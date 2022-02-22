@@ -76,7 +76,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   INF_INIT <- 100    #Infected
   
   # End time integration:
-  end_time <- 100
+  end_time <- 10
 #--------------------------Integration-----------------------------------
   mu <-  9 
   sigma <-  30
@@ -132,6 +132,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   betag <- betagamma(1,4)
   mu_bet <- rgamma(N,alphag,betag) 
   sig_bet <- rgamma(N,alphag,betag) 
+  mat_rand_mean <-  matrix(0, ncol = 8, nrow = N)
   for(i in c(1:N)){
     alphag <- alphagamma(mu_bet[i], sig_bet[i])
     betag <- betagamma(mu_bet[i], sig_bet[i])
@@ -179,7 +180,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
     max_inf_mean <- max(sol_mean[,c((N+2):(2*N+1))])
     time_max_mean <- sol_mean[which(max(sol_mean[,c((N+2):(2*N+1))]) == max_inf_mean),1]
     
-    mat.bet[i,] = c(mu_bet, sig_bet, 
+    mat_rand_mean[i,] = c(mu_bet[i], sig_bet[i], 
                      out_rand, max_inf_rand, time_max_rand,
                      out_mean, max_inf_mean, time_max_mean)
   }
@@ -189,5 +190,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
                         "outlier_mean","max_inf_mean", "time_max_mean")
   df.bet$diff_outl <- round(abs(df.bet$outlier_rand-df.bet$outlier_mean)/df.bet$outlier_rand,2)
   df.bet$diff_inf <- round(abs(df.bet$max_inf_rand-df.bet$max_inf_mean)/df.bet$max_inf_rand,2)
+  
+  write.csv(df.bet,"~/RMT/Integration/random_mean_bet.csv", row.names = TRUE)
   
   

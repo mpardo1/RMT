@@ -357,9 +357,9 @@ df.inf <-  as.data.frame(mat.inf)
 colnames(df.inf) <- c("inf_init","max_inf", "time_max")
 
 POP_INIT <- rowSums(sol[,2:(ncol(sol))])[1]
-plot_eigen <- ggplot(df.bet) + geom_line(aes(beta,outlier))
-plot_inf <- ggplot(df.bet) + geom_line(aes(beta,max_inf)) +
-  geom_segment(aes(x = 0, y = POP_INIT, xend = max_bet, yend = POP_INIT,
-                   colour = "segment"))
+plot_eigen <- ggplot(df.inf) + geom_line(aes(inf_init,time_max))
+plot_inf <- ggplot(df.inf) + geom_line(aes(inf_init,max_inf)) +
+  theme_bw() + xlab("Initial number of infected individuals") +
+  ylab("Maximum number of infected individuals")
 ggarrange(plot_eigen,plot_inf)
 

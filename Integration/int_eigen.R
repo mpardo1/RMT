@@ -257,8 +257,8 @@ ggsave(path,
        plot =gg_random, device = "png")
 
 #-----------------------SAVE FILE---------------------------#
-Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/"
-Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/"
+Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/Gen/"
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
 gamma_ct_w <- format(round(gamma_ct,2), decimal.mark = ',')
 beta_ct_w <- format(round(beta_ct,2), decimal.mark = ',')
 mu_w_w <- format(round(mu_w,2), decimal.mark = ',')
@@ -271,7 +271,5 @@ path <- paste0(Path,"gen","N",N_w,"g",gamma_ct_w,"b",beta_ct_w,"mw",
                # beta_ct,"mw","bnew","14",
                # mu_w,"sw",s_w,"mm",mu_c,"sm",s_c,".png")
 png(file = path, width = 8000, height = 6000, res = 1100)
-plot_1
+plot_outl_inf
 dev.off()
-
-
