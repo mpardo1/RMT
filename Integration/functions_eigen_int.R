@@ -375,3 +375,10 @@ outl_1patch <- function(alp, bet_cte, N, mu_w, mu_c, gamma_ct){
   outl2 <- outl2 + (bet_cte*(1-mu_w) - N*mu_c - gamma_ct)
   return(c(outl,outl2))
 }
+
+alphagamma <- function(mu,sig) {
+  alphagamma <- (mu/sig)^2
+}
+betagamma <- function(mu,sig) {
+  betagamma <- mu/(sig^2)
+}

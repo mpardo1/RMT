@@ -126,3 +126,68 @@ source("~/RMT/Integration/functions_eigen_int.R")
   plot.inf
   
   
+  #-----------------------RAND(BETA) VS MEAN(BETA)---------------------------
+  #-------------------- MOBILITY ------------------#
+  alphag <- alphagamma(1,4)
+  betag <- betagamma(1,4)
+  mu_bet <- rgamma(N,alphag,betag) 
+  sig_bet <- rgamma(N,alphag,betag) 
+  for(i in c(1:N)){
+    alphag <- alphagamma(mu_bet[i], sig_bet[i])
+    betag <- betagamma(mu_bet[i], sig_bet[i])
+    bet <- rgamma(N,alphag,betag)  # Transmission rate
+    ### Migration:
+    mu_c <- 0.01
+    s_c <- 0.00001
+    alp_c <- beta_a_b(mu_c, s_c)[1]
+    bet_c <- beta_a_b(mu_c, s_c)[2]
+    migrate_mat <- mat_conect(N,alp_c,bet_c,DIST)
+    ### Commuting
+    mu_w <- 0.1
+    s_w <- 0.01
+    alp_w <- beta_a_b(mu_w, s_w)[1]
+    bet_w <- beta_a_b(mu_w, s_w)[2]
+    commut_mat <- mat_conect(N,alp_w,bet_w,DIST)
+    
+    #-------------------------------RANDOM------------------------------------#
+    # Compute the Jacobian matrix:
+    
+    jac_rand <- jacobian(N, bet, gamma_ct, commut_mat, migrate_mat, mu_c, MOB)
+    eig_rand <- eigen_mat(jac_rand)
+    out_rand <-  max(eig_rand$re)
+    
+    sol_rand <- int(N, del_N,bet,d_vec,thet,alp,delt,
+               commut_mat,migrate_mat,50,MOB, CTE_POP,
+               CTE_INF,SUS_INIT, INF_INIT,init_pop)
+    
+    print(paste0("i:",i))
+    max_inf_rand <- max(sol_rand[,c((N+2):(2*N+1))])
+    time_max_rand <- sol_rand[which(max(sol_rand[,c((N+2):(2*N+1))]) == max_inf_rand),1]
+    
+    #------------------------------MEAN(BETA)---------------------------------#
+    bet <- rep(mean(bet),N)
+    # Compute the Jacobian matrix:
+    jac_mean <- jacobian(N, bet, gamma_ct, commut_mat, migrate_mat, mu_c, MOB)
+    eig_mean <- eigen_mat(jac_mean)
+    out_mean <-  max(eig_mean$re)
+    
+    sol_mean <- int(N, del_N,bet,d_vec,thet,alp,delt,
+                    commut_mat,migrate_mat,50,MOB, CTE_POP,
+                    CTE_INF,SUS_INIT, INF_INIT,init_pop)
+    
+    print(paste0("i:",i))
+    max_inf_mean <- max(sol_mean[,c((N+2):(2*N+1))])
+    time_max_mean <- sol_mean[which(max(sol_mean[,c((N+2):(2*N+1))]) == max_inf_mean),1]
+    
+    mat.bet[i,] = c(mu_bet, sig_bet, 
+                     out_rand, max_inf_rand, time_max_rand,
+                     out_mean, max_inf_mean, time_max_mean)
+  }
+  
+  df.bet <-  as.data.frame(mat.bet)
+  colnames(df.bet) <- c("mean_beta", "sigma_beta","outlier_rand","max_inf_rand", "time_max_rand",
+                        "outlier_mean","max_inf_mean", "time_max_mean")
+  df.bet$diff_outl <- round(abs(df.bet$outlier_rand-df.bet$outlier_mean)/df.bet$outlier_rand,2)
+  df.bet$diff_inf <- round(abs(df.bet$max_inf_rand-df.bet$max_inf_mean)/df.bet$max_inf_rand,2)
+  
+  
