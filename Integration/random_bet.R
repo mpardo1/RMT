@@ -124,16 +124,15 @@ source("~/RMT/Integration/functions_eigen_int.R")
     theme_bw() 
   
   plot.inf
-  
-  
   #-----------------------RAND(BETA) VS MEAN(BETA)---------------------------
   #-------------------- MOBILITY ------------------#
+  d <- 10000
   alphag <- alphagamma(1,4)
   betag <- betagamma(1,4)
-  mu_bet <- rgamma(N,alphag,betag) 
-  sig_bet <- rgamma(N,alphag,betag) 
-  mat_rand_mean <-  matrix(0, ncol = 8, nrow = N)
-  for(i in c(1:N)){
+  mu_bet <- rgamma(d,alphag,betag) 
+  sig_bet <- rgamma(d,alphag,betag) 
+  mat_rand_mean <-  matrix(0, ncol = 8, nrow = d)
+  for(i in c(1:d)){
     alphag <- alphagamma(mu_bet[i], sig_bet[i])
     betag <- betagamma(mu_bet[i], sig_bet[i])
     bet <- rgamma(N,alphag,betag)  # Transmission rate

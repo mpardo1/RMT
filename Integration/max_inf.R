@@ -258,8 +258,8 @@ print(paste0("beta - gamma:", bet[1] - (alp[1] + delt[1] + d_vec[1])))
 
 #-------------------- MOBILITY ------------------#
 ### Migration:
-mu_c <- 0.01
-s_c <- 0.00001
+mu_c <- 0.85
+s_c <- 0.1
 alp_c <- beta_a_b(mu_c, s_c)[1]
 bet_c <- beta_a_b(mu_c, s_c)[2]
 migrate_mat <- mat_conect(N,alp_c,bet_c,DIST)
@@ -296,13 +296,18 @@ for(i in c(1:N)){
 df.bet <-  as.data.frame(mat.bet)
 colnames(df.bet) <- c("beta", "outlier","max_inf", "time_max")
 
-POP_INIT <- rowSums(sol[,2:(ncol(sol))])[1]
+POP_INIT <- SUS_INIT + INF_INIT
 plot_eigen <- ggplot(df.bet) + geom_line(aes(beta,outlier))
 plot_inf <- ggplot(df.bet) + geom_line(aes(beta,max_inf)) +
   geom_segment(aes(x = 0, y = POP_INIT, xend = max_bet, yend = POP_INIT,
-                   colour = "segment"))
+                   colour = "segment"), linetype = 2, show.legend = FALSE)
 ggarrange(plot_eigen,plot_inf)
 
+gg_outl_inf <- ggplot(df.bet) + geom_line(aes(outlier,max_inf))
+
+path <- paste0("~/Documents/PHD/2022/RMT_SIR/Plots/","N: ",N,"\n", "gamma: ", gamma_ct, ", beta:", bet_cte,"\n", 
+       "mu_w: ",mu_w, ", s_w: ", s_w,"\n",
+       "mu_c: ", mu_c, ", s_c: ", s_c)
 #------------------CI vs MAGNITUDE EPI----------------------
 N = 100 # Number of patches
 # CTE parameters:
