@@ -216,8 +216,9 @@ source("~/RMT/Integration/functions_eigen_int.R")
   # Compute outliers:
   N = 100
   bet_cte <-  3
-  mat.pred <- matrix(0, ncol = 3, nrow = N) 
-  for(i in c(1:N)){
+  dim = 1000
+  mat.pred <- matrix(0, ncol = 3, nrow = dim) 
+  for(i in c(1:dim)){
     print(paste0("i: ",i))
     print(paste0("alp: ",alp))
     alp <- abs(rnorm(1,10,9))
@@ -249,25 +250,32 @@ source("~/RMT/Integration/functions_eigen_int.R")
   d_vec <- rep(0.7, N) # Natural mortality rate
   alp.vec <- rep(0.72, N) # Rate of disease overcome
   delt <- rep(0, N) # Diseases related mortality rate
-  # Check if the right most eigenvalue is the same for many iterations:
-  
+  # Check if the right most eigenvalue is the same for many iterations
   thet <- rep(0.6, N) # Rate of loss of immunity
   gamma_ct <-  alp.vec[1] + delt[1] + d_vec[1]
   
+d <- 100
+alphag <- alphagamma(2,6)
+betag <- betagamma(2,6)
+bet_vec <- rgamma(d,alphag,betag) 
+alp_vec <- rgamma(d,alphag,betag) 
+for(i in c(1:d)){
   ind <-  sample(1:N,1)
-  bet_cte <- 1
-  bet_new <- 5
+  bet_cte <- bet_vec[i]
+  bet_new <- alp_vec[i]
   alp <- bet_new
   mat.comp <-  matrix(0, ncol = 8, nrow = N)
+  df.comp <- data.frame(N.patches=0,out1=0,outk=0,diff=0,
+                          out.pred.1=0, out.pred.k=0, max.inf.1=0,max.inf.k=0)
   for(i in c(1:N)){
     # Compute  right most eigenvalue for 1 patch:
     bet <-  rep(bet_cte,N)
-    bet[ind] <- bet[ind] + i*alp
+    bet[ind] <- bet[ind] + alp
     # Compute the jacobian matrix:
     jac <- jacobian(N, bet, gamma_ct, commut_mat, migrate_mat, mu_c, MOB)
     eig <- eigen_mat(jac)
     out1 <-  max(eig$re)
-    out.pred.1 <- max(outl_1patch(alp*i, bet_cte, N, mu_w, mu_c, gamma_ct))
+    out.pred.1 <- max(outl_1patch(alp, bet_cte, N, mu_w, mu_c, gamma_ct))
     
     sol <- int(N, del_N,bet,d_vec,thet,alp.vec,delt,
                commut_mat,migrate_mat,5,
@@ -275,12 +283,12 @@ source("~/RMT/Integration/functions_eigen_int.R")
     
     # Compute  right most eigenvalue for K patches:
     bet <-  rep(bet_cte,N)
-    bet[1:i] <- bet[ind] + alp
+    bet[1:i] <- bet[ind] + alp/i
     # Compute the jacobian matrix:
     jac <- jacobian(N,bet,gamma_ct, commut_mat, migrate_mat,mu_c, MOB)
     eig <- eigen_mat(jac)
     outk <-  max(eig$re)
-    out.pred.k <- outl_Kpatch(i, alp, bet_cte, N, mu_w, mu_c, gamma_ct)
+    out.pred.k <- outl_Kpatch(i, alp/i, bet_cte, N, mu_w, mu_c, gamma_ct)
     
     sol.k <- int(N, del_N,bet,d_vec,thet,alp.vec,delt,
                commut_mat,migrate_mat,5,
@@ -293,12 +301,15 @@ source("~/RMT/Integration/functions_eigen_int.R")
                      max(sol.k[,c((N+2):(2*N+1))]))
   }
   
-df.comp <-  as.data.frame(mat.comp)
-colnames(df.comp) <-  c("N.patches","out1","outk","diff",
+df.comp1 <-  as.data.frame(mat.comp)
+colnames(df.comp1) <-  c("N.patches","out1","outk","diff",
                         "out.pred.1", "out.pred.k", "max.inf.1","max.inf.k")
+df.comp <- rbind(df.comp, df.comp1)
+}
 
-df.comp$diff.1 <- abs(df.comp$out1 - df.comp$out.pred.1)/df.comp$out1
-df.comp$diff.k <- abs(df.comp$outk - df.comp$out.pred.k)/df.comp$outk
+write.csv(df.comp,"~/RMT/Integration/1_vs_k_patch.csv", row.names = TRUE)
+df.comp$diff.1 <- abs(df.comp$out1 - df.comp$out.pred.1)/df.comp$out.pred.1
+df.comp$diff.k <- abs(df.comp$outk - df.comp$out.pred.k)/df.comp$out.pred.k
 df.comp$diff.pred <- abs(df.comp$out.pred.1 - df.comp$out.pred.k)/df.comp$out.pred.k
 df.comp$K.alp <- df.comp$N.patches * alp
 df.comp$diff.inf.abs <- df.comp$max.inf.1 - df.comp$max.inf.k

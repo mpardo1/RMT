@@ -126,7 +126,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   plot.inf
   #-----------------------RAND(BETA) VS MEAN(BETA)---------------------------
   #-------------------- MOBILITY ------------------#
-  d <- 10000
+  d <- 50000
   alphag <- alphagamma(1,4)
   betag <- betagamma(1,4)
   mu_bet <- rgamma(d,alphag,betag) 
@@ -184,12 +184,48 @@ source("~/RMT/Integration/functions_eigen_int.R")
                      out_mean, max_inf_mean, time_max_mean)
   }
   
-  df.bet <-  as.data.frame(mat.bet)
+  df.bet <-  as.data.frame(mat_rand_mean)
   colnames(df.bet) <- c("mean_beta", "sigma_beta","outlier_rand","max_inf_rand", "time_max_rand",
                         "outlier_mean","max_inf_mean", "time_max_mean")
+  df.bet$time_max_mean <- NULL
+  df.bet$time_max_rand <- NULL
+  
+  df.bet.unst <- df.bet  %>% filter(outlier_rand > 0)
+  df.bet.unst$time_max_mean <- NULL
+  df.bet.unst$time_max_rand <- NULL
+  
   df.bet$diff_outl <- round(abs(df.bet$outlier_rand-df.bet$outlier_mean)/df.bet$outlier_rand,2)
   df.bet$diff_inf <- round(abs(df.bet$max_inf_rand-df.bet$max_inf_mean)/df.bet$max_inf_rand,2)
   
-  write.csv(df.bet,"~/RMT/Integration/random_mean_bet.csv", row.names = TRUE)
+  df.bet$err_outl <- ((df.bet$outlier_rand-df.bet$outlier_mean)/df.bet$outlier_mean)^2
+  df.bet$err_inf <- ((df.bet$max_inf_rand-df.bet$max_inf_mean)/df.bet$max_inf_mean)^2
+  
+  hist(df.bet$err_outl)
+  mean(df.bet$err_outl)
+  hist(df.bet$err_inf)
+  mean(df.bet$err_inf)
+  
+  df.bet.unst$diff_outl <- round(abs(df.bet.unst$outlier_rand-df.bet.unst$outlier_mean)/df.bet.unst$outlier_rand,2)
+  df.bet.unst$diff_inf <- round(abs(df.bet.unst$max_inf_rand-df.bet.unst$max_inf_mean)/df.bet.unst$max_inf_rand,2)
+  
+  df.bet.unst$err_outl <- ((df.bet.unst$outlier_rand-df.bet.unst$outlier_mean)/df.bet.unst$outlier_mean)^2
+  df.bet.unst$err_inf <- ((df.bet.unst$max_inf_rand-df.bet.unst$max_inf_mean)/df.bet.unst$max_inf_mean)^2
+  
+
+  hist(df.bet.unst$err_outl)
+  mean(df.bet.unst$err_outl)
+  hist(df.bet.unst$err_inf)
+  mean(df.bet.unst$err_inf)
+  
+  var(df.bet.unst$diff_outl)
+  var(df.bet.unst$diff_inf)
+  
+  mean(df.bet$diff_outl)*100
+  mean(df.bet$diff_inf)*100
+  
+  var(df.bet$diff_outl)
+  var(df.bet$diff_inf)
+  
+  write.csv(df.bet,"~/RMT/Integration/random_mean_bet_1.csv", row.names = TRUE)
   
   

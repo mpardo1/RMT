@@ -54,7 +54,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   migrate_mat <- mat_conect(N,alp_c,bet_c,DIST)
 ### Commuting
   mu_w <- 0.4
-  s_w <- 0.2
+  s_w <- 0.001
   alp_w <- beta_a_b(mu_w, s_w)[1]
   bet_w <- beta_a_b(mu_w, s_w)[2]
   
@@ -89,9 +89,9 @@ end_time <- 50
 #----------------------------CTE BETA------------------------------------
 bet_cte <- mean(bet)
 bet <- rep(bet_cte, N)  # Transmission rate
-alphag <- alphagamma(1,4)
-betag <- betagamma(1,4)
-bet <- rgamma(N,alphag,betag)  # Transmission rate
+# alphag <- alphagamma(1,4)
+# betag <- betagamma(1,4)
+# bet <- rgamma(N,alphag,betag)  # Transmission rate
 d_vec <- rep(0.6, N) # Natural mortality rate
 del_N <- rep(0.6, N) # Birth rate
 thet <-  rep(0.6, N)# Rate of loss of immunity
@@ -139,6 +139,14 @@ state <- "INF"
 cte_bet <- plot_int(N, sol, state) + 
   theme_bw() + xlim(c(0,10))
 
+low_var_eigen <- low_var_eigen + labs(title="a" )
+high_var_eigen <- high_var_eigen + labs(title="b" )
+ggeigen <- ggarrange(low_var_eigen, high_var_eigen, ncol = 1, nrow = 2)
+low_var_inf <- low_var_inf + labs(title="c" ) + xlim(c(0,3))
+high_var_inf <- high_var_inf + labs(title="d" ) + ylab("")  + xlim(c(0,3))
+gginf <- ggarrange( low_var_inf, high_var_inf, ncol = 2, nrow = 1)
+ggfull <- ggarrange(ggeigen, gginf, ncol = 1, nrow=2)
+low_var_eigen <- low_var_eigen + scale_y_continuous(breaks = c(0))
 ggarrange(cte_bet + ylim(c(0, 100000)), rand_bet + ylim(c(0, 100000)), align = "h")
 #-----------------------RANDOM PARAMETERS-------------------------#
 plot_inf_d <- plot_int(N, sol, state) + 
@@ -249,12 +257,12 @@ mu_c_w <- format(round(mu_c,2), decimal.mark = ',')
 s_c_w <- format(round(s_c,2), decimal.mark = ',')
 
 Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/"
-Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/ExitRates/"
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
 
 path <- paste0(Path,"rand_param","N",N,"b",beta_ct_w,"mw",
-               mu_w_w,"sw1",s_w_w,"mm",mu_c_w,"sm",s_c_w,".png")
+               mu_w_w,"sw1","0.01","sw2","0.2","mm",mu_c_w,"sm",s_c_w,".png")
 ggsave(path,
-       plot =gg_random, device = "png")
+       plot =ggfull, device = "png")
 
 #-----------------------SAVE FILE---------------------------#
 Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/Gen/"
