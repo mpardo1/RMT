@@ -53,7 +53,6 @@ commut_mat <- mat_conect(N,alp_w,bet_w,DIST)
 tau_ct <- 0
 # Initial populations:
 init_pop <- matrix(100, nrow = N)
-print(paste0("beta - gamma:", bet[1] - (alp[1] + delt[1] + d_vec[1])))
 
 #-----------------POPULATION INIT----------------------#
 # Number of initial individuals by compartments:
