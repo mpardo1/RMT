@@ -254,20 +254,20 @@ source("~/RMT/Integration/functions_eigen_int.R")
   thet <- rep(0.6, N) # Rate of loss of immunity
   gamma_ct <-  alp.vec[1] + delt[1] + d_vec[1]
   
-d <- 100
-alphag <- alphagamma(2,6)
-betag <- betagamma(2,6)
+d <- 10
+alphag <- alphagamma(2,3)
+betag <- betagamma(2,3)
 bet_vec <- rgamma(d,alphag,betag) 
 alp_vec <- rgamma(d,alphag,betag) 
-for(i in c(1:d)){
+for(j in c(1:d)){
   ind <-  sample(1:N,1)
-  bet_cte <- bet_vec[i]
-  bet_new <- alp_vec[i]
+  bet_cte <- bet_vec[j]
+  bet_new <- alp_vec[j]
   alp <- bet_new
   mat.comp <-  matrix(0, ncol = 8, nrow = N)
   df.comp <- data.frame(N.patches=0,out1=0,outk=0,diff=0,
                           out.pred.1=0, out.pred.k=0, max.inf.1=0,max.inf.k=0)
-  for(i in c(1:N)){
+  for(i in c(1:2)){
     # Compute  right most eigenvalue for 1 patch:
     bet <-  rep(bet_cte,N)
     bet[ind] <- bet[ind] + alp
@@ -300,11 +300,13 @@ for(i in c(1:d)){
                      out.pred.k, max(sol[,c((N+2):(2*N+1))]),
                      max(sol.k[,c((N+2):(2*N+1))]))
   }
-  
-df.comp1 <-  as.data.frame(mat.comp)
-colnames(df.comp1) <-  c("N.patches","out1","outk","diff",
-                        "out.pred.1", "out.pred.k", "max.inf.1","max.inf.k")
-df.comp <- rbind(df.comp, df.comp1)
+  print(paste0("mat.comp",mat.comp[1:5,1:5]))
+  print("Uno los dos df")
+  df.comp1 <-  as.data.frame(mat.comp)
+  head(df.comp1)
+  colnames(df.comp1) <-  c("N.patches","out1","outk","diff",
+                          "out.pred.1", "out.pred.k", "max.inf.1","max.inf.k")
+  df.comp <- rbind(df.comp, df.comp1)
 }
 
 write.csv(df.comp,"~/RMT/Integration/1_vs_k_patch.csv", row.names = TRUE)
@@ -350,3 +352,8 @@ path <- paste0(Path,"pred_real_k_1","N",N,"g",gamma_ct_w,"b",beta_ct_w,
 gg_full <- ggarrange(ggarr1,plot, ncol=1, nrow =2)
 ggsave(path,
        plot =gg_full, device = "png")
+
+#---------------------------READ OUTPUT---------------------------#
+output_file <- read.csv(file = '~/RMT/Integration/1_vs_k_patch.csv')
+output_file$err_eigen <- ((output_file$out1 - output_file$outk)/output_file$outk)^2
+output_file$err_inf <- ((output_file$max.inf.1 - output_file$max.inf.k)/output_file$max.inf.k)^2

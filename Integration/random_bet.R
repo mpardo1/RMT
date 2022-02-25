@@ -226,6 +226,7 @@ source("~/RMT/Integration/functions_eigen_int.R")
   var(df.bet$diff_outl)
   var(df.bet$diff_inf)
   
-  write.csv(df.bet,"~/RMT/Integration/random_mean_bet_1.csv", row.names = TRUE)
+  path <- paste0("~/RMT/Integration/random_mean_bet_",Sys.Date(),".csv")
+  write.csv(df.bet,path, row.names = TRUE)
   
   
