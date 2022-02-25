@@ -2,10 +2,6 @@ rm(list = ls())
 library("tidyverse")
 library("deSolve")
 library("ggplot2")
-library("ggpubr")
-library("ggforce")
-library("stats")
-
 #----------------------------------------------------------------------------#
 source("~/RMT/Integration/functions_eigen_int.R")
 #----------------PARAMETERS-----------------
