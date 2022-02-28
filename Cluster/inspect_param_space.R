@@ -34,7 +34,7 @@ num_seed <- 1000000000
 mat.param <- matrix(0, ncol = 3, nrow = 1)
 count = 1
 N <- 50
-mu_w <- 0.03
+mu_w <- 0.003
 while( nrow(mat.param) < num_seed){
   rand_mu_c <- runif(1,0,0.3)
   rand_sig_c <- runif(1,0,0.25)
