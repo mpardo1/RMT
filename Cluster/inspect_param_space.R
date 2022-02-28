@@ -75,6 +75,8 @@ while(nrow(df.param) < long_df){
                              mc.cores = Cores, mc.preschedule = F))
   vec_sum <-rowSums(parall) 
   if(sum(vec_sum) > 0){
+    print("Matrix with good param:")
+    print(mat)
     mat <- parall[which(rowSums(parall) > 0), ]
     df.param <- rbind(df.param, mat)
   }
