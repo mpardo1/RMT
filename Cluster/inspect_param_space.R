@@ -30,7 +30,7 @@ df.param <- data.frame(N = 0, mu_w= 0, mu_c= 0, sig_w= 0,
                       cond_1 = 0, cond_2 = 0)
 
 it <- 0
-num_seed <- 10
+num_seed <- 1000000000
 mat.param <- matrix(0, ncol = 3, nrow = 1)
 count = 1
 N <- 50
