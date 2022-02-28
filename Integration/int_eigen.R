@@ -86,6 +86,25 @@ tau_ct <- 0
 
 # End time integration:
 end_time <- 50
+
+#--------------------BETA DISTRIBUTION PARAM SPACE----------------------
+mu <- seq(0, 1,0.01)
+sig <- seq(0,1,0.001)
+len <- length(sig)
+df.beta <- data.frame(mu =0 ,sigma = 0, val = TRUE)
+for(i in c(1:len)){
+  func <- function(a){
+    validate_mu_s(a, sig[i])
+  }
+  log.vec <- sapply(mu,func)
+  df.prov <- data.frame(mu =mu ,sigma = sig[i], val = log.vec)
+  df.beta <- rbind(df.beta,df.prov)
+}
+
+ggplot(df.beta) + geom_point(aes(x = mu, y = sigma, colour = val)) +
+  geom_segment(aes(x = 0, y = 0, xend = 1, yend = 1,
+                   colour = "segment"))
+
 #-------------------------STAB COND -------------------------------------
 # Randomly generate parameters and check the stability conditions.
 # If cond_1 or cond_2 = 0 then Unstable, stable otherwise
