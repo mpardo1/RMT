@@ -382,3 +382,22 @@ alphagamma <- function(mu,sig) {
 betagamma <- function(mu,sig) {
   betagamma <- mu/(sig^2)
 }
+
+cond1 <- function(N, mu_w, gam, bet){
+  cond <- (N-1)*mu_w - (gam/bet) + 1
+  log <- TRUE
+  if(cond > 0 ){
+    log <- FALSE
+  }
+  return(log)
+}
+
+cond2 <- function(N, mu_w, mu_c, sig_w, sig_c, tau, gam, bet){
+  sig_hat <- sqrt(sig_w^2 + 2*(tau/bet) + (sig_c/bet)^2 )
+  cond <- mu_w + sqrt(N)*sig_hat - (gam/bet) + 1 - N*(mu_c/bet)
+  log <- TRUE
+  if(cond > 0 ){
+    log <- FALSE
+  }
+  return(log)
+}
