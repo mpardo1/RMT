@@ -2,6 +2,7 @@ rm(list = ls())
 library("tidyverse")
 library("deSolve")
 library("ggplot2")
+library("parallel")
 #----------------------------------------------------------------------------#
 source("~/RMT/Integration/functions_eigen_int.R")
 #----------------PARAMETERS-----------------
@@ -75,13 +76,14 @@ end_time <- 10
 
 #-----------------------RAND(BETA) VS MEAN(BETA)---------------------------
 #-------------------- MOBILITY ------------------#
-d <- 50000
+d <- 1000000
 alphag <- alphagamma(1,4)
 betag <- betagamma(1,4)
 mu_bet <- rgamma(d,alphag,betag) 
 sig_bet <- rgamma(d,alphag,betag) 
-mat_rand_mean <-  matrix(0, ncol = 8, nrow = d)
-for(i in c(1:d)){
+
+paral_func <-  function(i){
+  mat_rand_mean <-  matrix(0, ncol = 6, nrow = d)
   alphag <- alphagamma(mu_bet[i], sig_bet[i])
   betag <- betagamma(mu_bet[i], sig_bet[i])
   bet <- rgamma(N,alphag,betag)  # Transmission rate
@@ -128,11 +130,17 @@ for(i in c(1:d)){
   max_inf_mean <- max(sol_mean[,c((N+2):(2*N+1))])
   time_max_mean <- sol_mean[which(max(sol_mean[,c((N+2):(2*N+1))]) == max_inf_mean),1]
   
-  mat_rand_mean[i,] = c(mu_bet[i], sig_bet[i], 
-                        out_rand, max_inf_rand, time_max_rand,
-                        out_mean, max_inf_mean, time_max_mean)
+  mat_rand_mean = c(mu_bet[i], sig_bet[i], 
+                        out_rand, max_inf_rand,
+                        out_mean, max_inf_mean)
+  return(mat_rand_mean)
 }
 
-df.bet <- as.data.frame(mat_rand_mean)
+Cores <- parallel::detectCores()
+parall <- do.call("rbind", mclapply(c(1:d), paral_func,
+                                      mc.cores = Cores, mc.preschedule = F))
+
+
+df.bet <- as.data.frame(parall)
 path <- paste0("~/RMT/Integration/random_mean_bet_",Sys.Date(),".csv")
 write.csv(df.bet,path, row.names = TRUE)
