@@ -76,7 +76,7 @@ end_time <- 10
 
 #-----------------------RAND(BETA) VS MEAN(BETA)---------------------------
 #-------------------- MOBILITY ------------------#
-d <- 1000000
+d <- 100000
 alphag <- alphagamma(1,4)
 betag <- betagamma(1,4)
 mu_bet <- rgamma(d,alphag,betag) 
