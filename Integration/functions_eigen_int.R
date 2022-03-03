@@ -310,7 +310,7 @@ validate_mu_s <-  function(mu,sigma){
 beta_a_b <-  function(mu, sigma){
   l <-  validate_mu_s(mu, sigma)
   if( l == TRUE){
-    a <-  mu*((mu/sigma)*(1-mu)-1)
+    a <-  mu*(((mu/sigma)*(1-mu))-1)
     print(paste0("a: ",a))
     b <- ((1-mu)/mu)*a
   }else{

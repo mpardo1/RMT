@@ -240,7 +240,8 @@ plot_eigen_rmt <- function(jacobian,
                            N,mub,mug,
                            muw,sw,rhow,Gammaw,
                            muc,sc,rhoc,Gammac,
-                           tau) {
+                           tau,
+                           alp, K) {
   
   sigma <- sqrt(mub^2*sw^2 + 2*mub*tau + sc^2)
   rho <- (mub^2*rhow + rhoc)/(sigma^2)
@@ -258,12 +259,56 @@ plot_eigen_rmt <- function(jacobian,
   #outlier <- -1 + N*muw + (N*muw/2)*(1+rho/(G*N))*(sqrt(1+(4*N*G*sw^2)/(N*muw^2))-1)# retuned rescaling
   #outlier <- mu*N*(3/2+rho/(2*G*N))*(sqrt(1+4*G*N*sw^2/muw^2)-1)
   
-  plot_eigen_rmt <- plot_eigen(jacobian) +
-    coord_fixed() +
-    geom_vline(xintercept = 0, color = "blue") +
-    geom_point(aes(x = outlier, y = 0), color = "red") +
-    geom_ellipse(aes(x0 = center, y0 = 0, a = (1+rho)*radius, b = (1-rho)*radius, angle = 0), color = "red") +
-    theme_bw()
+  a <- mub*muw +muc
+  b <- alp
+  c <- alp*muw
+  
+  # Outlier k patches:
+  if( K == 1){
+    print("one patch")
+    outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+    outl2 <- (1/2)*(N*a + b - sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+    outl <- outl + (mub*(1-muw) - N*muc - mug)
+    outl2 <- outl2 + (mub*(1-muw) - N*muc - mug)
+    
+    plot_eigen_rmt <- plot_eigen(jacobian) +
+      coord_fixed() +
+      geom_vline(xintercept = 0, color = "blue") +
+      geom_point(aes(x = outl, y = 0), color = "red") +
+      geom_point(aes(x = outl2, y = 0), color = "red") +
+      geom_ellipse(aes(x0 = center, y0 = 0, a = (1+rho)*radius, b = (1-rho)*radius, angle = 0), color = "red") +
+      theme_bw()
+    
+  }else if( K > 1 ){
+    print("K patch")
+    print(K)
+    outl <- (1/2)*(N*a + b + (K-1)*c + sqrt((N*a)^2 - (2*N-4*K)*a*b +
+                                              (2*(K+1)*N-4*K)*a*c + b^2 + (2*K-2)*b*c + (K-1)^2*c^2))
+    outl2 <- (1/2)*(N*a + b + (K-1)*c - sqrt((N*a)^2 - (2*N-4*K)*a*b +
+                                               (2*(K+1)*N-4*K)*a*c + b^2 + (2*K-2)*b*c + (K-1)^2*c^2))
+    outl3 <- b - c
+    
+    outl <- outl + (mub*(1-muw) - N*muc - mug)
+    outl2 <- outl2 + (mub*(1-muw) - N*muc - mug)
+    outl3 <- outl3 + (mub*(1-muw) - N*muc - mug)
+    
+    plot_eigen_rmt <- plot_eigen(jacobian) +
+      coord_fixed() +
+      geom_vline(xintercept = 0, color = "blue") +
+      geom_point(aes(x = outl, y = 0), color = "red") +
+      geom_point(aes(x = outl2, y = 0), color = "red") +
+      geom_point(aes(x = outl3, y = 0), color = "red") +
+      geom_ellipse(aes(x0 = center, y0 = 0, a = (1+rho)*radius, b = (1-rho)*radius, angle = 0), color = "red") +
+      theme_bw()
+  }else{
+    plot_eigen_rmt <- plot_eigen(jacobian) +
+      coord_fixed() +
+      geom_vline(xintercept = 0, color = "blue") +
+      geom_point(aes(x = outlier, y = 0), color = "red") +
+      geom_ellipse(aes(x0 = center, y0 = 0, a = (1+rho)*radius, b = (1-rho)*radius, angle = 0), color = "red") +
+      theme_bw()
+    
+  }
   
   print(plot_eigen_rmt)
 }

@@ -5,7 +5,7 @@
 ### generate, plot and integrate metapopulation
 ### epidemiological models
 ### 
-#########################################################
+
 source("~/RMT/David/RMT_genrandom.R")
 source("~/RMT/David/RMT_plotmobility.R")
 source("~/RMT/David/d_functions_eigen_int.R")
@@ -24,9 +24,9 @@ sb <- 0.001
 betas <- rep(mub, N) # transmission rates
 # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
 thetas <- rep(0.3, N) # loss of immunity rates
-mud <- 0.9
+mud <- 0.2
 deaths <- rep(mud, N) # not disease-related death rates
-mua <- 0.5
+mua <- 1.7
 alphas <- rep(mua, N) # recovery rates
 mudel <- 0.15
 deltas <- rep(mudel, N) # disease-related death rates
@@ -42,8 +42,8 @@ Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.001
-sc <- 0.0005
+muc <- 0.01
+sc <- 0.005
 rhoc <- 0
 Gammac <- 0
 rc <- 0
@@ -58,7 +58,7 @@ MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
 diag(MIGRATION) <- 0
 
 # jacobian
-
+betas <- rep(mub, N)
 jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
   diag(deaths + alphas + deltas + colSums(MIGRATION))
 
@@ -78,7 +78,7 @@ plot_eigen_rmt(jacobian,
 sus_init <- rep(100000, N) # initial susceptibles
 inf_init <- rep(100, N)    # initial infecteds
 
-end_time <- 10
+end_time <- 15
 
 # integro el sistema con condiciones iniciales 
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
@@ -88,39 +88,81 @@ sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
 # plot SUS, INF, REC or TOT population
 plot_int(N, sol, state = "INF")
 
-sol_df <-  as.data.frame(sol)
+vec_col <-  vector(mode="character", length=N)
+vec_col[1:N] <- "royalblue3"
+
+plot.inf <- plot_int(N, sol, state = "INF") +
+  scale_colour_manual(values = vec_col) +
+  theme_bw() + theme(legend.position="none") 
+
+muc
+muw
+plot.inf.bet.cte <- plot.inf + ggtitle(""*mu[c]~": 0.1 , "*mu[w]~": 0.1 ") 
+
+####### PERTURBATIONS ###################################
+## 1 PATCH DIFFERENT MOBILITY ######
+alp <- 7.4
+K = 1
+ind <- sample(1:N,K)
+betas <- rep(mub, N)
+betas[ind] <- alp + betas[ind]
+vec_col <-  vector(mode="character", length=N)
+vec_col[1:N] <- "royalblue3"
+vec_col[ind] <- "red4"
+# jacobian
+
+jacobian1 <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+  diag(deaths + alphas + deltas + colSums(MIGRATION))
+
+# plot the eigenvalues of the system
+
+plot_eigen_rmt(jacobian1,
+               N,mub,mug = mud + mua + mudel,
+               muw,sw,rhow,Gammaw,
+               muc,sc,rhoc,Gammac,
+               tau = 0, alp, K)
+
+# integro el sistema con condiciones iniciales 
+end_time <- 50
+sol1 <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+           COMMUTING,MIGRATION,
+           sus_init,inf_init,end_time)
+
+plot_int(N, sol1, state = "INF")
+# plot SUS, INF, REC or TOT population
+plot.inf1 <- plot_int(N, sol1, state = "INF") +
+  scale_colour_manual(values = vec_col) +
+  theme_bw() + theme(legend.position="none")
+
+plot.inf.1 <- plot.inf1 + xlim(c(0,5)) + ylim(c(0,200000))
+
+muc
+muw
+plot.inf.hm.lc.lim <- plot.inf.1 +
+  ggtitle("a  "*mu[c]~": 0.1, "*mu[w]~": 0.01 ") 
+
+##### DF SOL ####
+sol_df1 <-  as.data.frame(sol1)
 for(i in c(1:N)){
   colnames(sol_df)[i+1] <-  paste0("S",i)
   colnames(sol_df)[N+i+1] <-  paste0("I",i)
   colnames(sol_df)[2*N+i+1] <-  paste0("R",i)
 }
 
-####### MOBILITY MATRIX ###########################################
+####### SAVE FILE #####
+gammas.cte <- format(round(gammas,2), decimal.mark = ',')
+beta.cte <- format(round(mub,2), decimal.mark = ',')
+# mu_w_w <- format(round(mu_w,2), decimal.mark = ',')
+sw.cte <- format(round(sw,2), decimal.mark = ',')
+# mu_c_w <- format(round(mu_c,2), decimal.mark = ',')
+sc.cte <- format(round(sc,2), decimal.mark = ',')
 
-# plot the mobility network
-#legend for plotmobility2 can be found in RMT_plotmobility
-plotmobility(COMMUTING)
-plotmobility2(MIGRATION, COMMUTING)
+Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/"
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Epi_param/1patch/"
 
-
-
-eigen_df <- eigen_mat(jacobian)
-####### PERTURBATIONS ###################################
-alp <- 1.4
-K = 1
-ind <- sample(1:N,K)
-betas[ind] <- alp + betas[ind]
-
-# jacobian
-
-jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
-  diag(deaths + alphas + deltas + colSums(MIGRATION))
-
-# plot the eigenvalues of the system
-
-plot_eigen_rmt(jacobian,
-               N,mub,mug = mud + mua + mudel,
-               muw,sw,rhow,Gammaw,
-               muc,sc,rhoc,Gammac,
-               tau = 0, alp, K)
-
+path <- paste0(Path,"mob_epi","N",N,"b",beta.cte,"g",gammas.cte,
+               "sw",sw.cte,"sc",sc.cte,".png")
+ggfull <-   ggarrange(plot.inf.bet.cte, plot.inf.lm.hc.lim,
+                      plot.inf.hm.lc.lim, plot.inf.hm.hc.lim)
+ggsave(path,
+       plot =ggfull, device = "png")
