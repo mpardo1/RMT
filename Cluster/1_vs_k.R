@@ -2,7 +2,7 @@ rm(list = ls())
 library("tidyverse")
 library("deSolve")
 library("ggplot2")
-
+library("parallel")
 #----------------------------------------------------------------------------#
 source("~/RMT/Integration/functions_eigen_int.R")
 #----------------PARAMETERS-----------------
@@ -126,7 +126,8 @@ Cores <- parallel::detectCores()
 parall <- do.call("rbind", mclapply(c(1:d), parall_k_patch,
                                     mc.cores = Cores, mc.preschedule = F))
 
-colnames(df.comp1) <-  c("N.patches","beta","alpha","out1","outk","diff",
+df.comp <-  as.data.frame(parall)
+colnames(df.comp) <-  c("N.patches","beta","alpha","out1","outk","diff",
                          "out.pred.1", "out.pred.k", "max.inf.1","max.inf.k")
 
 path <- paste0("~/RMT/Integration/1_vs_k_",Sys.Date(),".csv")
