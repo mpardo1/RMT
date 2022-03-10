@@ -33,8 +33,8 @@ SIR <- function(t, y, parameters) {
       
       # Recovered individuals:
       q1 <- alpha_r[i]*y[i+dim] 
-      q2 <- (theta_r[i] + d[i])*y[i+2*dim] 
-      q3 <- y[i+2*dim]*sum(C[,i])
+      q2 <- (theta_r[i] + d[i])*y[i+dim2] 
+      q3 <- y[i+dim2]*sum(C[,i])
       q4 <- sum(y[dim3:dim4]*C[i,])
       # dR/dt
       dy[i+dim2] <- q1 - q2 - q3 + q4

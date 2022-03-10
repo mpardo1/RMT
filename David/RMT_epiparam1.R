@@ -5,7 +5,7 @@
 ### generate, plot and integrate metapopulation
 ### epidemiological models
 ### 
-
+rm(list = ls())
 source("~/RMT/David/RMT_genrandom.R")
 source("~/RMT/David/RMT_plotmobility.R")
 source("~/RMT/David/d_functions_eigen_int.R")
@@ -19,23 +19,22 @@ N <- 100
 #all rates must lie in (0,1) except for betas
 
 Deltas <- rep(0.6, N) # birth rate
-mub <- 0.1
+mub <- 2.8
 sb <- 0.001
 betas <- rep(mub, N) # transmission rates
 # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
 thetas <- rep(0.3, N) # loss of immunity rates
-mud <- 0.2
+mud <- 0.02
 deaths <- rep(mud, N) # not disease-related death rates
-mua <- 1.7
+mua <- 0.02
 alphas <- rep(mua, N) # recovery rates
-mudel <- 0.15
+mudel <- 0.015
 deltas <- rep(mudel, N) # disease-related death rates
 gammas = deaths + alphas + deltas
 
 # mobility
 #commuting and migration networks
-
-muw <- 0.1 
+muw <- 0.01 
 sw <- 0.05
 rhow <- 0 #original rho (Gamma of baron et al)
 Gammaw <- 0 #gamma of baron et al
@@ -43,7 +42,7 @@ rw <- 0
 cw <- 0
 
 muc <- 0.01
-sc <- 0.005
+sc <- 0.001
 rhoc <- 0
 Gammac <- 0
 rc <- 0
@@ -68,8 +67,9 @@ plot_eigen_rmt(jacobian,
                N,mub,mug = mud + mua + mudel,
                muw,sw,rhow,Gammaw,
                muc,sc,rhoc,Gammac,
-               tau = 0, alp = 0, K = 0)
-
+               tau = 0, alp = 0, K = 0) 
+# + xlim(c(-60,-50))
+eigen <-  eigen_mat(jacobian)
 ####### INTEGRATE SYSTEM ################################
 
 # initial populations
@@ -78,7 +78,7 @@ plot_eigen_rmt(jacobian,
 sus_init <- rep(100000, N) # initial susceptibles
 inf_init <- rep(100, N)    # initial infecteds
 
-end_time <- 15
+end_time <- 25
 
 # integro el sistema con condiciones iniciales 
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
