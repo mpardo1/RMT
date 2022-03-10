@@ -19,7 +19,7 @@ N <- 100
 #all rates must lie in (0,1) except for betas
 
 Deltas <- rep(0.6, N) # birth rate
-mub <- 2.8
+mub <- 0.8
 sb <- 0.001
 betas <- rep(mub, N) # transmission rates
 # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
@@ -34,14 +34,14 @@ gammas = deaths + alphas + deltas
 
 # mobility
 #commuting and migration networks
-muw <- 0.01 
+muw <- 0.3 
 sw <- 0.05
 rhow <- 0 #original rho (Gamma of baron et al)
 Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.01
+muc <- 0.1
 sc <- 0.001
 rhoc <- 0
 Gammac <- 0

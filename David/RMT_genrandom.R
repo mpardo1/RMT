@@ -313,4 +313,32 @@ plot_eigen_rmt <- function(jacobian,
   print(plot_eigen_rmt)
 }
 
+# Full jacobian matrix:
+full_mat <- function(N,birth,betas,deaths,deltas,
+                     thetas,alphas,COMMUTING, MIGRATION){
+  mat11 <- MIGRATION
+  diag(mat11) <- birth - deaths - colSums(MIGRATION)
+  betas_mat <- matrix(0,N,N)
+  diag(betas_mat) <- betas
+  mat22 <- MIGRATION + COMMUTING %*% betas_mat
+  diag(mat22) <- betas - (deaths + alphas + deltas) - colSums(MIGRATION)
+  mat33 <- MIGRATION 
+  diag(mat33) <- thetas + deaths - colSums(MIGRATION)
+  mat12 <- - COMMUTING %*% betas_mat
+  mat12[,1] <- birth - betas
+  mat13 <- matrix(0,N,N)
+  mat13[,1] <- birth + thetas
+  mat32 <-  matrix(0,N,N)
+  diag(mat32) <- alphas
+  
+  mat_full <- matrix(0,3*N,3*N)
+  mat_full[1:N,1:N] <- mat11
+  mat_full[(N+1):(2*N),(N+1):(2*N)] <- mat22
+  mat_full[(2*N+1):(3*N),(2*N+1):(3*N)] <- mat33
+  mat_full[1:N,(N+1):(2*N)] <- mat12
+  mat_full[1:N,(2*N+1):(3*N)] <- mat13
+  mat_full[(2*N+1):(3*N),(N+1):(2*N)] <- mat32
+  
+  return(mat_full)
+}
 
