@@ -342,3 +342,13 @@ full_mat <- function(N,birth,betas,deaths,deltas,
   return(mat_full)
 }
 
+mat_SIR_1p <- function(birth,betas,deaths,deltas,
+                     thetas,alphas){
+  mat <- matrix(0,3,3)
+  mat[1,] <- c(Deltas[1]-deaths[1],betas[1]-deaths[1],thetas[1]) 
+  mat[2,] <- c(0,betas[1]-(deaths[1] + alphas[1] + deltas[1]),0) 
+  mat[3,] <- c(0,alphas[1],-(thetas[1]+deaths[1])) 
+  return(mat)
+  
+}
+

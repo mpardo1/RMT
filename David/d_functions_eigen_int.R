@@ -93,8 +93,9 @@ plot_int <- function(N, z, state){
   head(df_plot)
   # Plot number of individuals at each time.
   if( state == "TOT"){
+    df_plot$type <- substr(df_plot$variable,1,1)
     plot  <- ggplot(df_plot,aes(time, value)) + 
-      geom_line(aes( colour = variable))  +
+      geom_line(aes(group =variable, colour = type))  +
       ylab("Number of individuals") 
   }else if( state == "SUS"){
     # Filter Susceptibles:
@@ -116,6 +117,17 @@ plot_int <- function(N, z, state){
       geom_line(aes( colour = variable))  +
       ylab("Number of individuals") +
       ggtitle("Recovered individuals")
+  }else if( state == "REC_INF" ){
+    # Filter Recovered:
+    df_rec_inf <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "R" |  substr(df_plot$variable,1,1) == "I")
+    df_rec_inf$type <- substr(df_rec_inf$variable,1,1)
+    plot  <- ggplot(df_rec_inf,aes(time, value), show.legend = NA) + 
+      geom_line(aes( colour = type))  +
+      ylab("Number of individuals") +
+      ggtitle("Recovered individuals")
   }
-  return(plot + theme(legend.position = "none"))
+  if(state != "TOT"){
+    plot <- plot + theme(legend.position = "none")
+  }
+  return(plot)
 }
