@@ -41,7 +41,7 @@ Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.02
+muc <- 0.01
 sc <- 0.001
 rhoc <- 0
 Gammac <- 0
