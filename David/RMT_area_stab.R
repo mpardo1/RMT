@@ -77,6 +77,8 @@ for(i in c(1:length(N_vec))){
 
 df_sol <- df_sol[-1,]
 
-ggplot(df_sol) + 
-  geom_point(aes(N,muw, colour = state)) + theme_bw()  + 
-  scale_color_manual(values=c("#6622CC", "#A755C2"))
+path <- paste0("~/RMT/Integration/area_gen_",Sys.Date(),".csv")
+write.csv(df_sol, row.names = TRUE)
+# ggplot(df_sol) + 
+#   geom_point(aes(N,muw, colour = state)) + theme_bw()  + 
+#   scale_color_manual(values=c("#6622CC", "#A755C2"))

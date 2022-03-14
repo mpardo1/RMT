@@ -106,9 +106,10 @@ plot_int <- function(N, z, state){
       ggtitle("Susceptible individuals")
   }else if( state == "INF"){
     # Filter Infected:
+    df_plot$type <- substr(df_plot$variable,1,1)
     df_inf <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "I")
     plot  <- ggplot(df_inf,aes(time, value)) + 
-      geom_line(aes( colour = variable),size=1)  +
+      geom_line(aes( group =variable, colour = type),size=1)  +
       ylab("Number of infected individuals") 
   }else if( state == "REC"){
     # Filter Recovered:
@@ -130,4 +131,66 @@ plot_int <- function(N, z, state){
     plot <- plot + theme(legend.position = "none")
   }
   return(plot)
+}
+
+#SIR N PATCH DISCONECTED#
+SIR1 <- function(t, y, parameters) {
+  with(as.list(c(y, parameters)),{
+    dy <- c()
+    dim1 <- dim + 1
+    dim2 <- dim*2
+    dim3 <- (dim*2)+1
+    dim4 <- dim*3
+    for(i in c(1:dim)){
+      # Total population (N = S+I+R)
+      N <- y[i] + y[i+dim] + y[i+dim2]
+      
+      # Susceptible individuals:
+      q1 <- delta_N[i]*N
+      q2 <- beta_r[i]*(y[i]/N)*y[i+dim]
+      q3 <- d[i]*y[i]
+      q4 <- theta_r[i]*y[i+dim2]
+      # dS/dt
+      dy[i] <- q1 - q2 - q3 + q4 
+      
+      # Infected individuals:
+      q1 <- beta_r[i]*(y[i]/N)*y[i+dim]
+      q2 <- (alpha_r[i] + delta_r[i] + d[i])*y[i+dim] 
+      # dI/dt
+      dy[i+dim] <- q1 - q2 
+      
+      # Recovered individuals:
+      q1 <- alpha_r[i]*y[i+dim] 
+      q2 <- (theta_r[i] + d[i])*y[i+2*dim] 
+      # dR/dt
+      dy[i+dim2] <- q1 - q2 
+      
+    }
+    list(dy)
+  }) 
+}
+
+int1 <- function(N,Deltas,betas,deaths,thetas,alphas,deltas,COMMUTING,MIGRATION,sus_init,inf_init,end_time){
+  
+  # create vector of parameters for ode function:
+  parameters <- list(
+    dim = N,
+    delta_N = Deltas,
+    beta_r = betas,
+    d = deaths,
+    theta_r = thetas,
+    alpha_r = alphas,
+    delta_r = deltas,
+    C = COMMUTING,
+    W = MIGRATION)
+  
+  # time steps for integration:
+  times = seq(0,end_time, 0.1)
+  
+  # initial values:
+  pops <- c(sus_init, inf_init, rep(0,N))
+  
+  # run integration:
+  z <- ode(pops, times, SIR1, parameters)
+  return(z)
 }
