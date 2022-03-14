@@ -4,10 +4,6 @@ library("tidyverse")
 library("parallel")
 library("deSolve")
 library("ggplot2")
-library("ggpubr")
-library("ggsci")
-library("ggforce")
-library("gifski")
 
 ##### FUNCTIONS #####
 
