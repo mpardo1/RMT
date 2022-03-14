@@ -2,7 +2,7 @@
 
 library(tidyverse)
 library(ggplot2)
-library(copula)
+# library(copula)
 
 ####### GENERATE MATRICES ##########################
 
