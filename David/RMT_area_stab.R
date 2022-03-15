@@ -77,7 +77,7 @@ for(i in c(1:length(N_vec))){
 
 df_sol <- df_sol[-1,]
 
-path <- paste0("~/RMT/Integration/area_gen_1",Sys.Date(),".csv")
+path <- paste0("~/RMT/Integration/area_gen_2",Sys.Date(),".csv")
 write.csv(df_sol, row.names = TRUE)
 
 # library(latex2exp)
