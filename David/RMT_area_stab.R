@@ -19,7 +19,7 @@ N <- 10
 #all rates must lie in (0,1) except for betas
 
 Deltas <- rep(0.6, N) # birth rate
-mub <- 0.6
+mub <- 0.1
 sb <- 0.001
 betas <- rep(mub, N) # transmission rates
 # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
