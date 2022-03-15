@@ -16,7 +16,7 @@ source("~/RMT/David/d_functions_eigen_int.R")
 N <- 50
 
 # epidemiological
-#all rates must lie in (0,1) except for betas
+#all rates must lie in (0,1) except for betas 
 
 Deltas <- rep(0.6, N) # birth rate
 mub <- 0.2
@@ -41,8 +41,8 @@ Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.005
-sc <- 0.00001
+muc <- 0.008
+sc <- 0.005
 rhoc <- 0
 Gammac <- 0
 rc <- 0
@@ -70,6 +70,7 @@ plot_jac_inf <- plot_eigen_rmt(jacobian,
                tau = 0, alp = 0, K = 0) 
 # + xlim(c(-60,-50))
 eigen <-  eigen_mat(jacobian)
+print(plot_eigen(jacobian))
 ####### INTEGRATE SYSTEM ################################
 
 # initial populations
@@ -78,7 +79,7 @@ eigen <-  eigen_mat(jacobian)
 sus_init <- rep(200, N) # initial susceptibles
 inf_init <- rep(50, N)    # initial infecteds
 
-end_time <- 50
+end_time <- 100
 
 # integro el sistema con condiciones iniciales 
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
@@ -87,11 +88,16 @@ sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
 
 # plot SUS, INF, REC or TOT population
 plot_int(N, sol, state = "INF")
-plot_int(N, sol, state = "INF") +  xlim(c(0,1))
-plot_inf <- plot_int(N, sol, state = "TOT") + theme_bw() +
-  xlim(c(0,50)) + ylim(c(0,60))
+plot_int(N, sol, state = "INF") +  xlim(c(0,0.5))
+plot_inf <- plot_int(N, sol, state = "TOT") + theme_bw() 
+# +
+#   xlim(c(0,50)) + ylim(c(0,60))
 # +ggtitle(""*mu[c]~": 0.5") 
-
+muc
+sc
+plot_hm_ls <- plot_int(N, sol, state = "INF")+ theme_bw()  +
+  ggtitle(TeX("$\\mu_{c}: 0.5, \\s_{c}: 0.0001$")) 
+plot_eigen_hm_ls <- plot_jac_inf
 #### FULL JACOBIAN MATRIX ####
 full_jac <- full_mat(N,Deltas,betas,deaths,deltas,
                      thetas,alphas,COMMUTING, MIGRATION) 

@@ -79,6 +79,11 @@ df_sol <- df_sol[-1,]
 
 path <- paste0("~/RMT/Integration/area_gen_",Sys.Date(),".csv")
 write.csv(df_sol, row.names = TRUE)
-# ggplot(df_sol) + 
-#   geom_point(aes(N,muw, colour = state)) + theme_bw()  + 
-#   scale_color_manual(values=c("#6622CC", "#A755C2"))
+
+# library(latex2exp)
+# ggplot(df_sol) +
+#   geom_point(aes(N,muw, colour = state)) + theme_bw()  +
+#   scale_color_manual(values=c("#6622CC", "#A755C2")) + 
+#   ylab(""*mu[c]~"") + 
+#   # ggtitle(""*gamma/beta~": 4")
+#   ggtitle(TeX("\\frac{\\gamma}{\\beta}: 0.4"))
