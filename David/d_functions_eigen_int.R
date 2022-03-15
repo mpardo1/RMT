@@ -4,6 +4,7 @@ library("tidyverse")
 library("parallel")
 library("deSolve")
 library("ggplot2")
+# library("ggforce")
 
 ##### FUNCTIONS #####
 
@@ -91,13 +92,13 @@ plot_int <- function(N, z, state){
   if( state == "TOT"){
     df_plot$type <- substr(df_plot$variable,1,1)
     plot  <- ggplot(df_plot,aes(time, value)) + 
-      geom_line(aes(group =variable, colour = type))  +
+      geom_line(aes(group =variable, colour = type),size=0.5)  +
       ylab("Number of individuals") 
   }else if( state == "SUS"){
     # Filter Susceptibles:
     df_sus <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "S")
     plot  <- ggplot(df_sus,aes(time, value)) + 
-      geom_line(aes( colour = variable))  +
+      geom_line(aes( colour = variable),size=0.5)  +
       ylab("Number of individuals")  + 
       ggtitle("Susceptible individuals")
   }else if( state == "INF"){
@@ -105,13 +106,13 @@ plot_int <- function(N, z, state){
     df_plot$type <- substr(df_plot$variable,1,1)
     df_inf <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "I")
     plot  <- ggplot(df_inf,aes(time, value)) + 
-      geom_line(aes( group =variable, colour = type),size=1)  +
+      geom_line(aes( group =variable, colour = type),size=0.5)  +
       ylab("Number of infected individuals") 
   }else if( state == "REC"){
     # Filter Recovered:
     df_rec <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "R")
     plot  <- ggplot(df_rec,aes(time, value)) + 
-      geom_line(aes( colour = variable))  +
+      geom_line(aes( colour = variable),size=0.5)  +
       ylab("Number of individuals") +
       ggtitle("Recovered individuals")
   }else if( state == "REC_INF" ){
@@ -119,7 +120,7 @@ plot_int <- function(N, z, state){
     df_rec_inf <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "R" |  substr(df_plot$variable,1,1) == "I")
     df_rec_inf$type <- substr(df_rec_inf$variable,1,1)
     plot  <- ggplot(df_rec_inf,aes(time, value), show.legend = NA) + 
-      geom_line(aes( colour = type))  +
+      geom_line(aes( colour = type),size=0.5)  +
       ylab("Number of individuals") +
       ggtitle("Recovered individuals")
   }

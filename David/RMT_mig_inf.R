@@ -19,14 +19,14 @@ N <- 50
 #all rates must lie in (0,1) except for betas 
 
 Deltas <- rep(0.6, N) # birth rate
-mub <- 0.2
+mub <- 0.05
 sb <- 0.001
 betas <- rep(mub, N) # transmission rates
 # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
 thetas <- rep(0.3, N) # loss of immunity rates
-mud <- 0.2
+mud <- 0.6
 deaths <- rep(mud, N) # not disease-related death rates
-mua <- 0.2
+mua <- 0.5
 alphas <- rep(mua, N) # recovery rates
 mudel <- 0
 deltas <- rep(mudel, N) # disease-related death rates
@@ -34,15 +34,15 @@ gammas = deaths + alphas + deltas
 
 # mobility
 #commuting and migration networks
-muw <- 0.9
+muw <- 0.08
 sw <- 0.05
 rhow <- 0 #original rho (Gamma of baron et al)
 Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.008
-sc <- 0.005
+muc <- 0.02
+sc <- 0.002
 rhoc <- 0
 Gammac <- 0
 rc <- 0
@@ -76,8 +76,8 @@ print(plot_eigen(jacobian))
 # initial populations
 # for constant populations, set deltas = 0, Deltas = deaths
 
-sus_init <- rep(200, N) # initial susceptibles
-inf_init <- rep(50, N)    # initial infecteds
+sus_init <- rep(220, N) # initial susceptibles
+inf_init <- rep(2, N)    # initial infecteds
 
 end_time <- 100
 
@@ -88,7 +88,7 @@ sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
 
 # plot SUS, INF, REC or TOT population
 plot_int(N, sol, state = "INF")
-plot_int(N, sol, state = "INF") +  xlim(c(0,0.5))
+plot_int(N, sol, state = "INF") +  xlim(c(0,0.5)) 
 plot_inf <- plot_int(N, sol, state = "TOT") + theme_bw() 
 # +
 #   xlim(c(0,50)) + ylim(c(0,60))
@@ -104,7 +104,7 @@ full_jac <- full_mat(N,Deltas,betas,deaths,deltas,
 
 eigen_full <-  eigen_mat(full_jac)
 plot_full <- plot_eigen(full_jac)
-
+plot_full
 ggarrange(plot_jac_inf,plot_full, plot_inf)
 
 #### JACOBIAN MATRIX 1 PATCH####

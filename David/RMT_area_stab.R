@@ -19,7 +19,7 @@ N <- 10
 #all rates must lie in (0,1) except for betas
 
 Deltas <- rep(0.6, N) # birth rate
-mub <- 0.1
+mub <- 0.2
 sb <- 0.001
 betas <- rep(mub, N) # transmission rates
 # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
@@ -77,7 +77,7 @@ for(i in c(1:length(N_vec))){
 
 df_sol <- df_sol[-1,]
 
-path <- paste0("~/RMT/Integration/area_gen_2",Sys.Date(),".csv")
+path <- paste0("~/RMT/Integration/area_gen_",Sys.Date(),".csv")
 write.csv(df_sol, row.names = TRUE)
 
 # library(latex2exp)
