@@ -64,11 +64,11 @@ jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
 
 # plot the eigenvalues of the system
 
-plot_eigen_rmt(jacobian,
-               N,mub,mug = mud + mua + mudel,
-               muw,sw,rhow,Gammaw,
-               muc,sc,rhoc,Gammac,
-               tau = 0, alp = 0, K = 0)
+# plot_eigen_rmt(jacobian,
+               # N,mub,mug = mud + mua + mudel,
+               # muw,sw,rhow,Gammaw,
+               # muc,sc,rhoc,Gammac,
+               # tau = 0, alp = 0, K = 0)
 
 ####### INTEGRATE SYSTEM ################################
 
