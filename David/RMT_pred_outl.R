@@ -88,11 +88,11 @@ for(j in c(1:d)){
   }
 }
 
-plot_eigen_rmt(jacobian,
-               N,mub,mug = mud + mua + mudel,
-               muw,sw,rhow,Gammaw,
-               muc,sc,rhoc,Gammac,
-               tau = 0, 0, 0)
+# plot_eigen_rmt(jacobian,
+               # N,mub,mug = mud + mua + mudel,
+               # muw,sw,rhow,Gammaw,
+               # muc,sc,rhoc,Gammac,
+               # tau = 0, 0, 0)
 
 df_err_outl$err <- ((df_err_outl$pred - df_err_outl$outl)/df_err_outl$outl)^2
 df_err_outl <- df_err_outl[-1,]
