@@ -4,7 +4,6 @@ library("tidyverse")
 library("parallel")
 library("deSolve")
 library("ggplot2")
-# library("ggforce")
 
 ##### FUNCTIONS #####
 
@@ -13,32 +12,32 @@ library("ggplot2")
 SIR <- function(t, y, parameters) {
   with(as.list(c(y, parameters)),{
     dy <- c()
-    dim1 <- dim + 1
-    dim2 <- dim*2
-    dim3 <- (dim*2)+1
-    dim4 <- dim*3
-    for(i in c(1:dim)){
+    dim1 <- dime + 1
+    dim2 <- dime*2
+    dim3 <- (dime*2)+1
+    dim4 <- dime*3
+    for(i in c(1:dime)){
       # Total population (N = S+I+R)
-      N <- y[i] + y[i+dim] + y[i+dim2]      # Susceptible individuals:
+      N <- y[i] + y[i+dime] + y[i+dim2]      # Susceptible individuals:
       q1 <- delta_N[i]*N
-      q2 <- beta_r[i]*(y[i]/N)*y[i+dim]
+      q2 <- beta_r[i]*(y[i]/N)*y[i+dime]
       q3 <- d[i]*y[i]
       q4 <- theta_r[i]*y[i+dim2]
       q5 <- y[i]*sum(C[,i])
-      q6 <- sum(y[1:dim]*C[i,])
+      q6 <- sum(y[1:dime]*C[i,])
       q7 <- (y[i]/N)*sum(beta_r*W[,i]*y[dim1:dim2])
       # dS/dt
       dy[i] <- q1 - q2 - q3 + q4 - q5 + q6 - q7      # Infected individuals:
-      q1 <- beta_r[i]*(y[i]/N)*y[i+dim]
-      q2 <- (alpha_r[i] + delta_r[i] + d[i])*y[i+dim]
-      q3 <- y[dim+i]*sum(C[,i])
+      q1 <- beta_r[i]*(y[i]/N)*y[i+dime]
+      q2 <- (alpha_r[i] + delta_r[i] + d[i])*y[i+dime]
+      q3 <- y[dime+i]*sum(C[,i])
       q4 <- sum(y[dim1:dim2]*C[i,])
       q5 <- (y[i]/N)*sum(beta_r*W[,i]*y[dim1:dim2])
       # dI/dt
-      dy[i+dim] <- q1 - q2 - q3 + q4 + q5      # Recovered individuals:
-      q1 <- alpha_r[i]*y[i+dim]
-      q2 <- (theta_r[i] + d[i])*y[i+2*dim]
-      q3 <- y[i+2*dim]*sum(C[,i])
+      dy[i+dime] <- q1 - q2 - q3 + q4 + q5      # Recovered individuals:
+      q1 <- alpha_r[i]*y[i+dime]
+      q2 <- (theta_r[i] + d[i])*y[i+dim2]
+      q3 <- y[i+dim2]*sum(C[,i])
       q4 <- sum(y[dim3:dim4]*C[i,])
       # dR/dt
       dy[i+dim2] <- q1 - q2 - q3 + q4    }
@@ -52,7 +51,7 @@ int <- function(N,Deltas,betas,deaths,thetas,alphas,deltas,COMMUTING,MIGRATION,s
   
   # create vector of parameters for ode function:
   parameters <- list(
-    dim = N,
+    dime = N,
     delta_N = Deltas,
     beta_r = betas,
     d = deaths,

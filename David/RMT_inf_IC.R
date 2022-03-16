@@ -42,8 +42,8 @@ Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.01
-sc <- 0.005
+muc <- 0.1
+sc <- 0.05
 rhoc <- 0
 Gammac <- 0
 rc <- 0
@@ -115,7 +115,7 @@ for(i in c(1:length(vec_init_inf))){
 }
 
 path <- paste0("~/RMT/Integration/ci_inf",Sys.Date(),".csv")
-write.csv(df_inf, row.names = TRUE)
+write.csv(df_inf, path, row.names = TRUE)
 
 # ggplot(df_inf) + 
 #   geom_line(aes(inf_init, max_inf)) +

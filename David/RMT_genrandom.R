@@ -342,6 +342,34 @@ full_mat <- function(N,birth,betas,deaths,deltas,
   return(mat_full)
 }
 
+mat11 <- function(N,birth,betas,deaths,deltas,
+                  thetas,alphas,COMMUTING, MIGRATION){
+  mat11 <- MIGRATION
+  diag(mat11) <- birth - deaths - colSums(MIGRATION)
+  return(mat11)
+}
+
+mat12 <- function(N,birth,betas,deaths,deltas,
+                  thetas,alphas,COMMUTING, MIGRATION){
+  mat12 <- - COMMUTING %*% betas_mat
+  mat12[,1] <- birth - betas
+  return(mat12)
+}
+
+mat22 <- function(N,birth,betas,deaths,deltas,
+                  thetas,alphas,COMMUTING, MIGRATION){
+  mat22 <- MIGRATION + COMMUTING %*% betas_mat
+  diag(mat22) <- betas - (deaths + alphas + deltas) - colSums(MIGRATION)
+  return(mat22)
+}
+
+mat33 <- function(N,birth,betas,deaths,deltas,
+                  thetas,alphas,COMMUTING, MIGRATION){
+  mat33 <- MIGRATION 
+  diag(mat33) <- thetas + deaths - colSums(MIGRATION)
+  return(mat33)
+}
+
 mat_SIR_1p <- function(birth,betas,deaths,deltas,
                      thetas,alphas){
   mat <- matrix(0,3,3)
