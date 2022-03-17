@@ -94,10 +94,10 @@ for(j in c(1:d)){
                # muc,sc,rhoc,Gammac,
                # tau = 0, 0, 0)
 
-df_err_outl$err <- ((df_err_outl$pred - df_err_outl$outl)/df_err_outl$outl)^2
-df_err_outl <- df_err_outl[-1,]
-df_err_outl_group <- df_err_outl %>% group_by(N) %>% 
-  summarise(mean = mean(err))
+# df_err_outl$err <- ((df_err_outl$pred - df_err_outl$outl)/df_err_outl$outl)^2
+# df_err_outl <- df_err_outl[-1,]
+# df_err_outl_group <- df_err_outl %>% group_by(N) %>% 
+#   summarise(mean = mean(err))
 
 path <- paste0("~/RMT/David/outl_pred",Sys.Date(),".csv")
 write.csv(df_err_outl,path, row.names = TRUE)
