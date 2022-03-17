@@ -62,7 +62,7 @@ bet_vec <- rgamma(d,alphag,betag)
 for(j in c(1:d)){
   muw = muw_vec[j]
   for(i in c(30:100,10)){
-    print(paste0("i: ",i))
+    # print(paste0("i: ",i))
     print(paste0("j: ",j))
     betas <- rep(bet_vec[j],i)
     deaths <- rep(mud,i) # not disease-related death rates
