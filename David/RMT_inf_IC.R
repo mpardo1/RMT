@@ -110,7 +110,7 @@ for(i in c(1:length(vec_init_inf))){
 path <- paste0("~/RMT/Integration/ci_inf",Sys.Date(),".csv")
 write.csv(df_inf, path, row.names = TRUE)
 
-# path <- "~/RMT/David/OUTPUT/area_gen_2022-03-21.csv"
+# path <- "~/RMT/David/OUTPUT/ci_inf2022-03-17.csv"
 # area_gen <- read.csv(file = path)
 # df_inf_ci <- read.csv(file = "~/RMT/Integration/ci_inf2022-03-17.csv")
 # head(df_inf_ci)
