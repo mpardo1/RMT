@@ -110,29 +110,29 @@ for(i in c(1:length(vec_init_inf))){
 path <- paste0("~/RMT/David/OUTPUT/ci_inf",Sys.Date(),".csv")
 write.csv(df_inf, path, row.names = TRUE)
 
-# path <- "~/RMT/David/OUTPUT/ci_inf2022-03-17.csv"
-# area_gen <- read.csv(file = path)
+path <- "~/RMT/David/OUTPUT/ci_inf2022-03-21.csv"
+df_inf_ci <- read.csv(file = path)
 # df_inf_ci <- read.csv(file = "~/RMT/Integration/ci_inf2022-03-17.csv")
 # head(df_inf_ci)
 
-# df_inf <- df_inf_ci[-1,] 
-# 
-# ggplot(df_inf) +
-#   geom_line(aes(inf_init, end_inf))  +
-#   xlab("Number of initial infected individuals")+
-#   ylab("Number of infected individuals at equilibrium")+
-#   theme_bw()
-# 
-# ggplot(df_inf) +
-#   geom_line(aes(inf_init, max_inf))  +
-#   xlab("Number of initial infected individuals")+
-#   ylab("Number of infected individuals at equilibrium")+
-#   theme_bw()
-# 
-# ggplot(df_inf) +
-#   geom_line(aes(inf_init, time_max))  +
-#   xlab("Number of initial infected individuals")+
-#   ylab("Number of infected individuals at equilibrium")+
-#   theme_bw()
+df_inf <- df_inf_ci[-1,]
+
+ggplot(df_inf) +
+  geom_line(aes(inf_init, end_inf))  +
+  xlab("Number of initial infected individuals")+
+  ylab("Number of infected individuals at equilibrium")+
+  theme_bw()
+
+ggplot(df_inf) +
+  geom_line(aes(inf_init, max_inf))  +
+  xlab("Number of initial infected individuals")+
+  ylab("Number of infected individuals at equilibrium")+
+  theme_bw()
+
+ggplot(df_inf) +
+  geom_line(aes(inf_init, time_max))  +
+  xlab("Initial number of infected individuals")+
+  ylab("Time")+
+  theme_bw()
 
 
