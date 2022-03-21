@@ -13,7 +13,7 @@ source("~/RMT/David/d_functions_eigen_int.R")
 ####### GENERATE JACOBIAN ###############################
 
 # number of patches
-N <- 100
+N <- 50
 
 # epidemiological
 #all rates must lie in (0,1) except for betas
@@ -86,40 +86,51 @@ s_inf <- 150
 # alphag <- alphagamma(mu_inf,s_inf)
 # betag <- betagamma(mu_inf,s_inf)
 # inf_init <- rgamma(N,alphag,betag) 
-df_inf <- data.frame(inf_init=0,max_inf=0,max_inf1=0,max_inf2=0)
+df_inf <- data.frame(inf_init=0,end_inf=0,sumrow_max=0,time_max=0)
 list_sol <- list()
 vec_init_inf <- seq(1,3000,20)
 for(i in c(1:length(vec_init_inf))){
   inf_init <- rep(vec_init_inf[i], N)    # initial infecteds
-  end_time <- 100
-  Deltas <- rep(0.3, N) # birth rate
+  end_time <- 20
+  Deltas <- rep(0.6, N) # birth rate
+  print(paste0("i:", i))
   sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-             COMMUTING,MIGRATION,
-             sus_init,inf_init,end_time)
-  max_inf <- max(sol[nrow(sol),])
-  
-  Deltas <- rep(0.8, N) # birth rate
-  sol1 <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-             COMMUTING,MIGRATION,
-             sus_init,inf_init,end_time)
-  max_inf1 <- max(sol1[nrow(sol1),])
-  
-  Deltas <- rep(0.1, N) # birth rate
-  sol2 <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
               COMMUTING,MIGRATION,
               sus_init,inf_init,end_time)
-  max_inf2 <- max(sol1[nrow(sol2),])
-  df_inf[nrow(df_inf) +1,] <- c(vec_init_inf[i], max_inf, max_inf1, max_inf2)
- 
-  
+  sol <- sol[,c(1,(N+2):(2*N+1))]
+  end_inf <- sum(sol[nrow(sol),(2:ncol(sol))])
+  rsum <- rowSums(sol[,(2:ncol(sol))])
+  max_inf <- max(rsum)
+  time_max_inf <- sol[which(rowSums(sol[,(2:ncol(sol))]) == max_inf),1]
+  df_inf[nrow(df_inf) +1,] <- c(vec_init_inf[i], end_inf, max_inf, time_max_inf)
 }
 
+# df_inf <- df_inf[-1,]
+# plot_int(N,sol, "INF") + ylim(c(0,10000))
 path <- paste0("~/RMT/Integration/ci_inf",Sys.Date(),".csv")
 write.csv(df_inf, path, row.names = TRUE)
 
-# ggplot(df_inf) + 
-#   geom_line(aes(inf_init, max_inf)) +
-#   geom_line(aes(inf_init, max_inf1)) +
+# df_inf_ci <- read.csv(file = "~/RMT/Integration/ci_inf2022-03-17.csv")
+# head(df_inf_ci)
+
+# df_inf <- df_inf_ci[-1,] 
+# 
+# ggplot(df_inf) +
+#   geom_line(aes(inf_init, end_inf))  +
 #   xlab("Number of initial infected individuals")+
 #   ylab("Number of infected individuals at equilibrium")+
 #   theme_bw()
+# 
+# ggplot(df_inf) +
+#   geom_line(aes(inf_init, max_inf))  +
+#   xlab("Number of initial infected individuals")+
+#   ylab("Number of infected individuals at equilibrium")+
+#   theme_bw()
+# 
+# ggplot(df_inf) +
+#   geom_line(aes(inf_init, time_max))  +
+#   xlab("Number of initial infected individuals")+
+#   ylab("Number of infected individuals at equilibrium")+
+#   theme_bw()
+
+
