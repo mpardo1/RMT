@@ -107,7 +107,7 @@ for(i in c(1:length(vec_init_inf))){
 
 # df_inf <- df_inf[-1,]
 # plot_int(N,sol, "INF") + ylim(c(0,10000))
-path <- paste0("~/RMT/Integration/ci_inf",Sys.Date(),".csv")
+path <- paste0("~/RMT/David/OUTPUT/ci_inf",Sys.Date(),".csv")
 write.csv(df_inf, path, row.names = TRUE)
 
 # path <- "~/RMT/David/OUTPUT/ci_inf2022-03-17.csv"
