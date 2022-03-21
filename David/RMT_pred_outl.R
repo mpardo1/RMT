@@ -61,30 +61,35 @@ betag <- betagamma(1,2)
 bet_vec <- rgamma(d,alphag,betag)
 for(j in c(1:d)){
   muw = muw_vec[j]
-  for(i in c(30:100,10)){
-    # print(paste0("i: ",i))
-    print(paste0("j: ",j))
-    betas <- rep(bet_vec[j],i)
-    deaths <- rep(mud,i) # not disease-related death rates
-    alphas <- rep(mua,i) # recovery rates
-    deltas <- rep(mudel,i) # disease-related death rates
-    mug = deaths + alphas + deltas
-    mug <- mug[1]
-    mub <- betas[1]
-    # Generate random mat:
-    COMMUTING <- rand_mat(i, muw, sw, distrib = "beta")
-    diag(COMMUTING) <- 0
-    MIGRATION <- rand_mat(i, muc, sc, distrib = "beta")
-    diag(MIGRATION) <- 0
-    
-    # Create jacobian
-    jacobian <- (COMMUTING + diag(i)) %*% diag(betas) + MIGRATION -
-      diag(deaths + alphas + deltas + colSums(MIGRATION))
-    outlier <- mub - mug + mub*muw*(i-1)
-                      
-    eigen <- eigen_mat(jacobian)
-    df_err_outl[nrow(df_err_outl)+1,] <- c(i, betas[1], muw,
-                                           max(eigen$re),  outlier)
+  if( is.na(muw) == TRUE | muw > 1 | muw < 0){
+    print("Problem with muw")
+  }else
+  {
+    for(i in c(30:100,10)){
+      # print(paste0("i: ",i))
+      print(paste0("j: ",j))
+      betas <- rep(bet_vec[j],i)
+      deaths <- rep(mud,i) # not disease-related death rates
+      alphas <- rep(mua,i) # recovery rates
+      deltas <- rep(mudel,i) # disease-related death rates
+      mug = deaths + alphas + deltas
+      mug <- mug[1]
+      mub <- betas[1]
+      # Generate random mat:
+      COMMUTING <- rand_mat(i, muw, sw, distrib = "beta")
+      diag(COMMUTING) <- 0
+      MIGRATION <- rand_mat(i, muc, sc, distrib = "beta")
+      diag(MIGRATION) <- 0
+      
+      # Create jacobian
+      jacobian <- (COMMUTING + diag(i)) %*% diag(betas) + MIGRATION -
+        diag(deaths + alphas + deltas + colSums(MIGRATION))
+      outlier <- mub - mug + mub*muw*(i-1)
+      
+      eigen <- eigen_mat(jacobian)
+      df_err_outl[nrow(df_err_outl)+1,] <- c(i, betas[1], muw,
+                                             max(eigen$re),  outlier)
+    }
   }
 }
 
@@ -101,7 +106,7 @@ df_err_outl <- df_err_outl[-1,]
 df_err_outl_group <- df_err_outl %>% group_by(N) %>%
   summarise(mean = mean(err))
 
-path <- paste0("~/RMT/David/df_err_outl_group_1000it_",Sys.Date(),".csv")
+path <- paste0("~/RMT/David/OUTPUT/df_err_outl_group_1000it_",Sys.Date(),".csv")
 write.csv(df_err_outl_group,path, row.names = TRUE)
 # 
 # ggplot(df_err_outl_group) +
