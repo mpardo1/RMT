@@ -1,1 +1,19 @@
 *.csv
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+.RDataTmp
+
+# User-specific files
+.Ruserdata
+
+# Output files from R CMD build
+/*.tar.gz
+
+# knitr and R markdown default cache directories
+*_cache/
+/cache/
+
