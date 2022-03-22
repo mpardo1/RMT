@@ -40,8 +40,8 @@ Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.01
-sc <- 0.00001
+muc <- 0.001
+sc <- 0.001
 rhoc <- 0
 Gammac <- 0
 rc <- 0
@@ -85,22 +85,37 @@ df_sol <- df_sol[-1,]
 path <- paste0("~/RMT/David/OUTPUT/area_gen_",Sys.Date(),".csv")
 write.csv(df_sol, path,row.names = TRUE)
 
-# path <- "~/RMT/David/OUTPUT/area_gen_2022-03-22.csv"
-# df_sol <- read.csv(file = path)
-# df_sol$Stability <- ifelse(df_sol$state == TRUE, "Stable", "Unstable")
-# 
-# vec <- seq(0,1,0.01)
-# df_sol <- df_sol[which(df_sol$beta == vec),]
-# library(latex2exp)
-# ggplot(df_sol) +
-#   geom_point(aes(beta,muw, colour = Stability)) + theme_bw()  +
-#   scale_color_manual(values=c("#909CC2", "#084887")) +
-#   ylab(TeX("$\\mu_c$")) +
-#   xlab(TeX("$\\beta$")) +
-#   # ggtitle(""*gamma/beta~": 4")
-#   ggtitle(paste0("N: ",N)) +
-#   coord_fixed() +
-#   theme(text = element_text(size = 15)) +
-#   geom_point(aes(0.07,0.07), colour= "#F58A07", size = 0.1) +
-#   geom_point(aes(0.07,0.1), colour= "#F58A07") +
-#   geom_point(aes(0.1,0.07), colour= "#F58A07") 
+path <- "~/RMT/David/OUTPUT/area_gen_2022-03-22.csv"
+df_sol <- read.csv(file = path)
+df_sol$Stability <- ifelse(df_sol$state == TRUE, "Stable", "Unstable")
+
+vec <- seq(0,nrow(df_sol),2)
+df_sol <- df_sol[vec,]
+library(latex2exp)
+plot_area <- ggplot(df_sol) +
+  geom_point(aes(beta,muw, colour = Stability)) + theme_bw()  +
+  scale_color_manual(values=c("#9BC1BC", "#F4F1BB")) +
+  ylab(TeX("$\\mu_c$")) +
+  xlab(TeX("$\\beta$")) +
+  # ggtitle(""*gamma/beta~": 4")
+  ggtitle(paste0("N: ",N)) +
+  coord_fixed() +
+  theme(text = element_text(size = 15)) +
+  geom_point(aes(0.07,0.07), colour= "#ED6A5A", size = 0.3) +
+  geom_point(aes(0.07,0.2), colour= "#ED6A5A", size = 0.3) +
+  geom_point(aes(0.2,0.07), colour= "#ED6A5A", size = 0.3)
+
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
+path <- paste0(Path,"Area_g0,8_muc_0,01_sc0,00001_sw0,05.png")
+ggsave(path,
+       plot = plot_area, device = "png")
+
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/diagram.png"
+library(imager)
+library(ggpubr)
+library(png)
+#read file
+img <- load.image(Path)
+plot_list <- list(img,plot_area)
+
+par(mfrow=c(2,1))
