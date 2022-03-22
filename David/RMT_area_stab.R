@@ -47,7 +47,7 @@ Gammac <- 0
 rc <- 0
 cc <- 0
 
-step <- 0.001
+step <- 0.01
 beta_vec <- seq(0.01,0.9,step)
 muw_vec <- seq(0.01,0.9,step)
 df_sol <- data.frame(beta = 0, gamma = 0, N = 0, muw = 0, state = FALSE)
@@ -85,13 +85,22 @@ df_sol <- df_sol[-1,]
 path <- paste0("~/RMT/David/OUTPUT/area_gen_",Sys.Date(),".csv")
 write.csv(df_sol, path,row.names = TRUE)
 
-path <- "~/RMT/David/OUTPUT/area_gen_2022-03-21.csv"
-area_gen <- read.csv(file = path)
-library(latex2exp)
-ggplot(df_sol) +
-  geom_point(aes(beta,muw, colour = state)) + theme_bw()  +
-  scale_color_manual(values=c("#6622CC", "#A755C2")) +
-  ylab(TeX("\\mu_c")) +
-  xlab(TeX("\\beta")) +
-  # ggtitle(""*gamma/beta~": 4")
-  ggtitle(paste0("N: ",N))
+# path <- "~/RMT/David/OUTPUT/area_gen_2022-03-22.csv"
+# df_sol <- read.csv(file = path)
+# df_sol$Stability <- ifelse(df_sol$state == TRUE, "Stable", "Unstable")
+# 
+# vec <- seq(0,1,0.01)
+# df_sol <- df_sol[which(df_sol$beta == vec),]
+# library(latex2exp)
+# ggplot(df_sol) +
+#   geom_point(aes(beta,muw, colour = Stability)) + theme_bw()  +
+#   scale_color_manual(values=c("#909CC2", "#084887")) +
+#   ylab(TeX("$\\mu_c$")) +
+#   xlab(TeX("$\\beta$")) +
+#   # ggtitle(""*gamma/beta~": 4")
+#   ggtitle(paste0("N: ",N)) +
+#   coord_fixed() +
+#   theme(text = element_text(size = 15)) +
+#   geom_point(aes(0.07,0.07), colour= "#F58A07", size = 0.1) +
+#   geom_point(aes(0.07,0.1), colour= "#F58A07") +
+#   geom_point(aes(0.1,0.07), colour= "#F58A07") 
