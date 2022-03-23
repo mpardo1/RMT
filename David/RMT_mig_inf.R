@@ -43,7 +43,7 @@ Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.3
+muc <- 0.1
 sc <- 0.0012
 rhoc <- 0
 Gammac <- 0
@@ -116,9 +116,9 @@ plot_eigen
 # for constant populations, set deltas = 0, Deltas = deaths
 
 sus_init <- rep(220, N) # initial susceptibles
-inf_init <- rep(140, N)    # initial infecteds
+inf_init <- rep(1, N)    # initial infecteds
 
-end_time <- 300
+end_time <- 100
 
 # integro el sistema con condiciones iniciales 
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
@@ -127,7 +127,7 @@ sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
 
 # plot SUS, INF, REC or TOT population
 plot_inf <- plot_int(N, sol, state = "INF")
-plot_int(N, sol, state = "INF") + xlim(c(0,30))
+plot_int(N, sol, state = "INF") + xlim(c(0,5))
 plot_tot <- plot_int(N, sol, state = "TOT") + theme_bw() 
 # +
 #   xlim(c(0,50)) + ylim(c(0,60))
