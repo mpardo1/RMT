@@ -18,13 +18,13 @@ N <- 100
 # epidemiological
 #all rates must lie in (0,1) except for betas
 
-Deltas <- rep(0.6, N) # birth rate
-mub <- 0.07
+Deltas <- rep(0.3, N) # birth rate
+mub <- 0.05
 sb <- 0.001
 betas <- rep(mub, N) # transmission rates
 # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
-thetas <- rep(0.3, N) # loss of immunity rates
-mud <- 0.6
+thetas <- rep(0.1, N) # loss of immunity rates
+mud <- 0.3
 deaths <- rep(mud, N) # not disease-related death rates
 mua <- 0.2
 alphas <- rep(mua, N) # recovery rates
@@ -35,15 +35,15 @@ gammas = deaths + alphas + deltas
 # mobility
 #commuting and migration networks
 
-muw <- 0.07 
+muw <- 0.05
 sw <- 0.05
 rhow <- 0 #original rho (Gamma of baron et al)
 Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.001
-sc <- 0.001
+muc <- 0.1
+sc <- 0.06
 rhoc <- 0
 Gammac <- 0
 rc <- 0
@@ -71,15 +71,16 @@ eigen_unstab_com <- plot_eigen_rmt(jacobian,
                tau = 0, alp = 0, K = 0) +
                scale_y_continuous( breaks=c(0)) 
 
+eigen_unstab_com
 ####### INTEGRATE SYSTEM ################################
 
 # initial populations
 # for constant populations, set deltas = 0, Deltas = deaths
 
 sus_init <- rep(100000, N) # initial susceptibles
-inf_init <- rep(100, N)    # initial infecteds
+inf_init <- rep(1, N)    # initial infecteds
 
-end_time <- 50
+end_time <- 200
 
 # integro el sistema con condiciones iniciales 
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
@@ -88,6 +89,7 @@ sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
 
 # plot SUS, INF, REC or TOT population
 plot_inf_stab <- plot_int(N, sol, state = "INF")  + theme_bw()+ theme(legend.position = "none")
+plot_inf_stab
 plot_int(N, sol, state = "TOT")
 
 sol_df <-  as.data.frame(sol)

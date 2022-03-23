@@ -17,13 +17,13 @@ N <- 10
 # epidemiological
 #all rates must lie in (0,1) except for betas
 
-Deltas <- rep(0.6, N) # birth rate
+Deltas <- rep(0.3, N) # birth rate
 mub <- 0.2
 sb <- 0.001
 betas <- rep(mub, N) # transmission rates
 # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
-thetas <- rep(0.3, N) # loss of immunity rates
-mud <- 0.6
+thetas <- rep(0.1, N) # loss of immunity rates
+mud <- 0.3
 deaths <- rep(mud, N) # not disease-related death rates
 mua <- 0.2
 alphas <- rep(mua, N) # recovery rates
@@ -40,7 +40,7 @@ Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.001
+muc <- 0.01
 sc <- 0.001
 rhoc <- 0
 Gammac <- 0

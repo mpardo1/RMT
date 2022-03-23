@@ -21,30 +21,30 @@ N <- 50
 #all rates must lie in (0,1) except for betas 
 
 Deltas <- rep(0.3, N) # birth rate
-mub <- 0.5
+mub <- 0.1
 sb <- 0.001
 betas <- rep(mub, N) # transmission rates
 # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
-thetas <- rep(0.6, N) # loss of immunity rates
-mud <- 0.6
+thetas <- rep(0.1, N) # loss of immunity rates
+mud <- 0.3
 deaths <- rep(mud, N) # not disease-related death rates
-mua <- 0.3
+mua <- 0.2
 alphas <- rep(mua, N) # recovery rates
-mudel <- 0.7
+mudel <- 0
 deltas <- rep(mudel, N) # disease-related death rates
 gammas = deaths + alphas + deltas
 
 # mobility
 #commuting and migration networks
-muw <- 0.5
-sw <- 0.1
+muw <- 0.05
+sw <- 0.01
 rhow <- 0 #original rho (Gamma of baron et al)
 Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.2
-sc <- 0.012
+muc <- 0.3
+sc <- 0.0012
 rhoc <- 0
 Gammac <- 0
 rc <- 0
@@ -116,9 +116,9 @@ plot_eigen
 # for constant populations, set deltas = 0, Deltas = deaths
 
 sus_init <- rep(220, N) # initial susceptibles
-inf_init <- rep(100, N)    # initial infecteds
+inf_init <- rep(140, N)    # initial infecteds
 
-end_time <- 100
+end_time <- 300
 
 # integro el sistema con condiciones iniciales 
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
@@ -127,7 +127,7 @@ sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
 
 # plot SUS, INF, REC or TOT population
 plot_inf <- plot_int(N, sol, state = "INF")
-plot_int(N, sol, state = "INF")
+plot_int(N, sol, state = "INF") + xlim(c(0,30))
 plot_tot <- plot_int(N, sol, state = "TOT") + theme_bw() 
 # +
 #   xlim(c(0,50)) + ylim(c(0,60))
@@ -157,3 +157,4 @@ plot_tot <- plot_int(N, sol, state = "TOT") + theme_bw()
 #                mu_w_w,"sw","0.01","sm",s_c_w,".png")
 # ggsave(path,
 #        plot =ggarrange(gg_inf, gg_eigen, ncol = 1, nrow=2), device = "png")
+
