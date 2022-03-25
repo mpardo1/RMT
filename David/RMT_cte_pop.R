@@ -70,7 +70,7 @@ diag(MIGRATION) <- 0
 
 ### TRY with Gamma = D*N
 sus_init <- rep(100, N) # initial susceptibles
-inf_init <- rep(10, N)    # initial infecteds
+inf_init <- rep(0, N)    # initial infecteds
 init_pop <- sus_init+inf_init
 Deltas <- births_func(MIGRATION, init_pop, deaths)
 
