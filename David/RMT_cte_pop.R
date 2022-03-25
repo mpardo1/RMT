@@ -13,7 +13,7 @@ library(matlib)
 ####### GENERATE JACOBIAN ###############################
 
 # number of patches
-N <- 30
+N <- 50
 
 # epidemiological
 #all rates must lie in (0,1) except for betas
@@ -49,13 +49,13 @@ Gammac <- 0
 rc <- 0
 cc <- 0
 
-COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
-COMMUTING <- matrix(0,N,N)
+COMMUTING <- rand_mat(N, muw, sw, distrib = "gamma")
+# COMMUTING <- matrix(0,N,N)
 diag(COMMUTING) <- 0
 # COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
 # COMMUTING[sample.int(N^2, round(p*N^2))] <- 0
 
-MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
+MIGRATION <- rand_mat(N, muc, sc, distrib = "gamma")
 diag(MIGRATION) <- 0
 
 # ### TRY with N = inv(D)*Deltas
@@ -97,6 +97,7 @@ for(i in c(1: nrow(sol))){
 
 ########################################################################
 ####### EIGENVALUES #######
+sus_init <- init_pop_func(MIGRATION, Deltas, deaths)
 # jacobian
 jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
   diag(deaths + alphas + deltas + colSums(MIGRATION))
@@ -110,3 +111,4 @@ plot_eigen_rmt(jacobian,N,mub,mug = mud + mua + mudel,
 
 print(plot_eigen(jacobian))
 plot_int(N, sol, state = "INF")
+

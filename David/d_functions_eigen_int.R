@@ -225,6 +225,7 @@ SIR_cte_pop <- function(t, y, parameters) {
     for(i in c(1:dime)){
       # Total population (N = S+I+R)
       N <- tot_pop      # Susceptible individuals:
+      # print(paste0("N: ",N))
       q1 <- delta_N[i]
       q2 <- beta_r[i]*(y[i]/N)*y[i+dime]
       q3 <- d[i]*y[i]
