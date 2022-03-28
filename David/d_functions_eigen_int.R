@@ -18,7 +18,9 @@ SIR <- function(t, y, parameters) {
     dim4 <- dime*3
     for(i in c(1:dime)){
       # Total population (N = S+I+R)
-      N <- y[i] + y[i+dime] + y[i+dim2]      # Susceptible individuals:
+      N <- y[i] + y[i+dime] + y[i+dim2]  
+      print(paste0("N:", N))
+      # Susceptible individuals:
       q1 <- delta_N[i]*N
       q2 <- beta_r[i]*(y[i]/N)*y[i+dime]
       q3 <- d[i]*y[i]
@@ -198,10 +200,27 @@ births_func <- function(MIGRATION, init_pop, deaths){
   return(mat)
 }
 
-init_pop_func <- function(MIGRATION, Deltas, deaths){
+births_func <- function(MIGRATION, init_pop, deaths){
   mat <- - MIGRATION
   diag(mat) <- deaths + colSums(MIGRATION)
-  mat1 <- inv(mat)%*%Deltas
+  mat <- mat%*%init_pop
+  return(mat)
+}
+
+births_func2 <- function(MIGRATION){
+  vec <- colSums(MIGRATION) - rowSums(MIGRATION)
+  birth_vec <-  vec
+  birth_vec[vec<0] <- 0
+  death_vec <-  vec
+  death_vec[vec>0] <- 0
+  death_vec <- abs(death_vec)
+  return(list(birth_vec,death_vec))
+}
+
+init_pop_func <- function(MIGRATION, deaths){
+  mat <- MIGRATION
+  diag(mat) <- - colSums(MIGRATION)
+  mat1 <- inv(mat)
   return(mat1)
 }
 
@@ -224,7 +243,8 @@ SIR_cte_pop <- function(t, y, parameters) {
     dim4 <- dime*3
     for(i in c(1:dime)){
       # Total population (N = S+I+R)
-      N <- tot_pop      # Susceptible individuals:
+      N <- tot_pop      
+      # Susceptible individuals:
       # print(paste0("N: ",N))
       q1 <- delta_N[i]
       q2 <- beta_r[i]*(y[i]/N)*y[i+dime]

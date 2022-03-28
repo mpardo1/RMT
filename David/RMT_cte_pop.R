@@ -13,7 +13,7 @@ library(matlib)
 ####### GENERATE JACOBIAN ###############################
 
 # number of patches
-N <- 50
+N <- 3
 
 # epidemiological
 #all rates must lie in (0,1) except for betas
@@ -42,7 +42,7 @@ Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.5
+muc <- 0.1
 sc <- 0.001
 rhoc <- 0
 Gammac <- 0
@@ -50,29 +50,31 @@ rc <- 0
 cc <- 0
 
 COMMUTING <- rand_mat(N, muw, sw, distrib = "gamma")
-# COMMUTING <- matrix(0,N,N)
 diag(COMMUTING) <- 0
-# COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
-# COMMUTING[sample.int(N^2, round(p*N^2))] <- 0
 
 MIGRATION <- rand_mat(N, muc, sc, distrib = "gamma")
 diag(MIGRATION) <- 0
 
+
+# list <- births_func2(MIGRATION)
+# deaths <- list[[1]]
+# Deltas <- list[[2]]
+
 # ### TRY with N = inv(D)*Deltas
-# init_pop <- init_pop_func(MIGRATION, Deltas, deaths)
-# sus_init <- init_pop # initial susceptibles
-# inf_init <- rep(0, N)    # initial infecteds
-# 
-# sol <- int_cte_pop(N, Deltas,betas,deaths,thetas,alphas,deltas,
-#                    COMMUTING,MIGRATION,
-#                    sus_init,inf_init,end_time)
-# plot_int(N, sol, state = "TOT")
+init_pop <- DFE_func(MIGRATION, Deltas, deaths)
+sus_init <- init_pop # initial susceptibles
+inf_init <- rep(0, N)    # initial infecteds
+
+sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+                   COMMUTING,MIGRATION,
+                   sus_init,inf_init,end_time)
+plot_int(N, sol, state = "TOT")
 
 ### TRY with Gamma = D*N
 sus_init <- rep(100, N) # initial susceptibles
-inf_init <- rep(10, N)    # initial infecteds
+inf_init <- rep(0, N)    # initial infecteds
 init_pop <- sus_init+inf_init
-Deltas <- births_func(MIGRATION, init_pop, deaths)
+# Deltas <- births_func(MIGRATION, init_pop, deaths)
 
 if(all(Deltas > 0)){
   print("All good bro")
@@ -80,10 +82,13 @@ if(all(Deltas > 0)){
   print("Problem with the births rates, NEGATIVE!!")
 }
 
-end_time <- 100
-sol <- int_cte_pop(N, Deltas,betas,deaths,thetas,alphas,deltas,
+end_time <- 10
+sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
            sus_init,inf_init,end_time)
+
+sol_1 <- rowSums(sol[, c(2,4,6)])
+sol_2 <- rowSums(sol[, c(3,5,7)])
 plot_int(N, sol, state = "TOT")
 
 # Check if the pop is cte along time at each patch:
