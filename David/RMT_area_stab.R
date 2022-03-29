@@ -12,7 +12,7 @@ source("~/RMT/David/d_functions_eigen_int.R")
 ####### GENERATE JACOBIAN ###############################
 
 # number of patches
-N <- 10
+N <- 100
 
 # epidemiological
 #all rates must lie in (0,1) except for betas
@@ -25,7 +25,7 @@ betas <- rep(mub, N) # transmission rates
 thetas <- rep(0.1, N) # loss of immunity rates
 mud <- 0.3
 deaths <- rep(mud, N) # not disease-related death rates
-mua <- 0.2
+mua <- 0.65
 alphas <- rep(mua, N) # recovery rates
 mudel <- 0
 deltas <- rep(mudel, N) # disease-related death rates
@@ -47,7 +47,7 @@ Gammac <- 0
 rc <- 0
 cc <- 0
 
-step <- 0.01
+step <- 0.005
 beta_vec <- seq(0.01,0.9,step)
 muw_vec <- seq(0.01,0.9,step)
 df_sol <- data.frame(beta = 0, gamma = 0, N = 0, muw = 0, state = FALSE)
@@ -82,11 +82,11 @@ for(i in c(1:length(beta_vec))){
 
 df_sol <- df_sol[-1,]
 
-path <- paste0("~/RMT/David/OUTPUT/area_gen_",Sys.Date(),".csv")
-write.csv(df_sol, path,row.names = TRUE)
+# path <- paste0("~/RMT/David/OUTPUT/area_gen_",Sys.Date(),".csv")
+# write.csv(df_sol, path,row.names = TRUE)
 
-path <- "~/RMT/David/OUTPUT/area_gen_2022-03-22.csv"
-df_sol <- read.csv(file = path)
+# path <- "~/RMT/David/OUTPUT/area_gen_2022-03-22.csv"
+# df_sol <- read.csv(file = path)
 df_sol$Stability <- ifelse(df_sol$state == TRUE, "Stable", "Unstable")
 
 vec <- seq(0,nrow(df_sol),2)
@@ -94,16 +94,18 @@ df_sol <- df_sol[vec,]
 library(latex2exp)
 plot_area <- ggplot(df_sol) +
   geom_point(aes(beta,muw, colour = Stability)) + theme_bw()  +
-  scale_color_manual(values=c("#9BC1BC", "#F4F1BB")) +
+  scale_color_manual(values=c("#A0DDFF", "#758ECD")) +
   ylab(TeX("$\\mu_c$")) +
   xlab(TeX("$\\beta$")) +
   # ggtitle(""*gamma/beta~": 4")
   ggtitle(paste0("N: ",N)) +
   coord_fixed() +
   theme(text = element_text(size = 15)) +
-  geom_point(aes(0.07,0.07), colour= "#ED6A5A", size = 0.3) +
-  geom_point(aes(0.07,0.2), colour= "#ED6A5A", size = 0.3) +
-  geom_point(aes(0.2,0.07), colour= "#ED6A5A", size = 0.3)
+  geom_point(aes(0.07,0.07), colour= "#ED6A5A", size = 0.5) +
+  geom_point(aes(0.07,0.2), colour= "#ED6A5A", size = 0.5) +
+  geom_point(aes(0.2,0.07), colour= "#ED6A5A", size = 0.5)
+
+plot_area
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
 path <- paste0(Path,"Area_g0,8_muc_0,01_sc0,00001_sw0,05.png")

@@ -60,8 +60,8 @@ int <- function(N,Deltas,betas,deaths,thetas,alphas,deltas,COMMUTING,MIGRATION,s
     theta_r = thetas,
     alpha_r = alphas,
     delta_r = deltas,
-    C = COMMUTING,
-    W = MIGRATION)
+    C = MIGRATION,
+    W = COMMUTING)
 
   # time steps for integration:
   times = seq(0,end_time, 0.1)
@@ -179,8 +179,8 @@ int1 <- function(N,Deltas,betas,deaths,thetas,alphas,deltas,COMMUTING,MIGRATION,
     theta_r = thetas,
     alpha_r = alphas,
     delta_r = deltas,
-    C = COMMUTING,
-    W = MIGRATION)
+    C = MIGRATION,
+    W = COMMUTING)
   
   # time steps for integration:
   times = seq(0,end_time, 0.1)

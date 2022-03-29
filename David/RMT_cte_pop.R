@@ -13,7 +13,7 @@ library(matlib)
 ####### GENERATE JACOBIAN ###############################
 
 # number of patches
-N <- 3
+N <- 50
 
 # epidemiological
 #all rates must lie in (0,1) except for betas
@@ -35,14 +35,14 @@ gammas = deaths + alphas + deltas
 # mobility
 #commuting and migration networks
 
-muw <- 0.1
+muw <- 0.7
 sw <- 0.02
 rhow <- 0 #original rho (Gamma of baron et al)
 Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.1
+muc <- 0.01
 sc <- 0.001
 rhoc <- 0
 Gammac <- 0
@@ -61,44 +61,59 @@ diag(MIGRATION) <- 0
 # Deltas <- list[[2]]
 
 # ### TRY with N = inv(D)*Deltas
-init_pop <- DFE_func(MIGRATION, Deltas, deaths)
-sus_init <- init_pop # initial susceptibles
-inf_init <- rep(0, N)    # initial infecteds
+# init_pop <- DFE_func(MIGRATION, Deltas, deaths)
+sus_init <- rep(10000, N) # initial susceptibles
+inf_init <- rep(100, N)    # initial infecteds
 
+end_time <- 10
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
                    COMMUTING,MIGRATION,
                    sus_init,inf_init,end_time)
 plot_int(N, sol, state = "TOT")
 
+# jacobian
+jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+  diag(deaths + alphas + deltas + colSums(MIGRATION))
+
+# plot the eigenvalues of the system
+library("ggforce")
+plot_eigen_rmt(jacobian,N,mub,mug = mud + mua + mudel,
+               muw,sw,rhow,Gammaw,muc,sc,rhoc,Gammac,
+               tau = 0, alp = 0, K = 0) +
+  scale_y_continuous( breaks=c(0)) 
+
+print(plot_eigen(jacobian))
+plot_int(N, sol, state = "INF")
+
 ### TRY with Gamma = D*N
-sus_init <- rep(100, N) # initial susceptibles
-inf_init <- rep(0, N)    # initial infecteds
-init_pop <- sus_init+inf_init
+# sus_init <- rep(100, N) # initial susceptibles
+# inf_init <- rep(0, N)    # initial infecteds
+# init_pop <- sus_init+inf_init
 # Deltas <- births_func(MIGRATION, init_pop, deaths)
 
-if(all(Deltas > 0)){
-  print("All good bro")
-}else{
-  print("Problem with the births rates, NEGATIVE!!")
-}
-
-end_time <- 10
-sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-           COMMUTING,MIGRATION,
-           sus_init,inf_init,end_time)
-
-sol_1 <- rowSums(sol[, c(2,4,6)])
-sol_2 <- rowSums(sol[, c(3,5,7)])
-plot_int(N, sol, state = "TOT")
-
-# Check if the pop is cte along time at each patch:
-pop_patch <- matrix(0, nrow = nrow(sol), ncol = N+1)
-pop_patch[,1] <- sol[,1]
-for(i in c(1: nrow(sol))){
-  for(j in c(1:N)){
-    pop_patch[i,j+1] <- sol[i,(j+1)] + sol[i,(1+j+N)] + sol[i,(1+j+2*N)]
-  }
-}
+# if(all(Deltas > 0)){
+#   print("All good bro")
+# }else{
+#   print("Problem with the births rates, NEGATIVE!!")
+# }
+# 
+# end_time <- 10
+# sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+#            COMMUTING,MIGRATION,
+#            sus_init,inf_init,end_time)
+# 
+# sol_1 <- rowSums(sol[, c(2,4,6)])
+# sol_2 <- rowSums(sol[, c(3,5,7)])
+# plot_int(N, sol, state = "TOT")
+# 
+# # Check if the pop is cte along time at each patch:
+# pop_patch <- matrix(0, nrow = nrow(sol), ncol = N+1)
+# pop_patch[,1] <- sol[,1]
+# for(i in c(1: nrow(sol))){
+#   for(j in c(1:N)){
+#     pop_patch[i,j+1] <- sol[i,(j+1)] + sol[i,(1+j+N)] + sol[i,(1+j+2*N)]
+#   }
+# }
 
 ########################################################################
 ####### EIGENVALUES #######
