@@ -323,7 +323,7 @@ full_mat <- function(N,birth,betas,deaths,deltas,
   mat22 <- MIGRATION + COMMUTING %*% betas_mat
   diag(mat22) <- betas - (deaths + alphas + deltas) - colSums(MIGRATION)
   mat33 <- MIGRATION 
-  diag(mat33) <- thetas + deaths - colSums(MIGRATION)
+  diag(mat33) <- -(thetas + deaths) - colSums(MIGRATION)
   mat12 <- - COMMUTING %*% betas_mat
   mat12[,1] <- birth - betas
   mat13 <- matrix(0,N,N)
