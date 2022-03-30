@@ -47,7 +47,7 @@ Gammac <- 0
 rc <- 0
 cc <- 0
 
-step <- 0.005
+step <- 0.001
 beta_vec <- seq(0.01,0.9,step)
 muw_vec <- seq(0.01,0.9,step)
 df_sol <- data.frame(beta = 0, gamma = 0, N = 0, muw = 0, state = FALSE)
