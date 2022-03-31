@@ -13,7 +13,7 @@ source("~/RMT/David/d_functions_eigen_int.R")
 ####### GENERATE JACOBIAN ###############################
 
 # number of patches
-N <- 100
+N <- 1000
 
 # epidemiological
 #all rates must lie in (0,1) except for betas
@@ -42,8 +42,8 @@ Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.001
-sc <- 0.0002
+muc <- 0.1
+sc <- 0.02
 rhoc <- 0
 Gammac <- 0
 rc <- 0
@@ -69,9 +69,16 @@ eigen_stab <- plot_eigen_rmt(jacobian,
                muw,sw,rhow,Gammaw,
                muc,sc,rhoc,Gammac,
                tau = 0, alp = 0, K = 0) +
-               scale_y_continuous( breaks=c(0)) 
+               scale_y_continuous( breaks=c(0)) +
+              xlim(c(-102,-99)) + ylim(c(-1,1))
 
-eigen_stab
+eig <- eigen_mat(jacobian)
+eig <- eig[-nrow(eig),] 
+ggplot(eig, aes(re, im)) + 
+  geom_point() +
+  coord_fixed()
+
+print(plot_eigen(jacobian))
 ####### INTEGRATE SYSTEM ################################
 
 # initial populations
@@ -92,47 +99,7 @@ plot_inf_stab <- plot_int(N, sol, state = "INF")  + theme_bw()+ theme(legend.pos
 plot_inf_stab
 plot_int(N, sol, state = "TOT")
 
-library("ggpubr")
-size_text <- 16
-ggeigen <- ggarrange(eigen_stab  + xlab("")  + xlab("") + labs(title = "c") +
-                       theme(text = element_text(size = size_text)) ,
-         eigen_unstab_com  + xlab("") + labs(title = "d") + 
-           theme(text = element_text(size = size_text)),
-         eigen_unstab_bet + labs(title = "e")  + 
-           theme(text = element_text(size = size_text)),
-         nrow = 3, ncol = 1)
 
-gginf <- ggarrange(plot_inf_stab + labs(title = "c") +
-                     ylab("Infected individuals") + 
-                     xlab("") +
-                     theme(text = element_text(size = size_text)),
-          plot_inf_unstab_com + labs(title = "d") +
-            ylab("Infected individuals") + xlab("") +
-            theme(text = element_text(size = size_text)),
-          plot_inf_unstab_bet + labs(title = "e") +
-            ylab("Infected individuals") +
-            theme(text = element_text(size = size_text)),
-          ncol = 1, nrow = 3)
-
-ggarr <- ggarrange(ggeigen,gginf, ncol = 2)
-
-path <- paste0(Path,"gg_g0,95_muc_0,001_sc0,0001_sw0,05.png")
-ggsave(path,
-       plot = ggarr, device = "png")
-
-
-Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/diagram_c.png"
-library("jpeg")
-diagram <- readPNG(Path)
-im_A <- ggplot() + 
-  background_image(diagram) +
-  # This ensures that the image leaves so me space at the edges
-  theme(plot.margin = margin(t=3, l=4.8, r=4.8, b=3, unit = "cm"))
-
-gg_izq <- ggarrange(plot_area,
-                    im_A, 
-                    ncol = 2)
-ggarrange(gg_izq,ggall)
 # sol_df <-  as.data.frame(sol)
 # for(i in c(1:N)){
 #   colnames(sol_df)[i+1] <-  paste0("S",i)

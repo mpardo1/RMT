@@ -85,7 +85,7 @@ sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
            sus_init,inf_init,end_time)
 
-plot_stab <- plot_int(N, sol, state = "INF") +
+plot_stab <- plot_int1(N, sol, state = "INF") +
   theme_bw() +theme(legend.position="none") 
 plot_stab
 
@@ -120,7 +120,7 @@ sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            sus_init,inf_init,end_time)
 
 # plot SUS, INF, REC or TOT population
-plot_unstab1 <- plot_int(N, sol, state = "INF") +
+plot_unstab1 <- plot_int1(N, sol, state = "INF") +
   theme_bw() +theme(legend.position="none") 
 
 plot_unstab1
@@ -129,7 +129,7 @@ vec_col <-  vector(mode="character", length=N)
 vec_col[1:N] <- "#A63446"
 vec_col[1] <- "#3066BE"
 
-plot.inf <- plot_int(N, sol, state = "INF") +
+plot.inf <- plot_int1(N, sol, state = "INF") +
   scale_colour_manual(values = vec_col) +
   theme_bw() + theme(legend.position="none") 
 

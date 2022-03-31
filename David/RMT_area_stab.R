@@ -73,7 +73,7 @@ for(i in c(1:length(beta_vec))){
       #   diag(deaths + alphas + deltas + colSums(MIGRATION))
       # eigen <- eigen_mat(jacobian)
       # max_eig <- max(eigen$re)
-      state <- ifelse(((N-1)*muw_vec[j]) < ((gammas[1]/betas[1]) - 1), TRUE, FALSE)
+      state <- ifelse(((N-1)*muw_vec[j]) < ((gammas[1]/beta_vec[i]) - 1), TRUE, FALSE)
       df_sol[nrow(df_sol) + 1,1:4] <- list(betas[1], gammas[1], N, muw_vec[j])
       df_sol[nrow(df_sol) ,5] <- state
     }
