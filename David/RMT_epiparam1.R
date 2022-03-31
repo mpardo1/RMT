@@ -18,30 +18,30 @@ N <- 100
 # epidemiological
 #all rates must lie in (0,1) except for betas
 
-Deltas <- rep(0.6, N) # birth rate
-mub <- 0.8
+Deltas <- rep(0.3, N) # birth rate
+mub <- 0.02
 sb <- 0.001
 betas <- rep(mub, N) # transmission rates
 # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
 thetas <- rep(0.3, N) # loss of immunity rates
-mud <- 0.02
+mud <- 0.3
 deaths <- rep(mud, N) # not disease-related death rates
-mua <- 0.02
+mua <- 0.2
 alphas <- rep(mua, N) # recovery rates
-mudel <- 0.015
+mudel <- 0
 deltas <- rep(mudel, N) # disease-related death rates
 gammas = deaths + alphas + deltas
 
 # mobility
 #commuting and migration networks
-muw <- 0.3 
+muw <- 0.2 
 sw <- 0.05
 rhow <- 0 #original rho (Gamma of baron et al)
 Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.1
+muc <- 0.01
 sc <- 0.001
 rhoc <- 0
 Gammac <- 0
@@ -62,40 +62,78 @@ jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
   diag(deaths + alphas + deltas + colSums(MIGRATION))
 
 # plot the eigenvalues of the system
-
-plot_eigen_rmt(jacobian,
+library("ggforce")
+plot_stab <- plot_eigen_rmt(jacobian,
                N,mub,mug = mud + mua + mudel,
                muw,sw,rhow,Gammaw,
                muc,sc,rhoc,Gammac,
-               tau = 0, alp = 0, K = 0) 
+               tau = 0, alp = 0, K = 1) +
+                scale_y_continuous( breaks=c(0)) 
 # + xlim(c(-60,-50))
+print(plot_eigen(jacobian))
 eigen <-  eigen_mat(jacobian)
 ####### INTEGRATE SYSTEM ################################
 
 # initial populations
 # for constant populations, set deltas = 0, Deltas = deaths
 
-sus_init <- rep(100000, N) # initial susceptibles
+sus_init <- rep(10000, N) # initial susceptibles
 inf_init <- rep(100, N)    # initial infecteds
 
-end_time <- 25
+end_time <- 50
+sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+           COMMUTING,MIGRATION,
+           sus_init,inf_init,end_time)
 
-# integro el sistema con condiciones iniciales 
+plot_stab <- plot_int(N, sol, state = "INF") +
+  theme_bw() +theme(legend.position="none") 
+plot_stab
+
+vec_col <-  vector(mode="character", length=N)
+vec_col[1:N] <- "#A63446"
+
+plot.inf.stab <- plot_int(N, sol, state = "INF") +
+  scale_colour_manual(values = vec_col) +
+  theme_bw() + theme(legend.position="none") 
+
+plot.inf.stab
+#### 1 PATCH ####
+alp_bet <- 1.2
+
+betas <- rep(mub, N) 
+betas[1] <- alp_bet + betas[1]
+
+jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+  diag(deaths + alphas + deltas + colSums(MIGRATION))
+
+
+plot_eigen_rmt(jacobian,
+               N,mub,mug = mud + mua + mudel,
+               muw,sw,rhow,Gammaw,
+               muc,sc,rhoc,Gammac,
+               tau = 0, alp = alp_bet, K = 1) +
+  scale_y_continuous( breaks=c(0)) 
+
+
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
            sus_init,inf_init,end_time)
 
 # plot SUS, INF, REC or TOT population
-plot_int(N, sol, state = "INF")
+plot_unstab1 <- plot_int(N, sol, state = "INF") +
+  theme_bw() +theme(legend.position="none") 
+
+plot_unstab1
 
 vec_col <-  vector(mode="character", length=N)
-vec_col[1:N] <- "royalblue3"
+vec_col[1:N] <- "#A63446"
+vec_col[1] <- "#3066BE"
 
 plot.inf <- plot_int(N, sol, state = "INF") +
   scale_colour_manual(values = vec_col) +
   theme_bw() + theme(legend.position="none") 
 
-muc
+plot.inf
 muw
 plot.inf.bet.cte <- plot.inf + ggtitle(""*mu[c]~": 0.1 , "*mu[w]~": 0.1 ") 
 

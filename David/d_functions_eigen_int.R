@@ -106,8 +106,9 @@ plot_int <- function(N, z, state){
     # Filter Infected:
     df_plot$type <- substr(df_plot$variable,1,1)
     df_inf <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "I")
-    plot  <- ggplot(df_inf,aes(time, value)) + 
+    plot  <- ggplot(df_inf,aes(time, value), show.legend = NA) + 
       geom_line(aes( group =variable, colour = type),size=0.5)  +
+      # geom_line(aes( colour =variable),size=0.5)  +
       ylab("Number of infected individuals") 
   }else if( state == "REC"){
     # Filter Recovered:
