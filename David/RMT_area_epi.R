@@ -26,7 +26,7 @@ gammas = deaths + alphas + deltas
 
 # mobility
 #commuting and migration networks
-muw <- 0.2 
+muw <- 0.6 
 sw <- 0.05
 rhow <- 0 #original rho (Gamma of baron et al)
 Gammaw <- 0 #gamma of baron et al
@@ -76,5 +76,5 @@ for(i in c(1:length(beta_vec))){
 
 df_sol <- df_sol[-1,]
 Path <- "~/RMT/David/OUTPUT/"
-path <- paste0(Path,"Areaepi_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_",Sys.Date(), ".csv")
+path <- paste0(Path,"Areaepi_g0,5_muc_0,001_sc0,0001_muw0,6_sw0,05_",Sys.Date(), ".csv")
 write.csv(df_sol, path,row.names = TRUE)
