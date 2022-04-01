@@ -53,23 +53,28 @@ inf_init <- rep(100, N)    # initial infecteds
 
 end_time <- 100
 
-alp_bet_vec <- seq(0,2.5,0.01)
-sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-           COMMUTING,MIGRATION,
-           sus_init,inf_init,end_time)
-df_sum <- data.frame(time = sol[,1])
-for(i in c(1:length(alp_bet_vec))){
-  print(paste0("i: ", i))
-  betas <- rep(mub, N) 
-  betas[1] <- betas[1] + alp_bet_vec[i]
-  sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-             COMMUTING,MIGRATION,
-             sus_init,inf_init,end_time)
-  sol_inf <- sol[,c(1,(N+2):(2*N+1))]
-  sum_inf <- rowSums(sol_inf[,2:(N+1)])
-  df_sum[,ncol(df_sum)+1] <- sum_inf
+
+step <- 0.001
+beta_vec <- seq(0,0.1,step)
+alp_vec <- seq(0,2.5,step)
+df_sol <- data.frame(beta = 0, gamma = 0, N = 0, alp = 0, state = FALSE)
+N = 100
+mug <- gammas[1]
+for(i in c(1:length(beta_vec))){
+  print(paste0(" i : ", i))
+  for(j in c(1:length(alp_vec))){
+    a <- beta_vec[i]*muw + muc
+    b <- alp_vec[j]
+    c <- alp_vec[j]*muw
+    outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+    outl <- outl + (mub*(1-muw) - N*muc - mug)
+    state <- ifelse(outl < 0, TRUE, FALSE)
+    df_sol[nrow(df_sol) + 1,1:4] <- list(beta_vec[i], gammas[1], N, alp_vec[j])
+    df_sol[nrow(df_sol) ,5] <- state
+  }
 }
 
+df_sol <- df_sol[-1,]
 Path <- "~/RMT/David/OUTPUT/"
-path <- paste0(Path,"Suminf_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_",Sys.Date(), ".csv")
-write.csv(df_sum, path,row.names = TRUE)
+path <- paste0(Path,"Areaepi_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_",Sys.Date(), ".csv")
+write.csv(df_sol, path,row.names = TRUE)

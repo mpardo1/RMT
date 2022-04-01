@@ -205,7 +205,8 @@ sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
   scale_colour_gradient(name = ""*alpha~" ", 
                         low = "blue", high = "red") +
   ylab("Sum of infected individuals") +
-  theme_bw()
+  theme_bw() +
+  theme(text = element_text(size = 20)) 
 
 sum_inf
 
