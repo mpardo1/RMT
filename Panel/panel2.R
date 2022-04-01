@@ -83,7 +83,7 @@ sus_init <- rep(10000, N) # initial susceptibles
 inf_init <- rep(100, N)    # initial infecteds
 
 end_time <- 50
-sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+sol.stab <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
            sus_init,inf_init,end_time)
 
@@ -94,10 +94,11 @@ plot_stab
 vec_col <-  vector(mode="character", length=N)
 vec_col[1:N] <- "#A63446"
 
-plot.inf.stab <- plot_int1(N, sol, state = "INF") +
+size_let <- 15
+plot.inf.stab <- plot_int1(N, sol.stab, state = "INF") +
   scale_colour_manual(values = vec_col) +
   theme_bw() +
-  theme(text = element_text(size = 20), legend.position="none")
+  theme(text = element_text(size = size_let), legend.position="none")
 
 plot.inf.stab
 
@@ -135,7 +136,7 @@ vec_col[1] <- "#3066BE"
 plot.inf.1 <- plot_int1(N, sol, state = "INF") +
   scale_colour_manual(values = vec_col) +
   theme_bw() + theme(legend.position="none") +
-  theme(text = element_text(size = 20))
+  theme(text = element_text(size = size_let))
 
 plot.inf.1
 
@@ -184,7 +185,7 @@ plot_inf_max <- ggplot(df_sum_group) +
   xlab(TeX("$\\alpha$")) +
   ylab("Max of infected individuals") +
   theme_bw() +
-  theme(text = element_text(size = 20)) 
+  theme(text = element_text(size = size_let)) 
   
 
 
@@ -193,7 +194,7 @@ plot_time_max <-  ggplot(df_sum_group) +
   xlab(TeX("$\\alpha$")) +
   ylab("Time of max of infected individuals") +
   theme_bw() +
-  theme(text = element_text(size = 20)) 
+  theme(text = element_text(size = size_let)) 
 
 colnames(df_sum) <- c("time",as.character(alp_bet_vec))
 df_plot <- reshape2::melt(df_sum, id.vars = c("time"))
@@ -206,7 +207,7 @@ sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
                         low = "blue", high = "red") +
   ylab("Sum of infected individuals") +
   theme_bw() +
-  theme(text = element_text(size = 20)) 
+  theme(text = element_text(size = size_let), legend.position = "bottom") 
 
 sum_inf
 
@@ -248,7 +249,7 @@ plot_area <- ggplot(df_sol) +
   xlab(TeX("$\\beta$")) +
   # ggtitle(""*gamma/beta~": 4")
   ggtitle(paste0("N: ",N)) +
-  theme(text = element_text(size = 30), legend.position = "bottom") +
+  theme(text = element_text(size = size_let), legend.position = "bottom") +
   guides(colour = guide_legend(override.aes = list(size=5)))
 plot_area
 
@@ -259,6 +260,120 @@ ggsave(path,
 
 path <- paste0("~/RMT/David/OUTPUT/area_gen_beta_alp_",Sys.Date(),".csv")
 write.csv(df_sol, path,row.names = TRUE)
+
+#### PLOTS #####
+# Stability
+vec_col <-  vector(mode="character", length=N)
+vec_col[1:N] <- "#A63446"
+
+size_let <- 10
+plot.inf.stab <- plot_int1(N, sol.stab, state = "INF") +
+  scale_colour_manual(values = vec_col) +
+  theme_bw() +
+  theme(text = element_text(size = size_let), legend.position="none")
+
+plot.inf.stab
+
+# 1 patch different transmission rate:
+vec_col <-  vector(mode="character", length=N)
+vec_col[1:N] <- "#A63446"
+vec_col[1] <- "#3066BE"
+
+plot.inf.1 <- plot_int1(N, sol, state = "INF") +
+  scale_colour_manual(values = vec_col) +
+  theme_bw() + theme(legend.position="none") +
+  theme(text = element_text(size = size_let))
+
+plot.inf.1
+
+# Max infected
+Path <- "~/RMT/David/OUTPUT/"
+path <- paste0(Path,"Suminf_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_",Sys.Date(), ".csv")
+df_sum <- read.csv(file = path)
+df_sum <- df_sum[,-1]
+max_inf <- df_sum %>% summarise_if(is.numeric, max)
+time_max_vec <- c()
+for(i in c(1:251)){
+  ind <- which(df_sum[,i+1] == as.numeric(max_inf[i+1]) )
+  time_max_vec[i] <- df_sum[ind,1]
+}
+
+df_sum_group <- data.frame(alp <- alp_bet_vec[1:251], 
+                           max_inf <- t(max_inf)[1:251],
+                           time_max <- time_max_vec[1:251])
+
+df_sum_group <-  df_sum_group[-1,]
+colnames(df_sum_group) <-  c("alpha", "Max_inf", "Time_max")
+
+library("latex2exp")
+plot_inf_max <- ggplot(df_sum_group) + 
+  geom_line(aes(alpha, Max_inf)) + 
+  xlab(TeX("$\\alpha$")) +
+  ylab("Max of infected individuals") +
+  theme_bw() +
+  theme(text = element_text(size = size_let)) 
+
+
+# Time max infected
+plot_time_max <-  ggplot(df_sum_group) + 
+  geom_line(aes(alpha, Time_max)) + 
+  xlab(TeX("$\\alpha$")) +
+  ylab("Time of max of infected individuals") +
+  theme_bw() +
+  theme(text = element_text(size = size_let)) 
+
+
+colnames(df_sum) <- c("time",as.character(alp_bet_vec))
+df_sum_filt <- df_sum[,c(1,seq(1,ncol(df_sum),7))]
+df_plot <- reshape2::melt(df_sum_filt, id.vars = c("time"))
+
+# Sum of infected
+sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
+                                      color = as.numeric(as.character(variable)),
+                                      group = variable)) +
+  geom_line() +
+  scale_colour_gradient(name = ""*alpha~" ", 
+                        low = "blue", high = "red") +
+  ylab("Sum of infected individuals") +
+  xlim(c(0,20)) +
+  ggtitle("") + 
+  theme_bw() +
+  theme(text = element_text(size = size_let), legend.position = "top") 
+
+sum_inf
+
+# Area:
+plot_area <- ggplot(df_sol) +
+  geom_point(aes(beta,alp, colour = Stability)) + theme_bw()  +
+  scale_color_manual(values=c("#3066BE", "#A63446")) +
+  ylab(TeX("$\\alpha$")) +
+  xlab(TeX("$\\beta$")) +
+  # ggtitle(""*gamma/beta~": 4")
+  theme(text = element_text(size = size_let), legend.position = "top") +
+  guides(colour = guide_legend(override.aes = list(size=5)))
+plot_area
+
+## join all plots
+library("ggpubr")
+gg_1 <- ggarrange(plot.inf.stab,
+                  plot.inf.1,plot_inf_max,
+                  ncol = 3,nrow = 1,
+                  labels = c("a", "b", "c"))
+
+gg_2 <- ggarrange(plot_area,
+                  sum_inf,plot_time_max,
+                  ncol = 3,nrow = 1,
+                  labels = c("d", "e", "f"))
+
+gg_full <- ggarrange(gg_1,gg_2,
+          nrow = 2, ncol = 1)
+gg_full
+
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
+path <- paste0(Path,"Full_g0,5_muc_0,01_sc0,001_muw0,08_sw0,05.png")
+ggsave(path,
+       plot = gg_full, device = "png")
+
 ##### Random beta ####
 mub <- 1
 sb <- 2
