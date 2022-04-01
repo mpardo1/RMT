@@ -96,7 +96,8 @@ vec_col[1:N] <- "#A63446"
 
 plot.inf.stab <- plot_int1(N, sol, state = "INF") +
   scale_colour_manual(values = vec_col) +
-  theme_bw() + theme(legend.position="none") 
+  theme_bw() +
+  theme(text = element_text(size = 20), legend.position="none")
 
 plot.inf.stab
 
@@ -177,6 +178,7 @@ df_sum_group <- data.frame(alp <- alp_bet_vec[1:251],
 
 df_sum_group <-  df_sum_group[-1,]
 colnames(df_sum_group) <-  c("alpha", "Max_inf", "Time_max")
+library("latex2exp")
 plot_inf_max <- ggplot(df_sum_group) + 
   geom_line(aes(alpha, Max_inf)) + 
   xlab(TeX("$\\alpha$")) +
