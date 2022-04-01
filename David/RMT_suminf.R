@@ -2,7 +2,7 @@ source("~/RMT/David/RMT_genrandom.R")
 source("~/RMT/David/RMT_plotmobility.R")
 source("~/RMT/David/d_functions_eigen_int.R")
 
-####### GENERATE JACOBIAN ###############################
+################ GENERATE JACOBIAN ######################
 
 # number of patches
 N <- 100
@@ -51,7 +51,7 @@ diag(MIGRATION) <- 0
 sus_init <- rep(10000, N) # initial susceptibles
 inf_init <- rep(100, N)    # initial infecteds
 
-end_time <- 200
+end_time <- 300
 
 alp_bet_vec <- seq(0,2.5,0.01)
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
@@ -71,5 +71,6 @@ for(i in c(1:length(alp_bet_vec))){
 }
 
 Path <- "~/RMT/David/OUTPUT/"
-path <- paste0(Path,"Suminf_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_t200",Sys.Date(), ".csv")
+path <- paste0(Path,"Suminf_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_t200",
+               Sys.Date(), ".csv")
 write.csv(df_sum, path,row.names = TRUE)
