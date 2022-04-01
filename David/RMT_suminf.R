@@ -71,6 +71,6 @@ for(i in c(1:length(alp_bet_vec))){
 }
 
 Path <- "~/RMT/David/OUTPUT/"
-path <- paste0(Path,"Suminf_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_t400",
+path <- paste0(Path,"Suminf_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_t1000_",
                Sys.Date(), ".csv")
 write.csv(df_sum, path,row.names = TRUE)
