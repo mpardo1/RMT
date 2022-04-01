@@ -51,7 +51,7 @@ diag(MIGRATION) <- 0
 sus_init <- rep(10000, N) # initial susceptibles
 inf_init <- rep(100, N)    # initial infecteds
 
-end_time <- 400
+end_time <- 500
 
 alp_bet_vec <- seq(0,2.5,0.01)
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
