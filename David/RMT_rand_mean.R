@@ -85,6 +85,8 @@ while( count < 1000){
 }
 
 df_epi$sq_err <- ((df_epi$max_rand - df_epi$max_mean)/df_epi$max_rand)^2
-
-
+Path <- "~/RMT/David/OUTPUT/"
+path <- paste0(Path,"rand_bet_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_",
+               Sys.Date(), ".csv")
+write.csv(df_epi, path,row.names = TRUE)
 
