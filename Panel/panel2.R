@@ -11,7 +11,6 @@ source("~/RMT/David/RMT_plotmobility.R")
 source("~/RMT/David/d_functions_eigen_int.R")
 
 ####### GENERATE JACOBIAN ###############################
-
 # number of patches
 N <- 100
 
@@ -287,8 +286,9 @@ plot.inf.1 <- plot_int1(N, sol, state = "INF") +
 plot.inf.1
 
 # Max infected
+library("tidyverse")
 Path <- "~/RMT/David/OUTPUT/"
-path <- paste0(Path,"Suminf_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_",Sys.Date(), ".csv")
+path <- paste0(Path,"Suminf_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_t4002022-04-01.csv")
 df_sum <- read.csv(file = path)
 df_sum <- df_sum[,-1]
 max_inf <- df_sum %>% summarise_if(is.numeric, max)
@@ -350,7 +350,7 @@ plot_area <- ggplot(df_sol) +
   xlab(TeX("$\\beta$")) +
   # ggtitle(""*gamma/beta~": 4")
   theme(text = element_text(size = size_let), legend.position = "top") +
-  guides(colour = guide_legend(override.aes = list(size=5)))
+  guides(colour = guide_legend(override.aes = list(size=3)))
 plot_area
 
 ## join all plots
@@ -402,3 +402,5 @@ sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
 plot_stab <- plot_int1(N, sol, state = "INF") +
   theme_bw() +theme(legend.position="none") 
 plot_stab
+
+
