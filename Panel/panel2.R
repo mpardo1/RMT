@@ -343,6 +343,13 @@ sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
 sum_inf
 
 # Area:
+path <- "~/RMT/David/OUTPUT/Areaepi_g0,5_muc_0,001_sc0,0001_muw0,6_sw0,05_2022-04-01.csv"
+df_sol <- read.csv(file = path)
+df_sol <- df_sol[-1,]
+
+library("latex2exp")
+df_sol$Stability <- ifelse(df_sol$state == TRUE, "Stable", "Unstable")
+
 plot_area <- ggplot(df_sol) +
   geom_point(aes(beta,alp, colour = Stability)) + theme_bw()  +
   scale_color_manual(values=c("#3066BE", "#A63446")) +

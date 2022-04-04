@@ -26,7 +26,7 @@ gammas = deaths + alphas + deltas
 
 # mobility
 #commuting and migration networks
-muw <- 0.1 
+muw <- 0.05 
 sw <- 0.05
 rhow <- 0 #original rho (Gamma of baron et al)
 Gammaw <- 0 #gamma of baron et al
