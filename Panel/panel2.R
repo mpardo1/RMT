@@ -288,7 +288,8 @@ plot.inf.1
 # Max infected
 library("tidyverse")
 Path <- "~/RMT/David/OUTPUT/"
-path <- paste0(Path,"Suminf_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_t4002022-04-01.csv")
+path <- paste0(Path,"Suminf_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_t1000_2022-04-01.csv")
+alp_bet_vec <- seq(0,2.5,0.01)
 df_sum <- read.csv(file = path)
 df_sum <- df_sum[,-1]
 max_inf <- df_sum %>% summarise_if(is.numeric, max)
@@ -343,7 +344,7 @@ sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
 sum_inf
 
 # Area:
-path <- "~/RMT/David/OUTPUT/Areaepi_g0,5_muc_0,001_sc0,0001_muw0,6_sw0,05_2022-04-01.csv"
+path <- "~/RMT/David/OUTPUT/Areaepi_g0,5_muc_0,001_sc0,0001_muw0,1_sw0,05_2022-04-01.csv"
 df_sol <- read.csv(file = path)
 df_sol <- df_sol[-1,]
 
