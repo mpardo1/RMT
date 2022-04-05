@@ -13,13 +13,13 @@ source("~/RMT/David/d_functions_eigen_int.R")
 ####### GENERATE JACOBIAN ###############################
 
 # number of patches
-N <- 1000
+ N <- 100
 
 # epidemiological
 #all rates must lie in (0,1) except for betas
 
 Deltas <- rep(0.3, N) # birth rate
-mub <- 0.07
+mub <- 0.1
 sb <- 0.001
 betas <- rep(mub, N) # transmission rates
 # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
@@ -35,15 +35,15 @@ gammas = deaths + alphas + deltas
 # mobility
 #commuting and migration networks
 
-muw <- 0.07
+muw <- 0.6
 sw <- 0.05
 rhow <- 0 #original rho (Gamma of baron et al)
 Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.1
-sc <- 0.02
+muc <- 0.01
+sc <- 0.002
 rhoc <- 0
 Gammac <- 0
 rc <- 0
@@ -75,8 +75,9 @@ eigen_stab <- plot_eigen_rmt(jacobian,
 eig <- eigen_mat(jacobian)
 eig <- eig[-nrow(eig),] 
 ggplot(eig, aes(re, im)) + 
-  geom_point() +
-  coord_fixed()
+  geom_point(size = 0.5) +
+  coord_fixed() + 
+  xlim(c(-2,-1.8))
 
 print(plot_eigen(jacobian))
 ####### INTEGRATE SYSTEM ################################

@@ -11,8 +11,8 @@ source("~/RMT/David/RMT_plotmobility.R")
 source("~/RMT/David/d_functions_eigen_int.R")
 ####### GENERATE JACOBIAN ###############################
 
-# number of patches
-N <- 100
+ # number of patches
+ N <- 100
 
 # epidemiological
 #all rates must lie in (0,1) except for betas
