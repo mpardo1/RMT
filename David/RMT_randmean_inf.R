@@ -104,7 +104,25 @@ while( count < 1000){
   count = count + 1
 }
 
+#### Write in a CSV ######
 Path <- "~/RMT/David/OUTPUT/"
 path <- paste0(Path,"rand_bet_int_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_",
                Sys.Date(), ".csv")
 write.csv(df_epi, path,row.names = TRUE)
+
+#### Read from a CSV ######
+Path <- "~/RMT/David/OUTPUT/"
+path <- paste0(Path,"rand_bet_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_2022-04-01.csv")
+df_rand <- read.csv(file = path)
+df_rand <- df_rand[-1,]
+
+df_rand$diff_max <- df_rand$max_rand - df_rand$max_mean
+df_rand_group <- df_rand %>%  group_by(sigma) %>% 
+  summarise(mean = mean(sq_err), n = n())
+
+err_max_inf <- ggplot(df_rand_group) + 
+  geom_point(aes(sigma,mean), size = 1) +
+  xlab(TeX("$\\sigma_{\\beta}$")) +
+  ylab("Mean squared error") +
+  theme_bw()
+# df_rand$diff_time <- df_rand$time_max_rand - df_rand$time_max_mean

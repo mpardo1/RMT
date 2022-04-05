@@ -165,7 +165,7 @@ plot_int1 <- function(N, z, state){
     plot  <- ggplot(df_inf,aes(time, value), show.legend = NA) + 
       # geom_line(aes( group =variable, colour = type),size=0.5)  +
       geom_line(aes( colour =variable),size=0.5)  +
-      ylab("Number of infected individuals") 
+      ylab("Infected individuals") 
   }else if( state == "REC"){
     # Filter Recovered:
     df_rec <- df_plot  %>% filter( substr(df_plot$variable,1,1) == "R")

@@ -265,7 +265,7 @@ write.csv(df_sol, path,row.names = TRUE)
 vec_col <-  vector(mode="character", length=N)
 vec_col[1:N] <- "#A63446"
 
-size_let <- 10
+size_let <- 13
 plot.inf.stab <- plot_int1(N, sol.stab, state = "INF") +
   scale_colour_manual(values = vec_col) +
   theme_bw() +
@@ -288,7 +288,7 @@ plot.inf.1
 # Max infected
 library("tidyverse")
 Path <- "~/RMT/David/OUTPUT/"
-path <- paste0(Path,"Suminf_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_t1000_2022-04-01.csv")
+path <- paste0(Path,"Suminf_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_t2000_2022-04-04.csv")
 alp_bet_vec <- seq(0,2.5,0.01)
 df_sum <- read.csv(file = path)
 df_sum <- df_sum[,-1]
@@ -334,7 +334,10 @@ sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
                                       group = variable)) +
   geom_line() +
   scale_colour_gradient(name = ""*alpha~" ", 
-                        low = "blue", high = "red") +
+                        low = "blue", high = "red",
+                        limits = c(0,5),
+                        breaks = c(0,1,5),
+                        labels = c(0,1,5)) +
   ylab("Sum of infected individuals") +
   xlim(c(0,20)) +
   ggtitle("") + 
@@ -364,7 +367,8 @@ plot_area
 ## join all plots
 library("ggpubr")
 gg_1 <- ggarrange(plot.inf.stab,
-                  plot.inf.1,plot_inf_max,
+                  plot.inf.1,
+                  plot_inf_max,
                   ncol = 3,nrow = 1,
                   labels = c("a", "b", "c"))
 
@@ -378,37 +382,6 @@ gg_full <- ggarrange(gg_1,gg_2,
 gg_full
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
-path <- paste0(Path,"Full_g0,5_muc_0,01_sc0,001_muw0,08_sw0,05.png")
+path <- paste0(Path,"panel2.png")
 ggsave(path,
        plot = gg_full, device = "png")
-
-##### Random beta ####
-mub <- 1
-sb <- 2
-betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 
-
-jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
-  diag(deaths + alphas + deltas + colSums(MIGRATION))
-
-mub <- mean(betas)
-plot_eigen_rmt(jacobian,
-               N,mub,mug = mud + mua + mudel,
-               muw,sw,rhow,Gammaw,
-               muc,sc,rhoc,Gammac,
-               tau = 0, alp = 0, K = 0) +
-  scale_y_continuous( breaks=c(0)) 
-
-print(plot_eigen(jacobian))
-
-sus_init <- rep(10000, N) # initial susceptibles
-inf_init <- rep(100, N)
-end_time <- 20
-sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-           COMMUTING,MIGRATION,
-           sus_init,inf_init,end_time)
-
-plot_stab <- plot_int1(N, sol, state = "INF") +
-  theme_bw() +theme(legend.position="none") 
-plot_stab
-
-
