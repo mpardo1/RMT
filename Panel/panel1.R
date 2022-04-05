@@ -89,8 +89,8 @@ for(i in c(1:length(beta_vec))){
 
 df_sol <- df_sol[-1,]
 
-path <- paste0("~/RMT/David/OUTPUT/area_gen_",Sys.Date(),".csv")
-write.csv(df_sol, path,row.names = TRUE)
+# path <- paste0("~/RMT/David/OUTPUT/area_gen_",Sys.Date(),".csv")
+# write.csv(df_sol, path,row.names = TRUE)
 
 path <- "~/RMT/David/OUTPUT/area_gen_2022-03-30.csv"
 df_sol <- read.csv(file = path)
@@ -106,25 +106,28 @@ unstab_par <- 0.2
 
 # Create annotate for labels at each point in the area graph:
 annotation <- data.frame(
-  x = c(stab_par + 0.5,stab_par + 0.5, unstab_par + 0.04),
-  y = c(stab_par + 0.3,unstab_par + 0.02 , stab_par + 0.3),
+  x = c(stab_par + 0.05, stab_par + 0.05, unstab_par + 0.05),
+  y = c(stab_par + 0.05,unstab_par + 0.05 , stab_par + 0.05),
   label = c("c", "d", "e")
 )
 
 library(ggstar)
+color_points <- "#FFFFFF"
+color_stab <- "#3066BE"
+color_unstab <- "#A63446"
 plot_area <- ggplot(df_sol) +
   geom_point(aes(beta,muw, colour = Stability)) + theme_bw()  +
-  scale_color_manual(values=c("#3066BE", "#A63446")) +
+  scale_color_manual(values=c(color_stab, color_unstab)) +
   ylab(TeX("$\\mu_w$")) +
   xlab(TeX("$\\beta$")) +
   # ggtitle(""*gamma/beta~": 4")
   ggtitle(paste0("N: ",N)) +
   coord_fixed() +
-  geom_point(aes(stab_par,stab_par), colour= "#ADA544", size = 3) +
-  geom_point(aes(stab_par,unstab_par), colour= "#ADA544", size = 3) +
-  geom_point(aes(unstab_par,stab_par), colour= "#ADA544", size = 3) +
+  geom_point(aes(stab_par,stab_par), colour= color_points, size = 3) +
+  geom_point(aes(stab_par,unstab_par), colour= color_points, size = 3) +
+  geom_point(aes(unstab_par,stab_par), colour= color_points, size = 3) +
   geom_text(data=annotation, aes( x=x, y=y, label=label),
-            color="#ADA544", 
+            color=color_points, 
             size=9 , angle=0, fontface="bold" ) + 
   theme(text = element_text(size = 30), legend.position = "bottom") +
   guides(colour = guide_legend(override.aes = list(size=5)))
@@ -136,6 +139,60 @@ plot_area <- plot_area + labs(title = "b")
 path <- paste0(Path,"Area_g0,95_muc_0,01_sc0,00001_sw0,05.png")
 ggsave(path,
        plot = plot_area, device = "png")
+#-----------------------------------------------------------------------------#
+######### PLOTS ##############
+
+#### Stability Area ####
+path <- "~/RMT/David/OUTPUT/area_gen_2022-03-30.csv"
+df_sol <- read.csv(file = path)
+df_sol$Stability <- ifelse(df_sol$state == TRUE, "Stable", "Unstable")
+
+vec <- seq(0,nrow(df_sol),2)
+df_sol <- df_sol[vec,]
+library(latex2exp)
+
+# Values for the points in the area graph:
+stab_par <- 0.07
+unstab_par <- 0.2
+
+# Create annotate for labels at each point in the area graph:
+text_size <- 15
+
+annotation <- data.frame(
+  x = c(stab_par + 0.05, stab_par + 0.05, unstab_par + 0.05),
+  y = c(stab_par + 0.05,unstab_par + 0.05 , stab_par + 0.05),
+  label = c("c", "d", "e")
+)
+
+library(ggstar)
+color_points <- "#FFFFFF"
+color_stab <- "#3066BE"
+color_unstab <- "#A63446"
+plot_area <- ggplot(df_sol) +
+  geom_point(aes(beta,muw, colour = Stability)) + theme_bw()  +
+  scale_color_manual(values=c(color_stab, color_unstab)) +
+  ylab(TeX("$\\mu_w$")) +
+  xlab(TeX("$\\beta$")) +
+  # ggtitle(""*gamma/beta~": 4")
+  ggtitle(paste0("N: ",N)) +
+  coord_fixed() +
+  geom_point(aes(stab_par,stab_par), colour= color_points, size = 2) +
+  geom_point(aes(stab_par,unstab_par), colour= color_points, size = 2) +
+  geom_point(aes(unstab_par,stab_par), colour= color_points, size = 2) +
+  geom_text(data=annotation, aes( x=x, y=y, label=label),
+            color=color_points, 
+            size=9 , angle=0, fontface="bold" ) + 
+  theme(text = element_text(size = text_size), legend.position = "bottom") +
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+plot_area <- plot_area + labs(title = "b")
+
+# Save plot
+Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/Gen/"
+path <- paste0(Path,"Area_g0,95_muc_0,01_sc0,00001_sw0,05.png")
+ggsave(path,
+       plot = plot_area, device = "png")
+
 
 #------------------------------------------------------------------------#
 #### Plots RMT and Integration ####
@@ -173,7 +230,15 @@ sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            sus_init,inf_init,end_time)
 
 # plot SUS, INF, REC or TOT population
-plot_inf_stab <- plot_int(N, sol, state = "INF")  + theme_bw()+ theme(legend.position = "none")
+plot_inf_stab <- plot_int(N, sol, state = "INF")  + 
+  theme_bw() + theme(legend.position = "none")
+
+vec_col <-  vector(mode="character", length=N)
+vec_col[1:N] <- "#7018D5"
+
+plot_inf_stab <- plot_inf_stab +
+  xlim(c(0,10))  + 
+  scale_colour_manual(values = vec_col) 
 plot_inf_stab
 
 ### Unstable by commuting:
@@ -191,10 +256,10 @@ jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
 # Plot the eigenvalues of the system
 library("ggforce")
 eigen_unstab_com <- plot_eigen_rmt(jacobian,
-                             N,mub,mug = mud + mua + mudel,
-                             muw,sw,rhow,Gammaw,
-                             muc,sc,rhoc,Gammac,
-                             tau = 0, alp = 0, K = 0) +
+                                   N,mub,mug = mud + mua + mudel,
+                                   muw,sw,rhow,Gammaw,
+                                   muc,sc,rhoc,Gammac,
+                                   tau = 0, alp = 0, K = 0) +
   scale_y_continuous( breaks=c(0)) 
 
 eigen_unstab_com
@@ -243,8 +308,8 @@ plot_inf_unstab_bet <- plot_int(N, sol, state = "INF")  +
 plot_inf_unstab_bet
 # plot_int(N, sol, state = "TOT")
 
-#-----------------------------------------------------------------------------#
-##### Contructi panel1 ####
+
+##### Construct panel1 ####
 library("ggpubr")
 size_text <- 16
 ggeigen <- ggarrange(eigen_stab  + xlab("")  + xlab("") + labs(title = "c") +

@@ -20,7 +20,7 @@ N <- 100
 Deltas <- rep(0.3, N) # birth rate
 mub <- 0.02
 sb <- 0.001
-betas <- rep(mub, N) # transmission rates
+betas <- rep(mub, N) # transmission rates 
 # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
 thetas <- rep(0.3, N) # loss of immunity rates
 mud <- 0.3
