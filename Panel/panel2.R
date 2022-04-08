@@ -18,7 +18,7 @@ N <- 100
 #all rates must lie in (0,1) except for betas
 
 Deltas <- rep(0.3, N) # birth rate
-mub <- 0.02
+mub <- 0.1
 sb <- 0.001
 betas <- rep(mub, N) # transmission rates 
 # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
@@ -33,8 +33,8 @@ gammas = deaths + alphas + deltas
 
 # mobility
 #commuting and migration networks
-muw <- 0.2 
-sw <- 0.05
+muw <- 0.05 
+sw <- 0.001
 rhow <- 0 #original rho (Gamma of baron et al)
 Gammaw <- 0 #gamma of baron et al
 rw <- 0
@@ -97,12 +97,13 @@ size_let <- 15
 plot.inf.stab <- plot_int1(N, sol.stab, state = "INF") +
   scale_colour_manual(values = vec_col) +
   theme_bw() +
-  theme(text = element_text(size = size_let), legend.position="none")
+  theme(text = element_text(size = size_let),
+        legend.position="none")
 
 plot.inf.stab
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
-path <- paste0(Path,"Plot_inf_g0,5_muc_0,01_sc0,001_muw0,08_sw0,05.png")
+path <- paste0(Path,"Plot_inf_b0,02_g0,5_muc_0,01_sc0,001_muw0,08_sw0,05.png")
 ggsave(path,
        plot = plot.inf.stab, device = "png")
 #### 1 PATCH modified ####
@@ -141,12 +142,16 @@ plot.inf.1
 
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
-path <- paste0(Path,"Plot_inf1_g0,5_muc_0,01_sc0,001_muw0,08_sw0,05.png")
+path <- paste0(Path,"Plot_inf1_alp_1,1_b0,02__g0,5_muc_0,01_sc0,001_muw0,08_sw0,05.png")
 ggsave(path,
        plot = plot.inf.1, device = "png")
 
 ##### Sum of all the infected by alpha ####
-alp_bet_vec <- seq(0,2.5,0.01)
+sus_init <- rep(10000, N) # initial susceptibles
+inf_init <- rep(100, N)    # initial infecteds
+
+end_time <- 50
+alp_bet_vec <- seq(0,2.5,0.1)
 end_time <- 50
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
@@ -198,6 +203,7 @@ plot_time_max <-  ggplot(df_sum_group) +
 colnames(df_sum) <- c("time",as.character(alp_bet_vec))
 df_plot <- reshape2::melt(df_sum, id.vars = c("time"))
 
+size_let <- 13
 sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
                       color = as.numeric(as.character(variable)),
                       group = variable)) +
@@ -210,8 +216,9 @@ sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
 
 sum_inf
 
+## Save image
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
-path <- paste0(Path,"Sum_inf_g0,5_muc_0,01_sc0,001_muw0,08_sw0,05.png")
+path <- paste0(Path,"Sum_inf_b0,1_g0,5_muc_0,01_sc0,001_muw0,05_sw0,001.png")
 ggsave(path,
        plot = sum_inf, device = "png")
 

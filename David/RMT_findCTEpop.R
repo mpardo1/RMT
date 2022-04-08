@@ -57,78 +57,36 @@ diag(MIGRATION) <- 0
 mat <- MIGRATION
 diag(mat) <- - colSums(MIGRATION)
 
-# Generalized inverse:
-# library("MASS")
-# ginv(mat, tol = sqrt(.Machine$double.eps))
+init_pop <- c()
+N0 <- 100
+# Cramer's Rule:
+for(i in c(1:(N))){
+  mat_1 <- matrix(1,1,(N-1))
+  if(i > 1 & i < N){
+    print("i entre 2 y N-1")
+    sub_mat <- mat[c((1:(i-1)),((i+1):N)),c((1:(i-1)),((i+1):N))]
+    mat_i <- -mat[c(1:(i-1),(i+1):N),i]
+    mat_i <- mat_i%*%mat_1
+  }else if(i == 1){
+    print("i = 1")
+    sub_mat <- mat[(2:N),(2:N)]
+    mat_i <- -mat[(2:N),i]
+    mat_i <- mat_i%*%mat_1
+   }
+  det_1 <- det(sub_mat)
+  det_2 <- det(sub_mat + mat_i)
+  init_pop[i] <- det_1*N0/(det_2)
+}
 
-# Eigenvalues and eigenvectors, the one associated with lambda = 0 is the cte pop.
-# eig <- eigen(mat)
-# eig_val <- eig$values
-# eig_vec <- eig$vectors
-# 
-# ind <- which(abs(eig_val) == min(abs(eig_val)))
-# sus_init <- eig_vec[,ind]
-# inf_init <-  rep(0, N)
-
-# init_pop <- c()
-# N0 <- 100
-# # Cramer's Rule:
-# for(i in c(1:(N))){
-#   mat_1 <- matrix(1,1,(N-1))
-#   if(i > 1 & i < N){
-#     print("i entre 2 y N-1")
-#     sub_mat <- mat[c((1:(i-1)),((i+1):N)),c((1:(i-1)),((i+1):N))]
-#     mat_i <- -mat[c(1:(i-1),(i+1):N),i]
-#     mat_i <- mat_i%*%mat_1
-#   }else if(i == 1){
-#     print("i = 1")
-#     sub_mat <- mat[(2:N),(2:N)]
-#     mat_i <- -mat[(2:N),i]
-#     mat_i <- mat_i%*%mat_1
-#    }
-#   det_1 <- det(sub_mat)
-#   det_2 <- det(sub_mat + mat_i)
-#   init_pop[i] <- det_1*N0/(det_2)
-# }
-# 
-# init_pop_1 <- init_pop
-# 
-# init_pop <- c()
-# N0 <- 100
-# # Cramer's Rule:
-# for(i in c(1:(N))){
-#   mat_1 <- matrix(1,1,(N-1))
-#   if(i > 1 & i < N){
-#     print("i entre 2 y N-1")
-#     sub_mat <- inv(mat[c((1:(i-1)),((i+1):N)),c((1:(i-1)),((i+1):N))])
-#     mat_i <- -mat[c(1:(i-1),(i+1):N),i]
-#   }else if(i == 1){
-#     print("i = 1")
-#     sub_mat <- inv(mat[(2:N),(2:N)])
-#     mat_i <- -mat[(2:N),i]
-#   }
-#   init_pop[i] <- N0/(1+mat_1%*%sub_mat%*%mat_i)
-# }
-# 
-# # Check if the N0 is well computed:
-# mat_check <- matrix(1, N+1, N)
-# mat_check[c(2:(N+1)),] <- mat
-# check <- mat_check%*%init_pop
-# vec_b <- matrix(0, N+1,1)
-# vec_b[1,1] <- N0
-# if(sum(abs(check - vec_b)) < 0.00001){
-#   print("Solution find")
-# }else{
-#   print("Solution not find")
-# }
+init_pop_1 <- init_pop
 
 # Integrate the system:
-sus_init <- init_pop
+sus_init <- snit_pop
 inf_init <- rep(0,N)
 end_time <- 50
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
                    COMMUTING,MIGRATION,
                    sus_init,inf_init,end_time)
-library("ggpubr")
+# library("ggpubr")
 plot_no_com_tot <- plot_int(N, sol, state = "TOT")
 
