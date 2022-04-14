@@ -4,7 +4,6 @@ library(tidyverse)
 library(ggplot2)
 library(ggforce)
 library(copula)
-library(tmvtnorm)
 
 ####### GENERATE MATRICES ##########################
 
@@ -244,42 +243,61 @@ rand_mat_cor_norm_N <- function(N,mu,sig,rho,G,r,c){
     }
   }
   diag(rmatrix) <- mu - 1
-  return(rmatrix)
+  
+  paramdf <- data.frame(wantedN = c(mu/N,sig/N,rho,G/N,r/N,c/N),
+                        simulated = c(mean(fils)+mean(cols)+mean(valmob),
+                                      sqrt(var(fils)+var(cols)+var(valmob[,1])),
+                                      (2*cov(fils,cols)+cov(valmob[,1],
+                                                            valmob[,2]))/(var(fils)+var(cols)+var(valmob[,1])),
+                                      cov(fils,cols)/(var(fils)+var(cols)+var(valmob[,1])),
+                                      var(fils)/(var(fils)+var(cols)+var(valmob[,1])),
+                                      var(cols)/(var(fils)+var(cols)+var(valmob[,1])))) %>%
+    mutate(simulated = round(simulated,6))
+  rownames(paramdf) <- c("mu","sigma","rho","Gamma","r","c")
+  
+  return(list(rmatrix,paramdf))
 }
 
 #random matrix with general correlated entries
 #now with noise coming from beta distribution
 #recall mu\in(0,1), sig^2\in(0,mu*(1-mu))
-rand_mat_cor_beta <- function(N,mu,sig,rho,G,r,c){
+rand_mat_cor_norm_MPA <- function(N,mu,sig,rho,G,r,c){
+  
+  cond1 <- ifelse(r<0, FALSE, TRUE)
+  cond2 <- ifelse(c<0, FALSE, TRUE)
+  cond3 <- ifelse(abs(G) > sqrt(r*c), FALSE, TRUE)
+  cond4 <- ifelse(r+c > N, FALSE, TRUE)
+  cond5 <- ifelse(abs(rho - (2*G/N)) > (1- ((r+c)/N)), FALSE, TRUE)
+  
+  if(cond1 == TRUE & cond2 == TRUE & cond3 == TRUE & cond4 == TRUE & cond5 == TRUE ){
+    print("Conditions hold")
+  }else{
+    print("Conditions does not hold")
+  }
+  
   
   copfc <- normalCopula(param=G/sqrt(r*c), dim = 2, dispstr = "un")
-  bivfc <- mvdc(copula = copfc, margins=c("beta","beta"),
-                paramMargins=list(list(alphabeta(mu/(3*N),sqrt(r)*sig/N),betabeta(mu/(3*N),sqrt(r)*sig/N)),
-                                  list(alphabeta(mu/(3*N),sqrt(c)*sig/N),betabeta(mu/(3*N),sqrt(c)*sig/N))))
+  bivfc <- mvdc(copula = copfc, margins=c("norm","norm"),
+                paramMargins=list(list(0,(sqrt(sig)/N)*(sqrt(r/N))),
+                                  list(0,(sqrt(sig)/N)*(sqrt(r/N)))))
   valfc <- rMvdc(N, bivfc)
   
   fils <- valfc[,1] #betas of baron et al
   cols <- valfc[,2] #kappas of baron et al
   
-  copmob <- normalCopula(param= (rho-2*G/N)/(1-(r+c)/N), dim = 2, dispstr = "un")
-  bivmob <- mvdc(copula = copmob, margins=c("beta","beta"),
-                 paramMargins=list(list(alphabeta(mu/(3*N), sig*sqrt(N-r-c)/N),betabeta(mu/(3*N), sig*sqrt(N-r-c)/N)),
-                                   list(alphabeta(mu/(3*N), sig*sqrt(N-r-c)/N),betabeta(mu/(3*N), sig*sqrt(N-r-c)/N))))
-  valmob <- rMvdc(N*(N-1)/2, bivmob)
+  copmob <- normalCopula(param= (rho-(2*G/N))/(1-((r+c)/N)), dim = 2, dispstr = "un")
+  bivmob <- mvdc(copula = copmob, margins=c("norm","norm"),
+                 paramMargins=list(list(0,(sqrt(sig)/N)*sqrt(1-((r+c)/N))),
+                                   list(0,(sqrt(sig)/N)*sqrt(1-((r+c)/N)))))
   
-  # prueba <- vector()
-  # for (j in c(1:100)){
-  #   valmob <- rMvdc(N*(N-1)/2, bivmob)
-  #   prueba[j]<- cor(valmob[,1],valmob[,2])
-  # }
-  # mean(prueba)
-
+  valmob <- rMvdc(N*(N-1)/2, bivmob)
+ 
   rmatrix <- matrix(0,N,N)
   ind <- 1
   for(i in c(1:(N-1))){
     for(j in c((i+1):N)){
-      rmatrix[i,j] = valmob[ind,1] + fils[i] + cols[j]
-      rmatrix[j,i] = valmob[ind,2] + fils[j] + cols[i]
+      rmatrix[i,j] = mu/N + valmob[ind,1] + fils[i] + cols[j]
+      rmatrix[j,i] = mu/N + valmob[ind,2] + fils[j] + cols[i]
       ind <- ind+1
     }
   }
@@ -288,7 +306,8 @@ rand_mat_cor_beta <- function(N,mu,sig,rho,G,r,c){
   paramdf <- data.frame(wantedN = c(mu/N,sig/N,rho,G/N,r/N,c/N),
                         simulated = c(mean(fils)+mean(cols)+mean(valmob),
                                       sqrt(var(fils)+var(cols)+var(valmob[,1])),
-                                      (2*cov(fils,cols)+cov(valmob[,1],valmob[,2]))/(var(fils)+var(cols)+var(valmob[,1])),
+                                      (2*cov(fils,cols)+cov(valmob[,1],
+                                                            valmob[,2]))/(var(fils)+var(cols)+var(valmob[,1])),
                                       cov(fils,cols)/(var(fils)+var(cols)+var(valmob[,1])),
                                       var(fils)/(var(fils)+var(cols)+var(valmob[,1])),
                                       var(cols)/(var(fils)+var(cols)+var(valmob[,1])))) %>%

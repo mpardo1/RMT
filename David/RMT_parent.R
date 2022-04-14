@@ -88,7 +88,7 @@ print(plot_eigen(jacobian))
 sus_init <- rep(100000, N) # initial susceptibles
 inf_init <- rep(100, N)    # initial infecteds
 
-end_time <- 20
+end_time <- 100
 
 # integro el sistema con condiciones iniciales 
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,

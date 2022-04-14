@@ -51,7 +51,7 @@ MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
 diag(MIGRATION) <- 0
 # ----------------------------------------------------------------------#
 ##### Plot Stability #####
-step <- 0.001
+step <- 0.01
 beta_vec <- seq(0.01,0.9,step)
 muw_vec <- seq(0.01,0.9,step)
 df_sol <- data.frame(beta = 0, gamma = 0, N = 0, muw = 0, state = FALSE)
@@ -69,7 +69,7 @@ for(i in c(1:length(beta_vec))){
       # diag(MIGRATION) <- 0
       
       # EPI param:
-      # betas <- rep(beta_vec[i], N)
+      betas <- rep(beta_vec[i], N)
       # deltas <- rep(mudel, N)
       # deaths <- rep(mud, N) 
       # alphas <- rep(mua, N)

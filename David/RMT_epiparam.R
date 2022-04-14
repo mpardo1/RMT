@@ -27,7 +27,7 @@ mud <- 0.3
 deaths <- rep(mud, N) # not disease-related death rates
 mua <- 0.2
 alphas <- rep(mua, N) # recovery rates
-mudel <- 0
+mudel <- 0.4
 deltas <- rep(mudel, N) # disease-related death rates
 gammas = deaths + alphas + deltas
 
@@ -57,6 +57,12 @@ diag(MIGRATION) <- 0
 
 sus_init <- rep(10000, N) # initial susceptibles
 inf_init <- rep(100, N)    # initial infecteds
+
+end_time <- 50
+sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+           COMMUTING,MIGRATION,
+           sus_init,inf_init,end_time)
+plot_int(N,sol, "INF")
 
 min_int <- 0
 max_int <- 1
@@ -144,6 +150,7 @@ sum_deltas <- ggplot(data = df_plot_delt, aes(x = time, y = value,
 
 mudel <- 0
 deltas <- rep(mudel, N) # disease-related death rates
+
 ##### Natural mortility #####
 death_vec <-  seq(min_int,max_int,step)
 end_time <- 50
