@@ -275,11 +275,14 @@ rand_mat_cor_norm_MPA <- function(N,mu,sig,rho,G,r,c){
     print("Conditions does not hold")
   }
   
-  
+  # The param in normalCopula gives the correlation between the variables.
+  # Inside list there are the mean and the standard deviation, ie, sigma, 
+  # not the var = sig^2.
   copfc <- normalCopula(param=G/sqrt(r*c), dim = 2, dispstr = "un")
   bivfc <- mvdc(copula = copfc, margins=c("norm","norm"),
-                paramMargins=list(list(0,(sqrt(sig)/N)*(sqrt(r/N))),
-                                  list(0,(sqrt(sig)/N)*(sqrt(r/N)))))
+                paramMargins=list(list(0,(sqrt(sig)/N)*sqrt(r/N)),
+                                  list(0,(sqrt(sig)/N)*sqrt(c/N))))
+  
   valfc <- rMvdc(N, bivfc)
   
   fils <- valfc[,1] #betas of baron et al
@@ -287,8 +290,8 @@ rand_mat_cor_norm_MPA <- function(N,mu,sig,rho,G,r,c){
   
   copmob <- normalCopula(param= (rho-(2*G/N))/(1-((r+c)/N)), dim = 2, dispstr = "un")
   bivmob <- mvdc(copula = copmob, margins=c("norm","norm"),
-                 paramMargins=list(list(0,(sqrt(sig)/N)*sqrt(1-((r+c)/N))),
-                                   list(0,(sqrt(sig)/N)*sqrt(1-((r+c)/N)))))
+                 paramMargins=list(list(0, (sig/N)*sqrt(1-((r+c)/N))),
+                                   list(0, (sig/N)*sqrt(1-((r+c)/N)))))
   
   valmob <- rMvdc(N*(N-1)/2, bivmob)
  

@@ -9,9 +9,9 @@
 
 setwd("~/RMT/David/")
 
-source("./RMT_genrandom_1.R")
-source("./RMT_plotmobility.R")
-source("./d_functions_eigen_int.R")
+source("~/RMT/David/RMT_genrandom_1.R")
+source("~/RMT/David/RMT_plotmobility.R")
+source("~/RMT/David/d_functions_eigen_int.R")
 
 ####### GENERATE JACOBIAN ###############################
 
@@ -47,7 +47,7 @@ cw <- .3
 
 (Gammaw/sqrt(rw*cw) < 1) & ((N*rhow-2*Gammaw)/(N-(rw+cw)) < 1)
 com_mat <- rand_mat_cor_norm_MPA(N,muw,sw,rhow,Gammaw,rw,cw)
-com_mat <- rand_mat_cor_norm_N(N,muw,sw,rhow,Gammaw,rw,cw)
+com_mat_d <- rand_mat_cor_norm_N(N,muw,sw,rhow,Gammaw,rw,cw)
 
 muc <- 0.001
 sc <- 0.0005
