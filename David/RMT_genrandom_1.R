@@ -204,6 +204,50 @@ rand_mat_cor_norm <- function(N,mu,sig,rho,G,r,c){
   return(rmatrix)
 }
 
+
+rand_mat_cor_norm_DGG <- function(N,mu,sig,rho,G,r,c){
+  
+  copfc <- normalCopula(param=G/sqrt(r*c), dim = 2, dispstr = "un")
+  bivfc <- mvdc(copula = copfc, margins=c("norm","norm"),
+                paramMargins=list(list(0,sqrt((r/N))*sig/N),
+                                  list(0,sqrt((c/N))*sig/N)))
+  valfc <- rMvdc(N, bivfc)
+  
+  fils <- valfc[,1] #betas of baron et al
+  cols <- valfc[,2] #kappas of baron et al
+  
+  copmob <- normalCopula(param= (N*rho-2*G)/(N-(r+c)), dim = 2, dispstr = "un")
+  bivmob <- mvdc(copula = copmob, margins=c("norm","norm"),
+                 paramMargins=list(list(0, sqrt(sig^2*(N-r-c)/(N^3))),
+                                   list(0, sqrt(sig^2*(N-r-c)/(N^3)))))
+  valmob <- rMvdc(N*(N-1)/2, bivmob)
+  
+  rmatrix <- matrix(0,N,N)
+  ind <- 1
+  for(i in c(1:(N-1))){
+    for(j in c((i+1):N)){
+      rmatrix[i,j] = mu/N + valmob[ind,1] + fils[i] + cols[j]
+      rmatrix[j,i] = mu/N + valmob[ind,2] + fils[j] + cols[i]
+      ind <- ind+1
+    }
+  }
+  diag(rmatrix) <- mu/N - 1
+  paramdf <- data.frame(wantedN = c(mu/N,sig/N,rho,G/N,r/N,c/N),
+                        wanted1 = c(mu/N,sig/N,(N^2/sig)*rho,G/N,(N/sig)*r,c/N),
+                        simulated = c(mean(fils)+mean(cols)+mean(valmob),
+                                      sqrt(var(fils)+var(cols)+var(valmob[,1])),
+                                      (2*cov(fils,cols)+cov(valmob[,1],
+                                                            valmob[,2]))/(var(fils)+var(cols)+var(valmob[,1])),
+                                      cov(fils,cols)/(var(fils)+var(cols)+var(valmob[,1])),
+                                      var(fils)/(var(fils)+var(cols)+var(valmob[,1])),
+                                      var(cols)/(var(fils)+var(cols)+var(valmob[,1])))) %>%
+    mutate(simulated = round(simulated,6))
+  rownames(paramdf) <- c("mu","sigma","rho","Gamma","r","c")
+  
+  return(list(rmatrix,paramdf))
+}
+
+
 #### cor check
 # prueba <- vector()
 # for (j in c(1:100)){
@@ -290,8 +334,8 @@ rand_mat_cor_norm_MPA <- function(N,mu,sig,rho,G,r,c){
   
   copmob <- normalCopula(param= (rho-(2*G/N))/(1-((r+c)/N)), dim = 2, dispstr = "un")
   bivmob <- mvdc(copula = copmob, margins=c("norm","norm"),
-                 paramMargins=list(list(0, (sig/N)*sqrt(1-((r+c)/N))),
-                                   list(0, (sig/N)*sqrt(1-((r+c)/N)))))
+                 paramMargins=list(list(0, (sig/N^2)*sqrt(1-((r+c)/N))),
+                                   list(0, (sig/N^2)*sqrt(1-((r+c)/N)))))
   
   valmob <- rMvdc(N*(N-1)/2, bivmob)
  
@@ -307,6 +351,7 @@ rand_mat_cor_norm_MPA <- function(N,mu,sig,rho,G,r,c){
   diag(rmatrix) <- rep(0,N)
   
   paramdf <- data.frame(wantedN = c(mu/N,sig/N,rho,G/N,r/N,c/N),
+                        wanted1 = c(mu/N,sig/N,(N^2/sig)*rho,G/N,(N/sig)*r,c/N),
                         simulated = c(mean(fils)+mean(cols)+mean(valmob),
                                       sqrt(var(fils)+var(cols)+var(valmob[,1])),
                                       (2*cov(fils,cols)+cov(valmob[,1],
