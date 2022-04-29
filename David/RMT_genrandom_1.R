@@ -324,18 +324,18 @@ rand_mat_cor_norm_MPA <- function(N,mu,sig,rho,G,r,c){
   # not the var = sig^2.
   copfc <- normalCopula(param=G/sqrt(r*c), dim = 2, dispstr = "un")
   bivfc <- mvdc(copula = copfc, margins=c("norm","norm"),
-                paramMargins=list(list(0,(sqrt(sig)/N)*sqrt(r/N)),
-                                  list(0,(sqrt(sig)/N)*sqrt(c/N))))
+                paramMargins=list(list(0,(sig/N)*sqrt(r)),
+                                  list(0,(sig/N)*sqrt(c))))
   
   valfc <- rMvdc(N, bivfc)
   
   fils <- valfc[,1] #betas of baron et al
   cols <- valfc[,2] #kappas of baron et al
   
-  copmob <- normalCopula(param= (rho-(2*G/N))/(1-((r+c)/N)), dim = 2, dispstr = "un")
+  copmob <- normalCopula(param= (N*rho-(2*G))/(N-((r+c))), dim = 2, dispstr = "un")
   bivmob <- mvdc(copula = copmob, margins=c("norm","norm"),
-                 paramMargins=list(list(0, (sig/N^2)*sqrt(1-((r+c)/N))),
-                                   list(0, (sig/N^2)*sqrt(1-((r+c)/N)))))
+                 paramMargins=list(list(0, (sig/N)*sqrt(N-((r+c)))),
+                                   list(0, (sig/N)*sqrt(N-((r+c))))))
   
   valmob <- rMvdc(N*(N-1)/2, bivmob)
  
@@ -350,8 +350,7 @@ rand_mat_cor_norm_MPA <- function(N,mu,sig,rho,G,r,c){
   }
   diag(rmatrix) <- rep(0,N)
   
-  paramdf <- data.frame(wantedN = c(mu/N,sig/N,rho,G/N,r/N,c/N),
-                        wanted1 = c(mu/N,sig/N,(N^2/sig)*rho,G/N,(N/sig)*r,c/N),
+  paramdf <- data.frame(wantedN = c(mu/N,sig^2/N,rho,G/N,r/N,c/N),
                         simulated = c(mean(fils)+mean(cols)+mean(valmob),
                                       sqrt(var(fils)+var(cols)+var(valmob[,1])),
                                       (2*cov(fils,cols)+cov(valmob[,1],

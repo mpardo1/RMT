@@ -20,7 +20,7 @@ N <- 300
 
 muw <- 0.2
 sw <- 0.05
-rhow <- 0 #original rho (Gamma of baron et al)
+rhow <- 0.1 #original rho (Gamma of baron et al)
 Gammaw <- .15 #gamma of baron et al
 rw <- .1
 cw <- .3
@@ -49,3 +49,4 @@ plot_eig +
   geom_point(aes(outl_BG,0), colour = "green") +
   geom_point(aes(outl,0), colour = "blue") +
   theme_bw()
+
