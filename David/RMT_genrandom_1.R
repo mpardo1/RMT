@@ -233,8 +233,7 @@ rand_mat_cor_norm_DGG <- function(N,mu,sig,rho,G,r,c){
   }
   diag(rmatrix) <- mu/N - 1
   paramdf <- data.frame(wantedN = c(mu/N,sig/N,rho,G/N,r/N,c/N),
-                        wanted1 = c(mu/N,sig/N,(N^2/sig)*rho,G/N,(N/sig)*r,c/N),
-                        simulated = c(mean(fils)+mean(cols)+mean(valmob),
+                        simulated = c(mean(rmatrix),
                                       sqrt(var(fils)+var(cols)+var(valmob[,1])),
                                       (2*cov(fils,cols)+cov(valmob[,1],
                                                             valmob[,2]))/(var(fils)+var(cols)+var(valmob[,1])),
@@ -247,60 +246,6 @@ rand_mat_cor_norm_DGG <- function(N,mu,sig,rho,G,r,c){
   return(list(rmatrix,paramdf))
 }
 
-
-#### cor check
-# prueba <- vector()
-# for (j in c(1:100)){
-#   valmob <- rMvdc(N*(N-1)/2, bivmob)
-#   prueba[j]<- cor(valmob[,1],valmob[,2])
-# }
-# mean(prueba)
-####
-
-#random matrix with general correlated entries
-#and re-scaled in N so that all the cors
-#are in the same scale (N^0)
-rand_mat_cor_norm_N <- function(N,mu,sig,rho,G,r,c){
-  
-  copfc <- normalCopula(param=G/sqrt(r*c), dim = 2, dispstr = "un")
-  bivfc <- mvdc(copula = copfc, margins=c("norm","norm"),
-                paramMargins=list(list(0,sig*r),
-                                  list(0,sig*c)))
-  valfc <- rMvdc(N, bivfc)
-  
-  fils <- valfc[,1] #betas of baron et al
-  cols <- valfc[,2] #kappas of baron et al
-  
-  copmob <- normalCopula(param= (rho-2*G)/(1-(r+c)), dim = 2, dispstr = "un")
-  bivmob <- mvdc(copula = copmob, margins=c("norm","norm"),
-                 paramMargins=list(list(0, sig*(1-r-c)),
-                                   list(0, sig*(1-r-c))))
-  valmob <- rMvdc(N*(N-1)/2, bivmob)
-  
-  rmatrix <- matrix(0,N,N)
-  ind <- 1
-  for(i in c(1:(N-1))){
-    for(j in c((i+1):N)){
-      rmatrix[i,j] = mu + valmob[ind,1] + fils[i] + cols[j]
-      rmatrix[j,i] = mu + valmob[ind,2] + fils[j] + cols[i]
-      ind <- ind+1
-    }
-  }
-  diag(rmatrix) <- mu - 1
-  
-  paramdf <- data.frame(wantedN = c(mu/N,sig/N,rho,G/N,r/N,c/N),
-                        simulated = c(mean(fils)+mean(cols)+mean(valmob),
-                                      sqrt(var(fils)+var(cols)+var(valmob[,1])),
-                                      (2*cov(fils,cols)+cov(valmob[,1],
-                                                            valmob[,2]))/(var(fils)+var(cols)+var(valmob[,1])),
-                                      cov(fils,cols)/(var(fils)+var(cols)+var(valmob[,1])),
-                                      var(fils)/(var(fils)+var(cols)+var(valmob[,1])),
-                                      var(cols)/(var(fils)+var(cols)+var(valmob[,1])))) %>%
-    mutate(simulated = round(simulated,6))
-  rownames(paramdf) <- c("mu","sigma","rho","Gamma","r","c")
-  
-  return(list(rmatrix,paramdf))
-}
 
 #random matrix with general correlated entries
 #now with noise coming from beta distribution
@@ -311,7 +256,7 @@ rand_mat_cor_norm_MPA <- function(N,mu,sig,rho,G,r,c){
   cond2 <- ifelse(c<0, FALSE, TRUE)
   cond3 <- ifelse(abs(G) > sqrt(r*c), FALSE, TRUE)
   cond4 <- ifelse(r+c > N, FALSE, TRUE)
-  cond5 <- ifelse(abs(rho - (2*G/N)) > (1- ((r+c)/N)), FALSE, TRUE)
+  cond5 <- ifelse(abs(rho - (2*G/N)) > (1-((r+c)/N)), FALSE, TRUE)
   
   if(cond1 == TRUE & cond2 == TRUE & cond3 == TRUE & cond4 == TRUE & cond5 == TRUE ){
     print("Conditions hold")
@@ -334,8 +279,8 @@ rand_mat_cor_norm_MPA <- function(N,mu,sig,rho,G,r,c){
   
   copmob <- normalCopula(param= (N*rho-(2*G))/(N-((r+c))), dim = 2, dispstr = "un")
   bivmob <- mvdc(copula = copmob, margins=c("norm","norm"),
-                 paramMargins=list(list(0, (sig/N)*sqrt(N-((r+c)))),
-                                   list(0, (sig/N)*sqrt(N-((r+c))))))
+                 paramMargins=list(list(0, (sig/N)*sqrt(N-(r+c))),
+                                   list(0, (sig/N)*sqrt(N-(r+c)))))
   
   valmob <- rMvdc(N*(N-1)/2, bivmob)
  
@@ -343,16 +288,19 @@ rand_mat_cor_norm_MPA <- function(N,mu,sig,rho,G,r,c){
   ind <- 1
   for(i in c(1:(N-1))){
     for(j in c((i+1):N)){
-      rmatrix[i,j] = mu/N + valmob[ind,1] + fils[i] + cols[j]
-      rmatrix[j,i] = mu/N + valmob[ind,2] + fils[j] + cols[i]
+      # rmatrix[i,j] = mu/N + valmob[ind,1] + fils[i] + cols[j]
+      # rmatrix[j,i] = mu/N + valmob[ind,2] + fils[j] + cols[i]
+      rmatrix[i,j] = valmob[ind,1] + fils[i] + cols[j]
+      rmatrix[j,i] = valmob[ind,2] + fils[j] + cols[i]
       ind <- ind+1
     }
   }
-  diag(rmatrix) <- rep(0,N)
+  rmatrix <-  rmatrix + mu/N
+  diag(rmatrix) <- mu/N - 1
   
   paramdf <- data.frame(wantedN = c(mu/N,sig^2/N,rho,G/N,r/N,c/N),
-                        simulated = c(mean(fils)+mean(cols)+mean(valmob),
-                                      sqrt(var(fils)+var(cols)+var(valmob[,1])),
+                        simulated = c(mean(rmatrix),
+                                      var(fils)+var(cols)+var(valmob[,1]),
                                       (2*cov(fils,cols)+cov(valmob[,1],
                                                             valmob[,2]))/(var(fils)+var(cols)+var(valmob[,1])),
                                       cov(fils,cols)/(var(fils)+var(cols)+var(valmob[,1])),
