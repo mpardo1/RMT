@@ -256,7 +256,7 @@ rand_mat_cor_norm_MPA <- function(N,mu,sig,rho,G,r,c){
   cond2 <- ifelse(c<0, FALSE, TRUE)
   cond3 <- ifelse(abs(G) > sqrt(r*c), FALSE, TRUE)
   cond4 <- ifelse(r+c > N, FALSE, TRUE)
-  cond5 <- ifelse(abs(rho - (2*G/N)) > (1-((r+c)/N)), FALSE, TRUE)
+  cond5 <- ifelse(abs(N*rho - (2*G)) > (N-((r+c))), FALSE, TRUE)
   
   if(cond1 == TRUE & cond2 == TRUE & cond3 == TRUE & cond4 == TRUE & cond5 == TRUE ){
     print("Conditions hold")
@@ -311,6 +311,71 @@ rand_mat_cor_norm_MPA <- function(N,mu,sig,rho,G,r,c){
   
   return(list(rmatrix,paramdf))
 }
+
+# Rand matrix MPA reescale!
+rand_mat_cor_norm_MPA_resc <- function(N,mu,sig,rho,G,r,c){
+  
+  cond1 <- ifelse(r<0, FALSE, TRUE)
+  cond2 <- ifelse(c<0, FALSE, TRUE)
+  cond3 <- ifelse(abs(G) > sqrt(r*c), FALSE, TRUE)
+  cond4 <- ifelse((r+c) > 1, FALSE, TRUE)
+  cond5 <- ifelse(abs(rho - (2*G)) > (1-(r+c)), FALSE, TRUE)
+  
+  if(cond1 == TRUE & cond2 == TRUE & cond3 == TRUE & cond4 == TRUE & cond5 == TRUE ){
+    print("Conditions hold")
+  }else{
+    print("Conditions does not hold")
+  }
+  
+  # The param in normalCopula gives the correlation between the variables.
+  # Inside list there are the mean and the standard deviation, ie, sigma, 
+  # not the var = sig^2.
+  copfc <- normalCopula(param=G/sqrt(r*c), dim = 2, dispstr = "un")
+  bivfc <- mvdc(copula = copfc, margins=c("norm","norm"),
+                paramMargins=list(list(0,sig*sqrt(r)),
+                                  list(0,sig*sqrt(c))))
+  
+  valfc <- rMvdc(N, bivfc)
+  
+  fils <- valfc[,1] #betas of baron et al
+  cols <- valfc[,2] #kappas of baron et al
+  
+  copmob <- normalCopula(param= (rho-(2*G))/(1-(r+c)), dim = 2, dispstr = "un")
+  bivmob <- mvdc(copula = copmob, margins=c("norm","norm"),
+                 paramMargins=list(list(0, sig*sqrt(1-(r+c))),
+                                   list(0, sig*sqrt(1-(r+c)))))
+  
+  valmob <- rMvdc(N*(N-1)/2, bivmob)
+  
+  rmatrix <- matrix(0,N,N)
+  ind <- 1
+  for(i in c(1:(N-1))){
+    for(j in c((i+1):N)){
+      # rmatrix[i,j] = mu/N + valmob[ind,1] + fils[i] + cols[j]
+      # rmatrix[j,i] = mu/N + valmob[ind,2] + fils[j] + cols[i]
+      rmatrix[i,j] = valmob[ind,1] + fils[i] + cols[j]
+      rmatrix[j,i] = valmob[ind,2] + fils[j] + cols[i]
+      ind <- ind+1
+    }
+  }
+  rmatrix <-  rmatrix + mu
+  diag(rmatrix) <- mu - 1
+  
+  paramdf <- data.frame(wantedN = c(mu,sig^2,rho,G,r,c),
+                        simulated = c(mean(rmatrix),
+                                      var(fils)+var(cols)+var(valmob[,1]),
+                                      (2*cov(fils,cols)+cov(valmob[,1],
+                                                            valmob[,2]))/(var(fils)+var(cols)+var(valmob[,1])),
+                                      cov(fils,cols)/(var(fils)+var(cols)+var(valmob[,1])),
+                                      var(fils)/(var(fils)+var(cols)+var(valmob[,1])),
+                                      var(cols)/(var(fils)+var(cols)+var(valmob[,1])))) %>%
+    mutate(simulated = round(simulated,6))
+  rownames(paramdf) <- c("mu","sigma","rho","Gamma","r","c")
+  
+  return(list(rmatrix,paramdf))
+}
+
+
 
 #### SAVE ANTES DE ENREDAR CON BARON GALLA
 
