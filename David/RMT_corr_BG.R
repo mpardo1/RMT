@@ -88,11 +88,26 @@ com_mat_resc <- rand_mat_cor_norm_MPA_resc(N,muw,sw,rhow,Gammaw,rw,cw)
 plot_eig <- plot_eigen(com_mat_resc[[1]])
 com_mat_resc[[2]]
 
-outl_BG <- -1 + muw + (muw/2)*(1+rhow/Gammaw)*(sqrt(1+(4*Gammaw*sw^2/muw^2))-1)
-outl_BG <- outl_BG*N^2
-outl <- -1 + muw + rhow*sw^2/muw
+outl_BG <- -1 + N*muw + ((N*muw/2)*(1+(rhow/(N*Gammaw)))*(sqrt(1+(4*Gammaw*sw^2/muw^2))-1))
+outl <- -1 + N*muw + rhow*sw^2/muw
 
 plot_eig + 
   geom_point(aes(outl_BG,0), colour = "green") +
   geom_point(aes(outl,0), colour = "blue") +
   theme_bw()
+
+plot_eig + 
+  geom_point(aes(outl,0), colour = "blue") +
+  theme_bw()
+
+eig_MPA_resc <- eigen_mat(com_mat_resc[[1]])
+eig_MPA_circ <- eig_MPA[-which(eig_MPA_resc$re == max(eig_MPA_resc$re)),]
+
+center <-  -1
+radius <- sqrt(N)*sw
+ggplot(eig_MPA_resc) + 
+  geom_point(aes(re, im), size = 0.1) + 
+  geom_point(aes(outl_BG,0), colour = "blue") +
+  geom_point(aes(outl,0), colour = "green") +
+  geom_ellipse(aes(x0 = center, y0 = 0, a = (1+rhow)*radius,
+                   b = (1-rhow)*radius, angle = 0), color = "red") 
