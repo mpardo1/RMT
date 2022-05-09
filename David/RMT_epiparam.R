@@ -67,7 +67,8 @@ plot_int(N,sol, "INF")
 min_int <- 0
 max_int <- 1
 step <- 0.05
-#### Tethas Recovery rate ####
+
+## Tethas Recovery rate ####
 thetas_vec <- seq(min_int,max_int,step)
 end_time <- 50
 thetas <- rep(thetas_vec[1],N)
@@ -109,7 +110,7 @@ sum_tetha <- ggplot(data = df_plot_theta,
 
 thetas <- rep(0.3, N) # loss of immunity rates
 
-##### Disease mortility #####
+##### Disease mortality #####
 deltas_vec <-  seq(min_int,max_int,step)
 end_time <- 50
 deltas <- rep(deltas_vec[1],N)
@@ -258,3 +259,208 @@ Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
 path <- paste0(Path,"Plot_epiparam1_b0,1_g0,5_muc_0,001_sc0,00001_muw0,2_sw0,05.png")
 ggsave(path,
        plot = gg_param, device = "png")
+
+
+###### RAMDOM PARAM #########
+# Thetas ####
+Deltas <- rep(0.3, N) # birth rate
+mub <- 0.1
+sb <- 0.001
+betas <- rep(mub, N) # transmission rates
+# betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
+thetas <- rep(0.3, N) # loss of immunity rates
+mud <- 0.3
+deaths <- rep(mud, N) # not disease-related death rates
+mua <- 0.3
+alphas <- rep(mua, N) # recovery rates
+mudel <- 0
+deltas <- rep(mudel, N) # disease-related death rates
+gammas = deaths + alphas + deltas
+
+mut <- 1
+st <- 0.1
+thetas <- rgamma(N, shape = (mut/st)^2, rate = mut/(st^2))
+end_time <- 50
+sol.rand <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+           COMMUTING,MIGRATION,
+           sus_init,inf_init,end_time)
+
+for(i in c(1:N)){
+  colnames(sol.rand)[i+1] <-  paste0("S",i)
+  colnames(sol.rand)[N+i+1] <-  paste0("I",i)
+  colnames(sol.rand)[2*N+i+1] <-  paste0("R",i)
+}
+
+sol.rand <- as.data.frame(sol.rand)
+df_plot <- reshape2::melt(sol.rand, id.vars = c("time"))
+df_plot$type <- substr(df_plot$variable,1,1)
+df_inf <- df_plot  %>% 
+  filter( substr(df_plot$variable,1,1) == "I")
+df_inf$thet <- 0
+for(i in c(1:nrow(df_inf))){
+  df_inf$thet[i] <- thetas[as.numeric(substr(df_plot$variable[i],2,3))]
+}
+
+max_int <- ceiling(max(thetas))
+min_int <- floor(min(thetas))
+
+library("latex2exp")
+plot_stab.rand.hm.lv  <- ggplot(df_inf) + 
+  geom_line(aes(time, value, colour = thet, group = variable))  +
+  # geom_line(aes( colour =variable),size=0.5)  +
+  ylab("Number of infected individuals")+
+  scale_colour_gradient(name = ""*theta~" ", 
+                        low = "blue", high = "red",
+                        breaks=c(min_int,1,max_int),
+                        labels=c(min_int,1,max_int),
+                        limits=c(min_int,max_int)) + 
+  theme_bw() + 
+  ggtitle(TeX("$\\mu_{\\theta}: 1, \\sigma_{\\theta}:0.1$"))
+
+plot_stab.rand.hm.lv
+
+gg_thetas <- ggarrange(plot_stab.rand.hm + xlab(""),
+          plot_stab.rand.lm + ylab(""),
+          plot_stab.rand.hm.lv ,
+          plot_stab.rand.lm.lv + ylab(""),
+          common.legend = TRUE,
+          nrow = 2, ncol = 2)
+
+# Deaths ####
+Deltas <- rep(0.3, N) # birth rate
+mub <- 0.1
+sb <- 0.001
+betas <- rep(mub, N) # transmission rates
+# betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
+thetas <- rep(0.3, N) # loss of immunity rates
+mud <- 0.3
+deaths <- rep(mud, N) # not disease-related death rates
+mua <- 0.3
+alphas <- rep(mua, N) # recovery rates
+mudel <- 0
+deltas <- rep(mudel, N) # disease-related death rates
+gammas = deaths + alphas + deltas
+
+mut <- 1
+st <- 0.5
+deaths <- rgamma(N, shape = (mut/st)^2, rate = mut/(st^2))
+end_time <-200
+sol.rand <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+                COMMUTING,MIGRATION,
+                sus_init,inf_init,end_time)
+
+plot_int(sol.rand, state = "INF")
+for(i in c(1:N)){
+  colnames(sol.rand)[i+1] <-  paste0("S",i)
+  colnames(sol.rand)[N+i+1] <-  paste0("I",i)
+  colnames(sol.rand)[2*N+i+1] <-  paste0("R",i)
+}
+
+sol.rand <- as.data.frame(sol.rand)
+df_plot <- reshape2::melt(sol.rand, id.vars = c("time"))
+df_plot$type <- substr(df_plot$variable,1,1)
+df_inf <- df_plot  %>% 
+  filter( substr(df_plot$variable,1,1) == "I")
+df_inf$deaths <- 0
+for(i in c(1:nrow(df_inf))){
+  df_inf$deaths[i] <- deaths[as.numeric(substr(df_plot$variable[i],2,3))]
+}
+
+max_int <- ceiling(max(deaths))
+min_int <- floor(min(deaths))
+
+library("latex2exp")
+plot_stab.rand.hm.hv_d  <- ggplot(df_inf) + 
+  geom_line(aes(time, value, colour = deaths, group = variable))  +
+  # geom_line(aes( colour =variable),size=0.5)  +
+  ylab("Number of infected individuals")+
+  scale_colour_gradient(name = ""*d~" ", 
+                        low = "blue", high = "red",
+                        breaks=c(min_int,1,max_int),
+                        labels=c(min_int,1,max_int),
+                        limits=c(min_int,max_int)) + 
+  theme_bw() + 
+  ggtitle(TeX("$\\mu_{d}: 1, \\sigma_{d}:0.5$"))
+
+plot_stab.rand.hm.lv_d
+
+gg_deaths <- ggarrange(plot_stab.rand.lm.lv_d +
+                         xlab("") + ylim(c(0,20000)) + xlim(c(0,10)),
+                       plot_stab.rand.lm.hv_d + 
+                         ylab("") + ylim(c(0,20000)) + xlim(c(0,10)),
+                       plot_stab.rand.hm.lv_d +
+                         ylim(c(0,200)),
+                       plot_stab.rand.hm.hv_d +
+                         ylab("") + ylim(c(0,200)),
+                       common.legend = TRUE,
+                       nrow = 2, ncol = 2)
+gg_deaths
+
+# Induced deaths ####
+Deltas <- rep(0.3, N) # birth rate
+mub <- 0.1
+sb <- 0.001
+betas <- rep(mub, N) # transmission rates
+# betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
+thetas <- rep(0.3, N) # loss of immunity rates
+mud <- 0.3
+deaths <- rep(mud, N) # not disease-related death rates
+mua <- 0.3
+alphas <- rep(mua, N) # recovery rates
+mudel <- 0
+deltas <- rep(mudel, N) # disease-related death rates
+gammas = deaths + alphas + deltas
+
+mut <- 0.1
+st <- 0.5
+deltas <- rgamma(N, shape = (mut/st)^2, rate = mut/(st^2))
+end_time <- 50
+sol.rand <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+                COMMUTING,MIGRATION,
+                sus_init,inf_init,end_time)
+
+for(i in c(1:N)){
+  colnames(sol.rand)[i+1] <- paste0("S",i)
+  colnames(sol.rand)[N+i+1] <- paste0("I",i)
+  colnames(sol.rand)[2*N+i+1] <- paste0("R",i)
+}
+
+sol.rand <- as.data.frame(sol.rand)
+df_plot <- reshape2::melt(sol.rand, id.vars = c("time"))
+df_plot$type <- substr(df_plot$variable,1,1)
+df_inf <- df_plot  %>% 
+  filter( substr(df_plot$variable,1,1) == "I")
+df_inf$delta <- 0
+for(i in c(1:nrow(df_inf))){
+  df_inf$delta[i] <- deltas[as.numeric(substr(df_plot$variable[i],2,3))]
+}
+
+max_int <- ceiling(max(deltas))
+min_int <- floor(min(deltas))
+
+library("latex2exp")
+plot_stab.rand.lm.hv_delt  <- ggplot(df_inf) + 
+  geom_line(aes(time, value, colour = delta, group = variable))  +
+  # geom_line(aes( colour =variable),size=0.5)  +
+  ylab("Number of infected individuals")+
+  scale_colour_gradient(name = ""*deltas~" ", 
+                        low = "blue", high = "red",
+                        breaks=c(min_int,1,max_int),
+                        labels=c(min_int,1,max_int),
+                        limits=c(min_int,max_int)) + 
+  theme_bw() + 
+  ggtitle(TeX("$\\mu_{\\delta}: 0.1, \\sigma_{\\delta}:0.5$"))
+
+plot_stab.rand.hm.lv_d
+
+gg_deaths <- ggarrange(plot_stab.rand.lm.lv_d +
+                         xlab("") + ylim(c(0,20000)) + xlim(c(0,10)),
+                       plot_stab.rand.lm.hv_d + 
+                         ylab("") + ylim(c(0,20000)) + xlim(c(0,10)),
+                       plot_stab.rand.hm.lv_d +
+                         ylim(c(0,200)),
+                       plot_stab.rand.hm.hv_d +
+                         ylab("") + ylim(c(0,200)),
+                       common.legend = TRUE,
+                       nrow = 2, ncol = 2)
+gg_deaths
