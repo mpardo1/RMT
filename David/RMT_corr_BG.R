@@ -107,7 +107,7 @@ center <-  -1
 radius <- sqrt(N)*sw
 ggplot(eig_MPA_resc) + 
   geom_point(aes(re, im), size = 0.1) + 
-  geom_point(aes(outl_BG,0), colour = "blue") +
-  geom_point(aes(outl,0), colour = "green") +
-  geom_ellipse(aes(x0 = center, y0 = 0, a = (1+rhow)*radius,
+  geom_point(aes(outl_BG,0), colour = "green") +
+  geom_point(aes(outl,0), colour = "blue") +
+  geom_ellipse(aes(x0 = center, y0 = 0, a = (1+ rhow)*radius,
                    b = (1-rhow)*radius, angle = 0), color = "red") 
