@@ -233,6 +233,7 @@ eigen_mat <- function(mat){
 plot_eigen <- function(mymat){
   eigmat <- eigen_mat(mymat)
   plot_eigen <- ggplot(eigmat) + geom_point(aes(re,im), size = 0.05) 
+  return(plot_eigen)
 }
 
 # plot eigenvalues and predictions
