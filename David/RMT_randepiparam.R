@@ -482,11 +482,16 @@ df_err_g <- df_err %>% group_by(sal) %>%
 df_err_g <- df_err_g[-1,]
 
 library("latex2exp")
-ggplot(df_err_g) + 
+err_alp <- ggplot(df_err_g) + 
   geom_line(aes(sal, mean_err_mean), color ="#A40E4C", size = 0.4) + 
   geom_point(aes(sal, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
   xlim(c(0,0.8)) + ylim(c(-1.5,1)) +
   theme_bw() + xlab(TeX("$\\sigma_{\\alpha}$")) + ylab("Mean squared error")
+
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
+path <- paste0(Path,"Plot_err_alp_rand_b0,1_g0,95_muc_0,001_sc0,0001_muw0,2_sw0,05.png")
+ggsave(path,
+       plot = err_alp, device = "png")
 
 # Deaths
 Deltas <- rep(0.3, N) # birth rate
