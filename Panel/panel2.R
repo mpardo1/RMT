@@ -142,7 +142,7 @@ plot.inf.1
 
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
-path <- paste0(Path,"Plot_inf1_alp_1,1_b0,02__g0,5_muc_0,01_sc0,001_muw0,08_sw0,05.png")
+path <- paste0(Path,"Plot_inf1_alp_1,1_b0,02_g0,5_muc_0,01_sc0,001_muw0,08_sw0,05.png")
 ggsave(path,
        plot = plot.inf.1, device = "png")
 
