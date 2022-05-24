@@ -258,8 +258,20 @@ rand_mat_cor_norm_MPA <- function(N,mu,sig,rho,G,r,c){
   cond4 <- ifelse(r+c > N, FALSE, TRUE)
   cond5 <- ifelse(abs(N*rho - (2*G)) > (N-((r+c))), FALSE, TRUE)
   
-  if(cond1 == TRUE & cond2 == TRUE & cond3 == TRUE & cond4 == TRUE & cond5 == TRUE ){
-    print("Conditions hold")
+  if(cond1 == FALSE){
+    print("Conditions r<0 hold")
+    if(cond2 == FALSE){
+      print("Conditions c<0 hold")
+      if(cond3 == FALSE){
+        print("Conditions abs(G) > sqrt(r*c) hold")
+        if(cond4 == FALSE){
+          print("Conditions r+c > N hold")
+          if(cond5 == FALSE){
+            print("Conditions abs(N*rho - (2*G)) > (N-((r+c))) hold")
+          }
+        }
+      }
+    }
   }else{
     print("Conditions does not hold")
   }
@@ -387,10 +399,23 @@ rand_mat_cor_norm_MPA_resc1 <- function(N,mu,sig,rho,G,r,c){
   
   if(cond1 == TRUE & cond2 == TRUE & cond3 == TRUE & cond4 == TRUE & cond5 == TRUE ){
     print("Conditions hold")
-  }else{
-    print("Conditions does not hold")
   }
   
+  if(cond1 == FALSE){
+    print("Conditions abs(G) > sqrt(r*c) hold")
+  } 
+  if(cond2 == FALSE){
+    print("Conditions c<0 hold")
+  }
+  if(cond3 == FALSE){
+    print("Conditions abs(G) > sqrt(r*c) hold")
+  }  
+  if(cond4 == FALSE){
+    print("Conditions c<0 hold")
+  }
+  if(cond5 == FALSE){
+    print("Conditions abs(G) > sqrt(r*c) hold")
+  }  
   # The param in normalCopula gives the correlation between the variables.
   # Inside list there are the mean and the standard deviation, ie, sigma, 
   # not the var = sig^2.

@@ -15,12 +15,12 @@ source("~/RMT/David/d_functions_eigen_int.R")
 ####### GENERATE JACOBIAN ###############################
 
 # number of patches
-N <- 4000
+N <- 400
 
 muw <- 1
 sw <- 0.7
 rhow <- -0.4 #original rho (Gamma of baron et al)
-Gammaw <- 0.7 #gamma of baron et al
+Gammaw <- -0.55 #gamma of baron et al
 rw <- 1.4
 cw <- 1.6
 
@@ -29,13 +29,17 @@ cw <- 1.6
 outl_BG <- -1 + muw + (muw/2)*(1+rhow/Gammaw)*(sqrt(1+(4*Gammaw*sw^2/muw^2))-1)
 outl <- -1 + muw + rhow*sw^2/muw
 
+outl_BG_abs <- -1 + muw + (muw/2)*(1+rhow/Gammaw)*(sqrt(1+(4*abs(Gammaw)*sw^2/muw^2))-1)
+
 # Matrix MPA form:
 com_mat <- rand_mat_cor_norm_MPA(N,muw,sw,rhow,Gammaw,rw,cw)
 plot_eig <- plot_eigen(com_mat[[1]])
 com_mat[[2]]
 
+plot_eig
+
 plot_eig + 
-  geom_point(aes(outl_BG,0), colour = "green") 
+  geom_point(aes(-outl_BG_abs,0), colour = "green") 
 
 eig_MPA <- eigen_mat(com_mat[[1]])
 max_eig <- max(eig_MPA$re)
@@ -84,14 +88,18 @@ ggplot(eig_DD_circ) +
                    b = (1-rhow)*radius, angle = 0), color = "red") 
   
 # Reescale variables:
-N = 1000
-rw <- 0.34
+N = 300
+muw <- 0.05
+sw <- 0.3
+rhow <- 0.45
+Gammaw <- -0.5
+rw <- 0.75
 cw <- 0.6
-Gammaw <- 0.1
+
 
 df_err <- data.frame(it = 0, out_re = 0)
 count=0
-max_it <- 2000
+max_it <- 200
 while(count < max_it){
   count = count +1
   com_mat_resc <- rand_mat_cor_norm_MPA_resc1(N,muw,sw,rhow,Gammaw,rw,cw)
@@ -100,8 +108,8 @@ while(count < max_it){
   df_err[nrow(df_err) + 1, ] <-  c(count, max_eig)
 }
 
-outl_BG <- -1 + N*muw + ((N*muw/2)*(1+(rhow/(N*Gammaw)))*(sqrt(1+(4*Gammaw*sw^2/muw^2))-1))
-outl <- -1 + N*muw + rhow*sw^2/muw
+outl_BG <- -1 + N*muw + ((N*muw/2)*(1+(rhow/(Gammaw)))*(sqrt(1+(4*Gammaw*sw^2/(N*muw^2)))-1))
+outl <- -1 + N*muw 
 
 df_err$out_RMT <- outl
 df_err$out_BG <- outl_BG
@@ -110,16 +118,18 @@ mean(df_err$out_BG - df_err$out_re)
 mean(df_err$out_RMT - df_err$out_re)
 
 N = 300
-muw <- 0.1
-sw <- 0.01
-rhow <- 0.5
-Gammaw <- 0.01
+muw <- 0.05
+sw <- 0.3
+rhow <- 0.4
+Gammaw <- -0.5
 rw <- 0.75
 cw <- 0.6
 
 # outl_BG <- -1 + N*muw + ((N*muw/2)*(1+(rhow/(N*Gammaw)))*(sqrt(1+(4*Gammaw*sw^2/muw^2))-1))
 outl_BG <- -1 + N*muw + ((N*muw/2)*(1+(rhow/Gammaw))*(sqrt(1+(4*Gammaw*sw^2/(N*muw^2)))-1))
 outl <- -1 + N*muw 
+
+ifelse(((4*Gammaw*sw^2)< (-muw^2)),FALSE,TRUE)
 
 com_mat_resc <- rand_mat_cor_norm_MPA_resc1(N,muw,sw,rhow,Gammaw,rw,cw)
 plot_eig <- plot_eigen(com_mat_resc[[1]])
