@@ -20,7 +20,7 @@ N <- 400
 muw <- 1
 sw <- 0.7
 rhow <- -0.4 #original rho (Gamma of baron et al)
-Gammaw <- -0.55 #gamma of baron et al
+Gammaw <- -0.5 #gamma of baron et al
 rw <- 1.4
 cw <- 1.6
 
@@ -49,7 +49,6 @@ library(latex2exp)
 plot_eig + 
   geom_point(aes(outl_BG,0), colour = "green") +
   geom_point(aes(outl,0), colour = "blue") +
-  ggtitle(TeX("$outBG:$")) +
   theme_bw()
 
 eig_MPA <- eigen_mat(com_mat[[1]])
@@ -148,6 +147,7 @@ com_mat_resc[[2]]
 eig_MPA_resc <- eigen_mat(com_mat_resc[[1]])
 eig_MPA_circ <- eig_MPA[-which(eig_MPA_resc$re == max(eig_MPA_resc$re)),]
 
+
 center <-  -1
 radius <- sqrt(N)*sw
 plot_eig + 
@@ -155,3 +155,89 @@ plot_eig +
   geom_point(aes(outl,0), colour = "blue") +
   geom_ellipse(aes(x0 = center, y0 = 0, a = (1+rhow)*radius,
                    b = (1-rhow)*radius, angle = 0), color = "red")
+
+# Area of stability for rho and Gamma:
+N = 100
+muw <- 0.009
+sw <- 0.1
+rhow <- 0.4
+Gammaw <- -0.5
+rw <- 0.75
+cw <- 0.6
+
+
+outl_BG <- -1 + N*muw + 
+  ((N*muw/2)*(1+(rhow/Gammaw))*(sqrt(1+(4*Gammaw*sw^2/(N*muw^2)))-1))
+
+rho_vec <- seq(-1,1,0.01) 
+Gamma_vec <- seq(-1,1,0.01) 
+df_stab <- data.frame(rho = 0 , gamma = 0, stab = 0, pob = 0)
+for(i in c(1:length(rho_vec))){
+  for(j in c(1:length(Gamma_vec))){
+    cond1 <- ifelse(abs(Gammaw) > sqrt(rw*cw), FALSE, TRUE)
+    cond2 <- ifelse(abs(N*rhow - (2*Gammaw)) > (N-((rw+cw))), FALSE, TRUE)
+    
+   if(cond1 == FALSE){
+     pob_s <- 1
+   }else if( cond2 == FALSE ){
+     pob_s <- 2
+   }else{
+     pob_s <- 0
+    }
+    
+    rhow <- rho_vec[i]
+    Gammaw <- Gamma_vec[j]
+    if(Gammaw == 0 | Gammaw < (-N*muw^2)/(4*sw^2)){
+      stab = -1
+    }else{
+      outl_BG <- -1 + N*muw + 
+        ((N*muw/2)*(1+(rhow/Gammaw))*(sqrt(1+(4*Gammaw*sw^2/(N*muw^2)))-1))
+      if(outl_BG>0){
+        stab = 0
+      }else if(outl_BG<0){
+        stab = 1
+      }
+    }
+   
+   
+    df_stab[nrow(df_stab)+1,] <- c(rhow, Gammaw, stab, pob_s)
+  }
+}
+
+df_stab$stab[which(is.na(df_stab$stab) == TRUE)] <- -1
+
+library("latex2exp")
+ggplot(df_stab) + 
+  geom_point(aes(rho, gamma, colour = factor(stab)))  + 
+  scale_colour_manual(values = c("#464D77", "#36827F", "#F9DB6D")) + 
+  scale_fill_discrete(name = "Stability", labels = c("NA", "FALSE", "TRUE")) +
+  ylab(TeX("$\\Gamma$")) +
+  xlab(TeX("$\\rho$")) +
+  theme_bw()
+
+ggplot(df_stab) + 
+ geom_point(aes(rho, gamma, colour = factor(pob)), size = 0.1)
+
+Gammaw <- 0.5
+rhow <- -0.55
+# outl_BG <- -1 + N*muw + ((N*muw/2)*(1+(rhow/(N*Gammaw)))*(sqrt(1+(4*Gammaw*sw^2/muw^2))-1))
+outl_BG <- -1 + N*muw + ((N*muw/2)*(1+(rhow/Gammaw))*(sqrt(1+(4*Gammaw*sw^2/(N*muw^2)))-1))
+outl <- -1 + N*muw 
+
+ifelse(((4*Gammaw*sw^2)< (-muw^2)),FALSE,TRUE)
+
+com_mat_resc <- rand_mat_cor_norm_MPA_resc1(N,muw,sw,rhow,Gammaw,rw,cw)
+plot_eig <- plot_eigen(com_mat_resc[[1]])
+com_mat_resc[[2]]
+
+max_im <- max(eigen_mat(com_mat_resc[[1]])$im)
+
+plot_eig + 
+  geom_segment(aes(x = 0, y = -max_im, xend = 0, yend = max_im), color = "red") 
+  
+plot_eig + 
+  geom_point(aes(outl_BG,0), colour = "green") +
+  geom_point(aes(outl,0), colour = "blue") +
+  geom_segment(aes(x = 0, y = -max_im, xend = 0, yend = max_im), color = "red") +
+  theme_bw()
+
