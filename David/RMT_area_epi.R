@@ -75,6 +75,21 @@ for(i in c(1:length(beta_vec))){
 }
 
 df_sol <- df_sol[-1,]
-Path <- "~/RMT/David/OUTPUT/"
-path <- paste0(Path,"Areaepi_g0,5_muc_0,001_sc0,0001_muw0,1_sw0,05_",Sys.Date(), ".csv")
-write.csv(df_sol, path,row.names = TRUE)
+
+library("latex2exp")
+color_stab <- "#3066BE"
+color_unstab <- "#A63446"
+plot_area <- ggplot(df_sol) +
+  geom_point(aes(beta,alp, colour = state)) + theme_bw()  +
+  scale_color_manual(values=c(color_stab, color_unstab)) +
+  ylab(TeX("$\\alpha$")) +
+  xlab(TeX("$\\beta$")) +
+  # ggtitle(""*gamma/beta~": 4")
+  ggtitle(paste0("N: ",N)) +
+  theme(text = element_text(size = 20), legend.position = "bottom") +
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
+path <- paste0(Path,"area_bet_alp_g0,5_b0,5_muc_0,001_sc0,0001_muw0,05_sw0,05_",Sys.Date(), ".png")
+ggsave(path,
+       plot = plot_area, device = "png")

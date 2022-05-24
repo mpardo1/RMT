@@ -76,7 +76,7 @@ mudel <- 0
 deltas <- rep(mudel, N) # disease-related death rates
 gammas = deaths + alphas + deltas
 
-vec_mu <- c(0.1,1)
+vec_mu <- c(0.1,0.5)
 vec_s <- c(0.1,0.5)
 list_plot <- list()
 count <- 1
@@ -358,7 +358,7 @@ for(k in 1:2){
     mut <- vec_mu[k]
     st <- vec_s[j]
   alphas <- rgamma(N, shape = (mut/st)^2, rate = mut/(st^2))
-  end_time <- 500
+  end_time <- 100
   sol.rand <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
                   COMMUTING,MIGRATION,
                   sus_init,inf_init,end_time)
@@ -714,3 +714,87 @@ ggsave(path,
        plot = gg_gammas, device = "png")
 
 
+
+# Betas
+Deltas <- rep(0.3, N) # birth rate
+mub <- 0.1
+sb <- 0.001
+betas <- rep(mub, N) # transmission rates
+# betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
+thetas <- rep(0.3, N) # loss of immunity rates
+mud <- 0.3
+deaths <- rep(mud, N) # not disease-related death rates
+mua <- 0.3
+alphas <- rep(mua, N) # recovery rates
+mudel <- 0
+deltas <- rep(mudel, N) # disease-related death rates
+gammas = deaths + alphas + deltas
+
+mum = 1
+sm = 0.5
+mu_vec <- rgamma(100, shape = (mum/sm)^2, rate = mum/(sm^2))
+s_vec <- seq(0,1,0.01)
+df_err <- data.frame(muw = muw, sw = sw, muc = muc, sc = sc, 
+                     mual = 0, sal = 0, max_eig = 0, out_mean = 0 ,
+                     count_re = 0)
+
+count = 1
+while(count < 1000){
+  # for(i in c(1:length(mu_vec))){
+  for(j in c(1:length(s_vec))){
+    mut <- 0.5
+    st <- s_vec[j]
+    betas = rgamma(N, shape = (mut/st)^2, rate = mut/(st^2))
+    # Compute Jacobian
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    # Compute eigenvalues
+    eig <- eigen_mat(jacobian)
+    max_eig <- max(eig$re)
+    betas = rep(mean(betas),N)
+    # Compute Jacobian
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    # Compute eigenvalues
+    eig <- eigen_mat(jacobian)
+    max_eig_mean <- max(eig$re)
+    df_err[nrow(df_err)+1,] <- c(muw, sw, muc, sc, mut,
+                                 st, max_eig, max_eig_mean , count) 
+    # }
+  }
+  print(paste0("count:", count))
+  count = count + 1 
+}
+
+df_err$err_mean <- (df_err$out_mean - df_err$max_eig)^2/df_err$out_mean
+df_err_g <- df_err %>% group_by(sal) %>%
+  summarise(mean_err_mean = mean(err_mean))
+df_err_g <- df_err_g[-1,]
+
+library("latex2exp")
+gg_gammas <- ggplot(df_err_g) + 
+  geom_line(aes(sal, mean_err_mean), color ="#A40E4C", size = 0.4) + 
+  geom_point(aes(sal, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
+  theme_bw() + xlab(TeX("$\\sigma_{\\gamma}$")) + ylab("Mean squared error")
+
+Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/Gen/"
+path <- paste0(Path,"rand_gammas",format(muw,decimal.mark=","),
+               "sw",format(sw,decimal.mark=","),
+               "muc",format(muc,decimal.mark=","),
+               "b",format(betas[1],decimal.mark=","),
+               "d",format(deltas[1],decimal.mark=","), 
+               "D",format(Deltas[1],decimal.mark=","),
+               "a",format(alphas[1],decimal.mark=","),
+               "t",format(thetas[1],decimal.mark=","),".png")
+ggsave(path, plot = gg_gammas, device = "png")
+
+alp_hv <- alp_hv + xlim(c(0,15)) + 
+  theme(text = element_text(size = 10),legend.position = "bottom")
+thet_hv <- thet_hv + xlim(c(0,20)) + 
+  theme(text = element_text(size = 10),legend.position = "bottom") 
+
+gg_alp_thet <- ggarrange(alp_hv,thet_hv)
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
+path <- paste0(Path,"thet_alp_g0,5_b0,5_muc_0,001_sc0,0001_muw0,05_sw0,05_",Sys.Date(), ".png")
+ggsave(path,
+       plot = gg_alp_thet, device = "png")
