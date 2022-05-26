@@ -233,11 +233,85 @@ com_mat_resc[[2]]
 max_im <- max(eigen_mat(com_mat_resc[[1]])$im)
 
 plot_eig + 
-  geom_segment(aes(x = 0, y = -max_im, xend = 0, yend = max_im), color = "red") 
-  
+  geom_segment(aes(x = 0, y = -max_im, xend = 0, yend = max_im), color = "red") +
+  theme_bw()
+
 plot_eig + 
   geom_point(aes(outl_BG,0), colour = "green") +
   geom_point(aes(outl,0), colour = "blue") +
   geom_segment(aes(x = 0, y = -max_im, xend = 0, yend = max_im), color = "red") +
   theme_bw()
 
+##### JACOBIAN ###
+# Area of stability for rho and Gamma:
+N = 100
+Deltas <- rep(0.3, N) # birth rate
+mub <- 1
+sb <- 0.001
+betas <- rep(mub, N) # transmission rates
+# betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
+thetas <- rep(0.1, N) # loss of immunity rates
+mud <- 0.3
+deaths <- rep(mud, N) # not disease-related death rates
+mua <- 0.65
+alphas <- rep(mua, N) # recovery rates
+mudel <- 0
+deltas <- rep(mudel, N) # disease-related death rates
+gammas = deaths + alphas + deltas
+mug <- gammas[1]
+tau <- 0
+# Mobility variables:
+muw <- 0.01
+sw <- 0.09
+rhow <- - 0.4
+Gammaw <- - 0.8
+rw <- 0.9
+cw <- 0.9
+
+muc <- 0.01
+sc <- sw
+rhoc <- rhow
+Gammac <- Gammaw
+rc <- rw
+cc <- cw
+
+COMMUTING <- rand_mat_cor_norm_MPA_resc1(N,muw,sw,rhow,Gammaw,rw,cw)[[1]]
+diag(COMMUTING) <- 1
+MIGRATION <- rand_mat_cor_norm_MPA_resc1(N,muc,sc,rhoc,Gammac,rc,cc)[[1]]
+diag(MIGRATION) <- 1
+
+jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+  diag(deaths + alphas + deltas + colSums(MIGRATION))
+
+plot_eig <- plot_eigen(jacobian)
+plot_eig
+
+sh <- sqrt(mub^2*sw^2 + 2*mub*tau + sc^2)
+rhoh <- (rhow*mub^2*sw^2 + rhoc*sc^2)/sh^2
+Gammah <- (Gammaw*mub^2*sw^2 + Gammac*sc^2)/(sh^2)
+ch <- (cw*mub^2*sw^2 + cc*sc^2)/(sh^2)
+rh <- (rw*mub^2*sw^2 + rc*sc^2)/(sh^2)
+
+sq <- sqrt(1+((4*Gammah*sh^2)/N*(mub*muw+muc)^2))-1
+outl_BG_h <- (N-1)*mub*muw + mub - mug + (N*(mub*muw + muc)/2)*(1+(Gammah/rhoh))*sq
+
+out_RMT_h <- mub - mug + mub*muw*(N-1)
+
+plot_eig +
+  geom_point(aes(outl_BG_h,0), colour = "green") +
+  geom_point(aes(out_RMT_h,0), colour = "blue", size = 0.1) +
+  theme_bw()
+
+
+rho_vec <- seq(-1,1,0.1)
+Gamma_vec <- seq(-1,1,0.1)
+df_out <- data.frame(rho = 0, gamma = 0, inc = 0)
+for(i in c(1:length(rho_vec))){
+  for(j in c(1:length(Gamma_vec))){
+    rhoh <- rho_vec[i]
+    Gammah <- Gamma_vec[j]
+    
+    inc <- (mub/2)*(mub*muw + muc)*(1+(rhoh/Gammah))*(sqrt(1+(4*Gammah*sh^2)/(mub*muw + muc)^2)-1)
+    df_out[nrow(df_out)+1,] <- c(rhoh,Gammah, inc) 
+  }
+}
