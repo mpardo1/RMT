@@ -699,9 +699,11 @@ library("latex2exp")
 gg_gammas <- ggplot(df_err_g) + 
   geom_line(aes(sal, mean_err_mean), color ="#A40E4C", size = 0.4) + 
   geom_point(aes(sal, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
-  theme_bw() + xlab(TeX("$\\sigma_{\\gamma}$")) + ylab("Mean squared error")
+  theme_bw() + xlab(TeX("$\\sigma_{\\gamma}$")) + 
+  xlim(c(0,0.75)) + ylim(c(0,0.12)) +
+  ylab("Mean squared error")
 
-Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/Gen/"
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
 path <- paste0(Path,"rand_gammas",format(muw,decimal.mark=","),
                "sw",format(sw,decimal.mark=","),
                "muc",format(muc,decimal.mark=","),
@@ -772,13 +774,13 @@ df_err_g <- df_err %>% group_by(sal) %>%
 df_err_g <- df_err_g[-1,]
 
 library("latex2exp")
-gg_gammas <- ggplot(df_err_g) + 
+gg_betas <- ggplot(df_err_g) + 
   geom_line(aes(sal, mean_err_mean), color ="#A40E4C", size = 0.4) + 
   geom_point(aes(sal, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
-  theme_bw() + xlab(TeX("$\\sigma_{\\gamma}$")) + ylab("Mean squared error")
+  theme_bw() + xlab(TeX("$\\sigma_{\\beta}$")) + ylab("Mean squared error")
 
 Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/Gen/"
-path <- paste0(Path,"rand_gammas",format(muw,decimal.mark=","),
+path <- paste0(Path,"rand_betaas",format(muw,decimal.mark=","),
                "sw",format(sw,decimal.mark=","),
                "muc",format(muc,decimal.mark=","),
                "b",format(betas[1],decimal.mark=","),
@@ -786,7 +788,7 @@ path <- paste0(Path,"rand_gammas",format(muw,decimal.mark=","),
                "D",format(Deltas[1],decimal.mark=","),
                "a",format(alphas[1],decimal.mark=","),
                "t",format(thetas[1],decimal.mark=","),".png")
-ggsave(path, plot = gg_gammas, device = "png")
+ggsave(path, plot = gg_betas, device = "png")
 
 alp_hv <- alp_hv + xlim(c(0,15)) + 
   theme(text = element_text(size = 10),legend.position = "bottom")

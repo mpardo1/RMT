@@ -244,7 +244,7 @@ plot_eig +
 
 ##### JACOBIAN ###
 # Area of stability for rho and Gamma:
-N = 100
+N = 50
 Deltas <- rep(0.3, N) # birth rate
 mub <- 1
 sb <- 0.001
@@ -286,7 +286,7 @@ jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
 plot_eig <- plot_eigen(jacobian)
 plot_eig
 
-sh <- sqrt(mub^2*sw^2 + 2*mub*tau + sc^2)
+sh <- sqrt(mub^2*sw^2 + sc^2)
 rhoh <- (rhow*mub^2*sw^2 + rhoc*sc^2)/sh^2
 Gammah <- (Gammaw*mub^2*sw^2 + Gammac*sc^2)/(sh^2)
 ch <- (cw*mub^2*sw^2 + cc*sc^2)/(sh^2)
@@ -315,3 +315,40 @@ for(i in c(1:length(rho_vec))){
     df_out[nrow(df_out)+1,] <- c(rhoh,Gammah, inc) 
   }
 }
+
+sw <- 0.05
+sc <- 0.05
+sh <- sqrt(mub^2*sw^2 + sc^2)
+mub <- 0.01
+muc <-  0.1
+muw <-  0.1
+sh <- 0.1
+Gammah <- 0.8
+rhoh <- 0
+sq <- sqrt(1+((4*Gammah*sh^2)/((mub*muw+muc)^2)))-1
+outl_BG_h <- (N-1)*mub*muw + mub - mug + (N*(mub*muw + muc)/2)*(1+(rhoh/(N*Gammah)))*sq
+outl_BG_h - ((N-1)*mub*muw + mub - mug)
+
+Gamma_vec <- seq(-1,1,0.01)
+df_out <- data.frame(gamma = 0, outl_BG = 0, outl_RMT = 0)
+outl_RMT <- (N-1)*mub*muw + mub - mug
+for(j in c(1:length(Gamma_vec))){
+  Gammah <- Gamma_vec[j]
+  
+  if((1+((4*Gammah*sh^2)/((mub*muw+muc)^2)) > 0) | Gammah == 0){
+    sq <- sqrt(1+((4*Gammah*sh^2)/((mub*muw+muc)^2)))-1
+    outl_BG_h <- (N-1)*mub*muw + mub - mug + (N*(mub*muw + muc)/2)*(1+(rhoh/(N*Gammah)))*sq
+    outl_RMT <- (N-1)*mub*muw + mub - mug
+  }else{
+    outl_BG_h = 0
+  }
+ 
+  df_out[nrow(df_out)+1,] <- c(Gammah, outl_BG_h, outl_RMT) 
+}
+
+df_out <- df_out[-which(df_out$gamma == 0),]
+ggplot(df_out) + 
+  geom_line(aes(gamma, outl_BG), size = 0.4, colour = "green") + 
+  geom_point(aes(gamma, outl_BG), size = 0.8, colour = "blue") + 
+  geom_line(aes(gamma, outl_RMT), size = 0.4, colour = "red") + 
+  theme_bw()

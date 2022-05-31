@@ -12,7 +12,7 @@ source("~/RMT/David/d_functions_eigen_int.R")
 ####### GENERATE JACOBIAN ###############################
 
 # number of patches
-N <- 100
+N <- 50
 
 # epidemiological
 #all rates must lie in (0,1) except for betas
@@ -51,11 +51,11 @@ MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
 diag(MIGRATION) <- 0
 # ----------------------------------------------------------------------#
 ##### Plot Stability #####
-step <- 0.01
+step <- 0.005
 beta_vec <- seq(0.01,0.9,step)
 muw_vec <- seq(0.01,0.9,step)
 df_sol <- data.frame(beta = 0, gamma = 0, N = 0, muw = 0, state = FALSE)
-N = 100
+N = 50
 for(i in c(1:length(beta_vec))){
   print(paste0(" i : ", i))
   for(j in c(1:length(beta_vec))){
@@ -87,17 +87,16 @@ for(i in c(1:length(beta_vec))){
   }
 }
 
-df_sol <- df_sol[-1,]
+ df_sol <- df_sol[-1,]
 
 # path <- paste0("~/RMT/David/OUTPUT/area_gen_",Sys.Date(),".csv")
 # write.csv(df_sol, path,row.names = TRUE)
 
-path <- "~/RMT/David/OUTPUT/area_gen_2022-03-30.csv"
-df_sol <- read.csv(file = path)
+# path <- "~/RMT/David/OUTPUT/area_gen_2022-03-30.csv"
+# df_sol <- read.csv(file = path)
 df_sol$Stability <- ifelse(df_sol$state == TRUE, "Stable", "Unstable")
 
-vec <- seq(0,nrow(df_sol),2)
-df_sol <- df_sol[vec,]
+# df_sol <- df_sol[vec,]
 library(latex2exp)
 
 # Values for the points in the area graph:
@@ -112,9 +111,24 @@ annotation <- data.frame(
 )
 
 library(ggstar)
+library("latex2exp")
+
+plot_area <- ggplot(df_sol) +
+  geom_point(aes(beta,muw, colour = Stability)) + theme_bw()  +
+  scale_color_manual(values=c(color_stab, color_unstab)) +
+  ylab(TeX("$\\mu_c$")) +
+  xlab(TeX("$\\beta$")) +
+  scale_x_continuous(breaks=c(0,0.25,0.50), limits = c(0, 0.5),
+                     labels = c("0", "0.25", "0.50")) +
+  scale_y_continuous(breaks=c(0,0.25,0.50, 0.75), limits = c(0, 0.75),
+                     labels = c("0", "0.25", "0.50", "0.75")) +
+  coord_fixed() +
+  theme(text = element_text(size = 25), legend.position = "bottom") +
+  guides(colour = guide_legend(override.aes = list(size=4))) 
+
 color_points <- "#FFFFFF"
-color_stab <- "#3066BE"
-color_unstab <- "#A63446"
+color_stab <- "#084C61"
+color_unstab <- "#DB504A"
 plot_area <- ggplot(df_sol) +
   geom_point(aes(beta,muw, colour = Stability)) + theme_bw()  +
   scale_color_manual(values=c(color_stab, color_unstab)) +
