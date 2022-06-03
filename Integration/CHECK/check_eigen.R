@@ -28,6 +28,7 @@ mat[2:dim,1] <- a+c
 eigen_m <- as.complex(eigen(mat, only.values = TRUE)$values)
 df <- data.frame(re = Re(eigen_m), im = Im(eigen_m))
 plot_eig <- ggplot(df) + geom_point(aes(re,im), size = 0.05) 
+plot_eig
 
 bet_cte <- bet
 mu_m <- mu_c
