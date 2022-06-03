@@ -219,8 +219,6 @@ source("~/RMT/Integration/functions_eigen_int.R")
   dim = 1000
   mat.pred <- matrix(0, ncol = 3, nrow = dim) 
   for(i in c(1:dim)){
-    print(paste0("i: ",i))
-    print(paste0("alp: ",alp))
     alp <- abs(rnorm(1,10,9))
     out.pred.1 <- max(outl_1patch(alp, bet_cte, N,
                                   mu_w, mu_c, gamma_ct))
