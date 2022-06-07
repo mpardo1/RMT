@@ -3,7 +3,7 @@
 N <- 3
 alp <- 1
 muw <- 0.3
-muc <- 0.1
+muc <- 0.01
 mub <- 0.1
 a <- alp
 b <- alp*muw
@@ -23,8 +23,3 @@ ggplot(eig) +
   geom_point(aes(outl,0), color = "red") +
   geom_point(aes(re,im), size = 0.1) 
    
-
-ggplot(eig) + 
-  geom_point(aes(re,im), size = 0.1) + 
-  geom_point(aes(outl,0), color = "red") +
-  geom_point(aes(outlk,0), color = "blue")

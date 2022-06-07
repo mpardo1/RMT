@@ -193,7 +193,7 @@ Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.001
+muc <- 0.01
 sc <- 0.0001
 rhoc <- 0
 Gammac <- 0
@@ -218,7 +218,7 @@ mub <- 0.1
 mug <- 1.8
 k <-  1
 outl1 <- (1/2)*(2*a + (k-1)*b + N*c  + 
-                  sqrt((k-1)^2*b^2 + (2*(k+1)*N - 4*k)*b*c + N^2*c^2))
+                 sqrt((k-1)^2*b^2 + (2*(k+1)*N - 4*k)*b*c + N^2*c^2))
 outl1 <- outl1 + (mub*(1-muw) - N*muc - mug)
 
 alp_vec <- seq(0.5,2,0.1)
@@ -278,8 +278,8 @@ gg_1_vs_k <- ggplot(df_plot) +
 
 gg_1_vs_k
 
-######
-alp <- 1
+################
+alp <- 12
 a <- alp
 b <- alp*muw
 c <- mub*muw + muc
@@ -288,7 +288,7 @@ mub <- 0.1
 mug <- 1.8
 k <-  1
 outl1 <- (1/2)*(2*a + (k-1)*b + N*c  + 
-                  sqrt((k-1)^2*b^2 + (2*(k+1)*N - 4*k)*b*c + N^2*c^2))
+                 sqrt((k-1)^2*b^2 + (2*(k+1)*N - 4*k)*b*c + N^2*c^2))
 outl1 <- outl1 + (mub*(1-muw) - N*muc - mug)
 
 outl1 <- (N/2)*(mub*muw + muc) + (alp/2)*(1 + (k-1)*muw) + mub*(1-muw) -
@@ -306,6 +306,15 @@ betas <- rep(mub, N)
 betas[1:i] <- betas[1:i] + alp/i
 jacobian_k <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
   diag(gammas + colSums(MIGRATION))
+
+k <- i
+outlk <- (N/2)*(mub*muw + muc) + (alp/2)*(1 + (k-1)*muw) + mub*(1-muw) -
+  mug - N*muc + (1/2)*sqrt(N^2*(mub*muw + muc)^2 + alp^2*(1 + (k-1)*muw)^2 + 
+                             2*alp*(mub*muw + muc)*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
+
+max(eigen_mat(jacobian_k)$re)
+plot_eigen(jacobian_k) + 
+  geom_point(aes(outlk,0), colour = "red")
 # plot_eigen(jacobian) +
 #   geom_vline(xintercept = 0, color = "blue", linetype = "longdash") 
 #   
