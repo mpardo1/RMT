@@ -279,13 +279,13 @@ gg_1_vs_k <- ggplot(df_plot) +
 gg_1_vs_k
 
 ################
-alp <- 12
+alp <- 1
 a <- alp
 b <- alp*muw
 c <- mub*muw + muc
 gammas = deaths + alphas + deltas
 mub <- 0.1
-mug <- 1.8
+mug <- gammas[1]
 k <-  1
 outl1 <- (1/2)*(2*a + (k-1)*b + N*c  + 
                  sqrt((k-1)^2*b^2 + (2*(k+1)*N - 4*k)*b*c + N^2*c^2))
@@ -302,12 +302,13 @@ jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
 plot_eigen(jacobian) + 
   geom_point(aes(outl1,0), colour = "red")
 
+k <- 12
+
 betas <- rep(mub, N)
-betas[1:i] <- betas[1:i] + alp/i
+betas[1:k] <- betas[1:k] + alp/k
 jacobian_k <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
   diag(gammas + colSums(MIGRATION))
 
-k <- i
 outlk <- (N/2)*(mub*muw + muc) + (alp/2)*(1 + (k-1)*muw) + mub*(1-muw) -
   mug - N*muc + (1/2)*sqrt(N^2*(mub*muw + muc)^2 + alp^2*(1 + (k-1)*muw)^2 + 
                              2*alp*(mub*muw + muc)*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
