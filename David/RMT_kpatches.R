@@ -279,28 +279,57 @@ gg_1_vs_k <- ggplot(df_plot) +
 gg_1_vs_k
 
 ################
-alp <- 12
+# number of patches
+N <- 100
+
+# epidemiological
+#all rates must lie in (0,1) except for betas
+
+Deltas <- rep(0.3, N) # birth rate
+mub <- 0.5
+sb <- 0.001
+betas <- rep(mub, N) # transmission rates
+# betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
+thetas <- rep(0.3, N) # loss of immunity rates
+mud <- 0.3
+deaths <- rep(mud, N) # not disease-related death rates
+mua <- 0.2
+alphas <- rep(mua, N) # recovery rates
+mudel <- 0
+deltas <- rep(mudel, N) # disease-related death rates
+gammas = deaths + alphas + deltas
+alp <- 1
 a <- alp
 b <- alp*muw
 c <- mub*muw + muc
 gammas = deaths + alphas + deltas
 mub <- 0.1
-mug <- 1.8
-k <-  1
-outl1 <- (1/2)*(2*a + (k-1)*b + N*c  + 
+mug <- gammas[1]
+k <-  3
+outl <- (1/2)*(2*a + (k-1)*b + N*c  + 
                  sqrt((k-1)^2*b^2 + (2*(k+1)*N - 4*k)*b*c + N^2*c^2))
-outl1 <- outl1 + (mub*(1-muw) - N*muc - mug)
+outl <- outl + (mub*(1-muw) - N*muc - mug)
 
 outl1 <- (N/2)*(mub*muw + muc) + (alp/2)*(1 + (k-1)*muw) + mub*(1-muw) -
-  mug - N*muc + (1/2)*sqrt(N^2*(mub*muw + muc)^2 + alp^2*(1 + (k-1)*muw)^2 + 
+  mug - N*muc + (1/2)*sqrt(N^2*(mub*muw + muc)^2 + alp^2*(1 + (k-1)*muw)^2 +
                              2*alp*(mub*muw + muc)*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
 
 betas <- rep(mub, N) 
-betas[1] <- betas[1] + alp
+betas[1:3] <- betas[1:3] + alp
+
+COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
+diag(COMMUTING) <- 0
+# COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
+# COMMUTING[sample.int(N^2, round(p*N^2))] <- 0
+
+MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
+diag(MIGRATION) <- 0
+
 jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
   diag(gammas + colSums(MIGRATION))
 plot_eigen(jacobian) + 
-  geom_point(aes(outl1,0), colour = "red")
+  # geom_point(aes(outl,0), colour = "red") +
+  geom_point(aes(outl1,0), colour = "blue")
 
 betas <- rep(mub, N)
 betas[1:i] <- betas[1:i] + alp/i
