@@ -9,6 +9,7 @@ rm(list = ls())
 source("~/RMT/David/RMT_genrandom.R")
 source("~/RMT/David/RMT_plotmobility.R")
 source("~/RMT/David/d_functions_eigen_int.R")
+library("viridis")
 ####### GENERATE JACOBIAN ###############################
 
 # number of patches
@@ -89,8 +90,8 @@ for(i in c(1:length(beta_vec))){
 
  df_sol <- df_sol[-1,]
 
-# path <- paste0("~/RMT/David/OUTPUT/area_gen_",Sys.Date(),".csv")
-# write.csv(df_sol, path,row.names = TRUE)
+path <- paste0("~/RMT/David/OUTPUT/area_gen_",Sys.Date(),".csv")
+write.csv(df_sol, path,row.names = TRUE)
 
 # path <- "~/RMT/David/OUTPUT/area_gen_2022-03-30.csv"
 # df_sol <- read.csv(file = path)
@@ -100,8 +101,8 @@ df_sol$Stability <- ifelse(df_sol$state == TRUE, "Stable", "Unstable")
 library(latex2exp)
 
 # Values for the points in the area graph:
-stab_par <- 0.07
-unstab_par <- 0.2
+stab_par <- 0.1
+unstab_par <- 0.25
 
 # Create annotate for labels at each point in the area graph:
 annotation <- data.frame(
@@ -113,6 +114,8 @@ annotation <- data.frame(
 library(ggstar)
 library("latex2exp")
 
+color_stab <- "#48639C"
+color_unstab <- "#BB4430"
 plot_area <- ggplot(df_sol) +
   geom_point(aes(beta,muw, colour = Stability)) + theme_bw()  +
   scale_color_manual(values=c(color_stab, color_unstab)) +
@@ -126,27 +129,28 @@ plot_area <- ggplot(df_sol) +
   theme(text = element_text(size = 25), legend.position = "bottom") +
   guides(colour = guide_legend(override.aes = list(size=4))) 
 
-color_points <- "#FFFFFF"
-color_stab <- "#084C61"
-color_unstab <- "#DB504A"
-plot_area <- ggplot(df_sol) +
+color_points <- "#EAF2EF"
+plot_area <-  ggplot(df_sol) +
   geom_point(aes(beta,muw, colour = Stability)) + theme_bw()  +
   scale_color_manual(values=c(color_stab, color_unstab)) +
-  ylab(TeX("$\\mu_w$")) +
+  ylab(TeX("$\\mu_c$")) +
   xlab(TeX("$\\beta$")) +
-  # ggtitle(""*gamma/beta~": 4")
-  ggtitle(paste0("N: ",N)) +
-  coord_fixed() +
+  scale_x_continuous(breaks=c(0,0.25,0.50), limits = c(0, 0.5),
+                     labels = c("0", "0.25", "0.50")) +
+  scale_y_continuous(breaks=c(0,0.25,0.50, 0.75), limits = c(0, 0.75),
+                     labels = c("0", "0.25", "0.50", "0.75")) +
   geom_point(aes(stab_par,stab_par), colour= color_points, size = 3) +
   geom_point(aes(stab_par,unstab_par), colour= color_points, size = 3) +
   geom_point(aes(unstab_par,stab_par), colour= color_points, size = 3) +
   geom_text(data=annotation, aes( x=x, y=y, label=label),
             color=color_points, 
-            size=9 , angle=0, fontface="bold" ) + 
-  theme(text = element_text(size = 30), legend.position = "bottom") +
-  guides(colour = guide_legend(override.aes = list(size=5)))
+            size=9 , angle=0, fontface="bold" ) +
+  coord_fixed() +
+  theme(text = element_text(size = 25), legend.position = "bottom") +
+  guides(colour = guide_legend(override.aes = list(size=4)))  
 
-plot_area <- plot_area + labs(title = "b")
+plot_area
+# plot_area <- plot_area + labs(title = "b")
 
 # Save plot
 # Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
@@ -166,8 +170,6 @@ df_sol <- df_sol[vec,]
 library(latex2exp)
 
 # Values for the points in the area graph:
-stab_par <- 0.07
-unstab_par <- 0.2
 
 # Create annotate for labels at each point in the area graph:
 text_size <- 15
@@ -248,11 +250,12 @@ plot_inf_stab <- plot_int(N, sol, state = "INF")  +
   theme_bw() + theme(legend.position = "none")
 
 vec_col <-  vector(mode="character", length=N)
-vec_col[1:N] <- "#7018D5"
+vec_col[1:N] <- color_stab
 
 plot_inf_stab <- plot_inf_stab +
-  xlim(c(0,10))  + 
+  xlim(c(0,20))  + 
   scale_colour_manual(values = vec_col) 
+
 plot_inf_stab
 
 ### Unstable by commuting:
@@ -284,9 +287,19 @@ sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            sus_init,inf_init,end_time)
 
 # plot SUS, INF, REC or TOT population
-plot_inf_unstab_com <- plot_int(N, sol, state = "INF")  + theme_bw()+ theme(legend.position = "none")
+plot_inf_unstab_com <- plot_int(N, sol, state = "INF")  +
+  theme_bw() + 
+  theme(legend.position = "none")
+
 plot_inf_unstab_com
 # plot_int(N, sol, state = "TOT")
+vec_col <-  vector(mode="character", length=N)
+vec_col[1:N] <- "#BB4430"
+
+plot_inf_unstab_com <- plot_inf_unstab_com +
+  xlim(c(0,20))  + 
+  scale_colour_manual(values = vec_col) 
+plot_inf_unstab_com
 
 ### Unstable by commuting:
 mub <- unstab_par
@@ -321,47 +334,74 @@ plot_inf_unstab_bet <- plot_int(N, sol, state = "INF")  +
   theme_bw() + theme(legend.position = "none")
 plot_inf_unstab_bet
 # plot_int(N, sol, state = "TOT")
+vec_col <-  vector(mode="character", length=N)
+vec_col[1:N] <- "#BB4430"
 
+plot_inf_unstab_bet <- plot_inf_unstab_bet +
+  xlim(c(0,20))  + 
+  scale_colour_manual(values = vec_col) 
+plot_inf_unstab_bet
 
 ##### Construct panel1 ####
 library("ggpubr")
 size_text <- 16
-ggeigen <- ggarrange(eigen_stab  + xlab("")  + xlab("") + labs(title = "c") +
+ggeigen <- ggarrange(eigen_stab  + rremove("xlab")  + rremove("ylab") + labs(title = "c") +
                        theme(text = element_text(size = size_text)) ,
-                     eigen_unstab_com  + xlab("") + labs(title = "d") + 
+                     eigen_unstab_com   + rremove("xlab")  + rremove("ylab") + labs(title = "d") + 
                        theme(text = element_text(size = size_text)),
-                     eigen_unstab_bet + labs(title = "e")  + 
+                     eigen_unstab_bet  + rremove("xlab")  + rremove("ylab") + labs(title = "e")  + 
                        theme(text = element_text(size = size_text)),
                      nrow = 3, ncol = 1)
-
+ggeigen  <- annotate_figure(ggeigen,
+                         bottom = text_grob("Real part", color = "black",
+                                            size = 15),
+                         left = text_grob("Imaginary part",
+                                          color = "black", rot = 90,  size = 15))
+ggeigen
 gginf <- ggarrange(plot_inf_stab + labs(title = "c") +
-                     ylab("Infected individuals") + 
-                     xlab("") +
+                     rremove("xlab")  + rremove("ylab") +
+                     scale_y_continuous( breaks=c(0, 50, 100)) +
                      theme(text = element_text(size = size_text)),
                    plot_inf_unstab_com + labs(title = "d") +
-                     ylab("Infected individuals") + xlab("") +
+                     rremove("xlab")  + rremove("ylab") +
+                     scale_y_continuous( breaks=c(0, 6000, 12500)) +
                      theme(text = element_text(size = size_text)),
                    plot_inf_unstab_bet + labs(title = "e") +
-                     ylab("Infected individuals") +
+                      rremove("xlab")  + rremove("ylab") +
+                     scale_y_continuous( breaks=c(0,7500, 15000)) +
                      theme(text = element_text(size = size_text)),
                    ncol = 1, nrow = 3)
+gginf  <- annotate_figure(gginf,
+                            bottom = text_grob("Time", color = "black",
+                                               size = 15),
+                            left = text_grob("Number of infected individuals",
+                                             color = "black", rot = 90,  size = 15))
 
-ggarr <- ggarrange(ggeigen,gginf, ncol = 2)
+gginf
 
+ggall <- ggarrange(ggeigen,gginf, ncol = 2)
+
+ggall
 path <- paste0(Path,"gg_g0,95_muc_0,001_sc0,0001_sw0,05.png")
 ggsave(path,
        plot = ggarr, device = "png")
 
 
-Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/diagram_c.png"
-library("jpeg")
+Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel1/diagram_c.png"
+library("png")
 diagram <- readPNG(Path)
 im_A <- ggplot() + 
   background_image(diagram) +
   # This ensures that the image leaves so me space at the edges
-  theme(plot.margin = margin(t=3, l=4.8, r=4.8, b=3, unit = "cm"))
+  theme(plot.margin = margin(t=1, l=1, r=1, b=1, unit = "cm"))
 
 gg_izq <- ggarrange(plot_area,
                     im_A, 
-                    ncol = 2)
-ggarrange(gg_izq,ggall)
+                    widths = c(1.2,2),
+                    ncol = 2, common.legend = TRUE)
+gg_izq
+
+gg_tot <- ggarrange(gg_izq,ggall, 
+                    heights = c(1.2,2),
+                    nrow = 2)
+gg_tot

@@ -303,11 +303,16 @@ plot_eigen_rmt <- function(jacobian,
       geom_ellipse(aes(x0 = center, y0 = 0, a = (1+rho)*radius, b = (1-rho)*radius, angle = 0), color = "red") +
       theme_bw()
   }else{
+    out <- max(eigen_mat(jacobian)$re)
     plot_eigen_rmt <- plot_eigen(jacobian) +
       coord_fixed() +
-      geom_vline(xintercept = 0, color = "blue") +
-      geom_point(aes(x = outlier, y = 0), color = "red") +
-      geom_ellipse(aes(x0 = center, y0 = 0, a = (1+rho)*radius, b = (1-rho)*radius, angle = 0), color = "red") +
+      geom_vline(xintercept = 0, color = "#D00000", linetype = "solid", size = 0.8) +
+      geom_point(aes(x = outlier, y = 0), color = "#48639C") +
+      geom_point(aes(x = out, y = 0), color = "black", size = 0.1) +
+      geom_ellipse(aes(x0 = center, y0 = 0,
+                       a = (1+rho)*radius, 
+                       b = (1-rho)*radius, angle = 0),
+                   color = "#48639C") +
       theme_bw()
     
   }

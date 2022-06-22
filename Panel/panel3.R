@@ -165,6 +165,7 @@ gg_comp
 
 ##### Numerical comparison rand and mean(bet) right most eigen #####
 # Read from a CSV 
+
 Path <- "~/RMT/David/OUTPUT/"
 path <- paste0(Path,"rand_bet_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_2022-04-01.csv")
 df_rand <- read.csv(file = path)
