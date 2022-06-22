@@ -9,7 +9,13 @@ rm(list = ls())
 source("~/RMT/David/RMT_genrandom.R")
 source("~/RMT/David/RMT_plotmobility.R")
 source("~/RMT/David/d_functions_eigen_int.R")
+library("viridis")
+library("ggpubr")
 
+###### COLORS & SIZE#####
+color_stab <- "#084C61"
+color_unstab <- "#DB504A"
+size_let <- 15
 ####### GENERATE JACOBIAN ###############################
 # number of patches
 N <- 100
@@ -25,7 +31,7 @@ betas <- rep(mub, N) # transmission rates
 thetas <- rep(0.3, N) # loss of immunity rates
 mud <- 0.3
 deaths <- rep(mud, N) # not disease-related death rates
-mua <- 0.2
+mua <- 0.5
 alphas <- rep(mua, N) # recovery rates
 mudel <- 0
 deltas <- rep(mudel, N) # disease-related death rates
@@ -34,7 +40,7 @@ gammas = deaths + alphas + deltas
 # mobility
 #commuting and migration networks
 muw <- 0.05 
-sw <- 0.001
+sw <- 0.01
 rhow <- 0 #original rho (Gamma of baron et al)
 Gammaw <- 0 #gamma of baron et al
 rw <- 0
@@ -86,14 +92,14 @@ sol.stab <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
            sus_init,inf_init,end_time)
 
-plot_stab <- plot_int1(N, sol, state = "INF") +
+plot_stab <- plot_int1(N, sol.stab, state = "INF") +
   theme_bw() +theme(legend.position="none") 
 plot_stab
 
-vec_col <-  vector(mode="character", length=N)
-vec_col[1:N] <- "#A63446"
 
-size_let <- 15
+vec_col <-  vector(mode="character", length=N)
+vec_col[1:N] <- color_stab
+
 plot.inf.stab <- plot_int1(N, sol.stab, state = "INF") +
   scale_colour_manual(values = vec_col) +
   theme_bw() +
@@ -106,8 +112,9 @@ Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
 path <- paste0(Path,"Plot_inf_b0,02_g0,5_muc_0,01_sc0,001_muw0,08_sw0,05.png")
 ggsave(path,
        plot = plot.inf.stab, device = "png")
+
 #### 1 PATCH modified ####
-alp_bet <- 1.2
+alp_bet <- 1
 
 betas <- rep(mub, N) 
 betas[1] <- alp_bet + betas[1]
@@ -115,7 +122,7 @@ betas[1] <- alp_bet + betas[1]
 jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
   diag(deaths + alphas + deltas + colSums(MIGRATION))
 
-
+plot_eigen(jacobian)
 plot_eigen_rmt(jacobian,
                N,mub,mug = mud + mua + mudel,
                muw,sw,rhow,Gammaw,
@@ -130,8 +137,8 @@ sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
 
 #  Change color 
 vec_col <-  vector(mode="character", length=N)
-vec_col[1:N] <- "#A63446"
-vec_col[1] <- "#3066BE"
+vec_col[1:N] <- color_stab
+vec_col[1] <- color_unstab
 
 plot.inf.1 <- plot_int1(N, sol, state = "INF") +
   scale_colour_manual(values = vec_col) +
@@ -152,7 +159,7 @@ inf_init <- rep(100, N)    # initial infecteds
 
 end_time <- 50
 alp_bet_vec <- seq(0,2.5,0.1)
-end_time <- 50
+end_time <- 250
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
            sus_init,inf_init,end_time)
@@ -186,7 +193,7 @@ colnames(df_sum_group) <-  c("alpha", "Max_inf", "Time_max")
 library("latex2exp")
 plot_inf_max <- ggplot(df_sum_group) + 
   geom_line(aes(alpha, Max_inf)) + 
-  xlab(TeX("$\\alpha$")) +
+  xlab(TeX("$\\beta^*$")) +
   ylab("Max of infected individuals") +
   theme_bw() +
   theme(text = element_text(size = size_let)) 
@@ -195,7 +202,7 @@ plot_inf_max <- ggplot(df_sum_group) +
 
 plot_time_max <-  ggplot(df_sum_group) + 
   geom_line(aes(alpha, Time_max)) + 
-  xlab(TeX("$\\alpha$")) +
+  xlab(TeX("$\\beta^*$")) +
   ylab("Time of max of infected individuals") +
   theme_bw() +
   theme(text = element_text(size = size_let)) 
@@ -208,14 +215,23 @@ sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
                       color = as.numeric(as.character(variable)),
                       group = variable)) +
   geom_line() +
-  scale_colour_gradient(name = ""*alpha~" ", 
-                        low = "blue", high = "red") +
+  scale_colour_gradient(name = TeX("$\\beta^*$"),
+                        low = "#F8F053", high = "#4C0EF6") +
   ylab("Sum of infected individuals") +
+  xlim( c(0,10) ) +
   theme_bw() +
-  theme(text = element_text(size = size_let), legend.position = "bottom") 
+  theme(text = element_text(size = size_let), legend.position = "right") 
 
 sum_inf
+require(grid) 
+gg1 <- ggarrange(plot.inf.stab + rremove("ylab") + rremove("xlab"),
+                 plot.inf.1 + rremove("ylab") + rremove("xlab"),
+                 nrow=1)
+gg1<- annotate_figure(gg1, left = textGrob("Infected individuals", rot = 90, vjust = 1, gp = gpar(cex = 1.3)),
+                bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 
+gg2 <- ggarrange(sum_inf  + rremove("xlab"), 
+          gg1, ncol = 1)
 ## Save image
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
 path <- paste0(Path,"Sum_inf_b0,1_g0,5_muc_0,01_sc0,001_muw0,05_sw0,001.png")
