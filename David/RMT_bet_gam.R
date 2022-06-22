@@ -165,7 +165,7 @@ diag(MIGRATION) <- 0
 
 mum = 1
 sm = 0.5
-mu_vec <- rgamma(100, shape = (mum/sm)^2, rate = mum/(sm^2))
+mu_vec <- rgamma(101, shape = (mum/sm)^2, rate = mum/(sm^2))
 s_vec <- seq(0,1,0.01)
 df_err_bet <- data.frame(muw = muw, sw = sw, muc = muc, sc = sc, 
                          mual = 0, sal = 0, max_eig = 0, out_mean = 0 ,
@@ -174,8 +174,13 @@ df_err_bet <- data.frame(muw = muw, sw = sw, muc = muc, sc = sc,
 count = 1
 while(count < 50){
   for(j in c(1:length(s_vec))){
-    mut <- 0.5
+    mut <- mu_vec[j]
     st <- s_vec[j]
+    if(mut <= st){
+      st <- 0.2
+      mut <- 0.5
+    }
+    print(paste0("j:", j))
     betas = rgamma(N, shape = (mut/st)^2, rate = mut/(st^2))
     # Compute Jacobian
     jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
@@ -198,22 +203,24 @@ while(count < 50){
 }
 
 df_err_bet$err_mean <- (df_err_bet$out_mean - df_err_bet$max_eig)^2/df_err_bet$out_mean
-df_err_bet_g <- df_err_bet %>% group_by(sal) %>%
+df_err_bet$var_bet <- (df_err_bet$sal)/(df_err_bet$mual)
+df_err_bet_g <- df_err_bet %>% group_by(var_bet) %>%
   summarise(mean_err_mean = mean(err_mean))
 df_err_bet_g <- df_err_bet_g[-1,]
 
 library("latex2exp")
+x_inter <- 0.7650498
 gg_betas <- ggplot(df_err_bet_g) + 
-  geom_line(aes(sal, mean_err_mean), color ="#A40E4C", size = 0.4) + 
-  geom_point(aes(sal, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
-  theme_bw() + xlab(TeX("$\\sigma_{\\beta}$")) + 
+  geom_line(aes(var_bet, mean_err_mean), color ="#A40E4C", size = 0.4) + 
+  geom_point(aes(var_bet, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
+  theme_bw() + xlab(TeX("$\\sigma_{\\beta}/\\mu_{\\beta}$")) + 
   ylab("Mean squared error")  +
-  geom_vline(xintercept = 0.75, color = "blue", linetype = "longdash") +
+  # geom_vline(xintercept = x_inter, color = "blue", linetype = "longdash") +
   theme(text = element_text(size = 15), legend.position = "bottom") 
 gg_betas
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
-path <- paste0(Path,"rand_betas","N", N,
+path <- paste0(Path,"rand_betas_no_dash","N", N,
                "muw",format(muw,decimal.mark=","),
                "sw",format(sw,decimal.mark=","),
                "muc",format(muc,decimal.mark=","),
@@ -231,11 +238,15 @@ ggsave(path, plot = gg_betas, device = "pdf")
 # Test whether the mean square error for the predicted outlier
 # decrease when increasing the size of the network
 # The j position for the sigma vector.
-j <- which(s_vec == 0.75)
+j <- which(df_err_bet$var_bet <= (x_inter + 0.001) & 
+             df_err_bet$var_bet >= (x_inter - 0.001))[1]
+
+mu <- df_err_bet$mual[j]
+sig <- df_err_bet$sal[j]
 count = 1
 df_err_bet_N <- data.frame(N = 0, err = 0)
-while(count < 30){
-  for(i in c(50:400)){
+while(count < 25){
+  for(i in c(50:300)){
     N = i
     COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
     diag(COMMUTING) <- 0
@@ -257,8 +268,8 @@ while(count < 30){
     deltas <- rep(mudel, N) # disease-related death rates
     gammas = deaths + alphas + deltas
     
-    mut <- 0.5
-    st <- s_vec[j]
+    mut <- mu
+    st <- sig
     betas = rgamma(N, shape = (mut/st)^2, rate = mut/(st^2))
     # Compute Jacobian
     jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
