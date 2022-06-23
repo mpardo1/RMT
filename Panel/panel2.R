@@ -158,8 +158,8 @@ sus_init <- rep(10000, N) # initial susceptibles
 inf_init <- rep(100, N)    # initial infecteds
 
 end_time <- 50
-alp_bet_vec <- seq(0,2.5,0.1)
-end_time <- 250
+alp_bet_vec <- seq(0.65,2.5,0.01)
+end_time <- 500
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
            sus_init,inf_init,end_time)
@@ -179,14 +179,15 @@ for(i in c(1:length(alp_bet_vec))){
 ## DF for maximum number of infected individuals and time of maximum.
 max_inf <- df_sum %>% summarise_if(is.numeric, max)
 time_max_vec <- c()
-for(i in c(1:251)){
-  ind <- which(df_sum[,i+1] == as.numeric(max_inf[i+1]) )
+len_vec <- length(alp_bet_vec)
+for(i in c(1:len_vec)){
+  ind <- which(df_sum[,i+1] == as.numeric(max_inf[i+1]) )[1]
   time_max_vec[i] <- df_sum[ind,1]
 }
 
-df_sum_group <- data.frame(alp <- alp_bet_vec[1:251], 
-                           max_inf <- t(max_inf)[1:251],
-                           time_max <- time_max_vec[1:251])
+df_sum_group <- data.frame(alp <- alp_bet_vec[1:len_vec], 
+                           max_inf <- t(max_inf)[1:len_vec],
+                           time_max <- time_max_vec[1:len_vec])
 
 df_sum_group <-  df_sum_group[-1,]
 colnames(df_sum_group) <-  c("alpha", "Max_inf", "Time_max")
@@ -197,18 +198,28 @@ plot_inf_max <- ggplot(df_sum_group) +
   ylab("Max of infected individuals") +
   theme_bw() +
   theme(text = element_text(size = size_let)) 
-  
+plot_inf_max
 
+# Check why it happens the fluctuations
+df_plot_filt <- df_sum[,c(1,65)]
+colnames(df_plot_filt) <- c("Time", "I")
+ggplot(df_plot_filt) + 
+  geom_line(aes(Time, log10(I))) + 
+  ylim(c(58675.2,58675.3))
 
 plot_time_max <-  ggplot(df_sum_group) + 
-  geom_line(aes(alpha, Time_max)) + 
+  geom_line(aes(alpha, Time_max), colour = "#69995D" , size = 0.5) + 
+  geom_point(aes(alpha, Time_max), colour = "#050223" , size = 0.8) + 
   xlab(TeX("$\\beta^*$")) +
   ylab("Time of max of infected individuals") +
   theme_bw() +
   theme(text = element_text(size = size_let)) 
+plot_time_max
 
+seq <- seq(1,len_vec,5 )
 colnames(df_sum) <- c("time",as.character(alp_bet_vec))
-df_plot <- reshape2::melt(df_sum, id.vars = c("time"))
+filt_sum <- df_sum[, seq]
+df_plot <- reshape2::melt(filt_sum, id.vars = c("time"))
 
 size_let <- 13
 sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
@@ -230,8 +241,20 @@ gg1 <- ggarrange(plot.inf.stab + rremove("ylab") + rremove("xlab"),
 gg1<- annotate_figure(gg1, left = textGrob("Infected individuals", rot = 90, vjust = 1, gp = gpar(cex = 1.3)),
                 bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 
-gg2 <- ggarrange(sum_inf  + rremove("xlab"), 
-          gg1, ncol = 1)
+gg2 <- ggarrange(sum_inf  + rremove("xlab") + ylab("Sum Infected"), 
+          gg1, ncol = 1, labels = c("a", "b"))
+
+gg3 <- ggarrange(plot_inf_max  +
+                   rremove("xlab") + 
+                   ylab("Maximum Infected"), 
+                 plot_time_max + 
+                   ylab("Time for maximum"),
+                 ncol = 1)
+ggall <- ggarrange(gg2,
+                   gg3,
+                   widths = c(1.8,1),
+                   labels = c("","c"))
+ggall
 ## Save image
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
 path <- paste0(Path,"Sum_inf_b0,1_g0,5_muc_0,01_sc0,001_muw0,05_sw0,001.png")
