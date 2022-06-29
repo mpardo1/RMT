@@ -86,6 +86,7 @@ gg_err <- ggplot(df_sol) +
   ylab("Mean square error") + 
   theme_bw()
 
+gg_err
 # Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
 # path <- paste0(Path,"kpatch_err_g0,5_b0,5_muc_0,001_sc0,0001_muw0,1_sw0,05_",Sys.Date(), ".png")
 # ggsave(path,
@@ -147,11 +148,12 @@ colnames(df_plot) <- c("k","1 patch","k patches")
 df_plot <- reshape2::melt(df_plot, id.vars = "k")
 gg_1_vs_k <- ggplot(df_plot) + 
   geom_line(aes(k,value, colour = variable)) + 
-  scsal
   ylab("Right most eigenvalue") + 
   xlab("Number of patches") +
   labs(color='') +
   theme_bw()
+
+gg_1_vs_k
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
 path <- paste0(Path,"1_vs_k_","N", N,
@@ -167,6 +169,131 @@ ggsave(path,
        plot = gg_1_vs_k, device = "png")
 
 ##### CHECK K PATCHES ######
+# number of patches
+N <- 100
+# epidemiological
+#all rates must lie in (0,1) except for betas
+Deltas <- rep(0.3, N) # birth rate
+mub <- 0.3
+sb <- 0.001
+betas <- rep(mub, N) # transmission rates
+# betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
+thetas <- rep(0.3, N) # loss of immunity rates
+mud <- 0.3
+deaths <- rep(mud, N) # not disease-related death rates
+mua <- 0.2
+alphas <- rep(mua, N) # recovery rates
+mudel <- 0
+deltas <- rep(mudel, N) # disease-related death rates
+gammas = deaths + alphas + deltas
+mug <- gammas[1]
+# mobility
+#commuting and migration networks
+muw <- 0.1 
+sw <- 0.08
+rhow <- 0 #original rho (Gamma of baron et al)
+Gammaw <- 0 #gamma of baron et al
+rw <- 0
+cw <- 0
+
+muc <- 0.01
+sc <- 0.0001
+rhoc <- 0
+Gammac <- 0
+rc <- 0
+cc <- 0
+
+COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
+diag(COMMUTING) <- 0
+# COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
+# COMMUTING[sample.int(N^2, round(p*N^2))] <- 0
+
+MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
+diag(MIGRATION) <- 0
+
+alp_cte = 0.8
+k <-  1
+outl1 <- (N/2)*(mub*muw + muc) + (alp/2)*(1 + (k-1)*muw) + mub*(1-muw) -
+  mug - N*muc + (1/2)*sqrt(N^2*(mub*muw + muc)^2 + alp^2*(1 + (k-1)*muw)^2 + 
+                             2*alp*(mub*muw + muc)*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
+
+outlRMT <- mub - mug + mub*muw*(N-1)
+
+alp_vec <- seq(0.5,2,0.1)
+df_sol_k_1 <- data.frame(k = 0, alph = 0, 
+                         max_eig_1 = 0, max_eig_k = 0 ,
+                         pred_eig_1 = 0, pred_eig_k = 0, outl_RMT = outlRMT)
+
+for(i in c(1:(N/2))){
+  betas <- rep(mub, N) 
+  alp <- i*alp_cte
+  betas[1] <- betas[1] + alp
+  jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+    diag(gammas + colSums(MIGRATION))
+  plot_eigen(jacobian) +
+    geom_vline(xintercept = 0, color = "blue", linetype = "longdash") +
+    geom_point(aes(outl1,0), color = "purple")
+  k <- 1
+  outl1 <- (N/2)*(mub*muw + muc) + (alp/2)*(1 + (k-1)*muw) + mub*(1-muw) -
+    mug - N*muc + (1/2)*sqrt(N^2*(mub*muw + muc)^2 + alp^2*(1 + (k-1)*muw)^2 + 
+                               2*alp*(mub*muw + muc)*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
+  
+  eig_jac <- eigen_mat(jacobian)
+  max_eig_1 <- max(eig_jac$re)
+  
+  betas <- rep(mub, N)
+  betas[1:i] <- betas[1:i] + alp_cte
+  jacobian_k <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+    diag(gammas + colSums(MIGRATION))
+
+  eig_jac_k <- eigen_mat(jacobian_k)
+  max_eig_k <- max(eig_jac_k$re)
+  
+  k <- i
+  alp <- alp_cte
+  
+  outlk <- (N/2)*(mub*muw + muc) + (alp/2)*(1 + (k-1)*muw) + mub*(1-muw) -
+    mug - N*muc + (1/2)*sqrt(N^2*(mub*muw + muc)^2 + alp^2*(1 + (k-1)*muw)^2 + 
+                               2*alp*(mub*muw + muc)*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
+  
+  plot_eigen(jacobian) +
+    geom_vline(xintercept = 0, color = "blue", linetype = "longdash") +
+    geom_point(aes(outlk,0), color = "purple")
+  
+  df_sol_k_1[nrow(df_sol_k_1)+1,] <- c(i, alp,
+                                   max_eig_1, max_eig_k,
+                                   outl1, outlk, outlRMT)
+  
+  print(paste0("i:",i))
+}
+
+df_sol_k_1 <- df_sol_k_1[-1,]
+df_plot <- df_sol_k_1[,c(1,3,4,5,6)]
+
+colnames(df_plot) <- c("k","real 1 patch","real k patches",
+                       "pred 1 patch","pred k patches")
+# df_filt <- df_sol_k_1[,c(1,5,6)]
+df_plot <- reshape2::melt(df_plot, id.vars = "k")
+df_plot$type <- substr(df_plot$variable,1,4)
+gg_1_vs_k <- ggplot(df_plot) + 
+  geom_line(aes(k,value, colour = variable, linetype = type)) + 
+  ylab("Right most eigenvalue") + 
+  xlab("Number of patches") +
+  labs(color='') +
+  theme_bw()
+
+gg_1_vs_k
+
+df_plot_pred <- reshape2::melt(df_filt, id.vars = "k")
+gg_1_vs_k_pred <- ggplot(df_plot_pred) + 
+  geom_line(aes(k,value, colour = variable)) + 
+  ylab("Right most eigenvalue") + 
+  xlab("Number of patches") +
+  labs(color='') +
+  theme_bw()
+
+gg_1_vs_k_pred
+################
 # number of patches
 N <- 100
 # epidemiological
@@ -208,87 +335,11 @@ diag(COMMUTING) <- 0
 
 MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
 diag(MIGRATION) <- 0
-
 alp <- 1
-
-a <- alp
-b <- alp*muw
-c <- mub*muw + muc
-gammas = deaths + alphas + deltas
-mub <- 0.1
-mug <- 1.8
-k <-  1
-outl1 <- (1/2)*(2*a + (k-1)*b + N*c  + 
-                 sqrt((k-1)^2*b^2 + (2*(k+1)*N - 4*k)*b*c + N^2*c^2))
-outl1 <- outl1 + (mub*(1-muw) - N*muc - mug)
-
-alp_vec <- seq(0.5,2,0.1)
-df_sol_k_1 <- data.frame(k = 0, alp = 0, 
-                         max_eig_1 = 0, max_eig_k = 0 ,
-                         pred_eig_1 = 0, pred_eig_k = 0)
-
-for(i in c(1:N)){
-  betas <- rep(mub, N) 
-  betas[1] <- betas[1] + alp
-  jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
-    diag(gammas + colSums(MIGRATION))
-  # plot_eigen(jacobian) +
-  #   geom_vline(xintercept = 0, color = "blue", linetype = "longdash") 
-  
-  eig_jac <- eigen_mat(jacobian)
-  max_eig_1 <- max(eig_jac$re)
-  
-  betas <- rep(mub, N)
-  betas[1:i] <- betas[1:i] + alp/i
-  jacobian_k <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
-    diag(gammas + colSums(MIGRATION))
-  # plot_eigen(jacobian) +
-  #   geom_vline(xintercept = 0, color = "blue", linetype = "longdash") 
-  #   
-  eig_jac_k <- eigen_mat(jacobian_k)
-  max_eig_k <- max(eig_jac_k$re)
-  
-  k <- i
-  alp <- alp/i
-  
-  outlk <- (N/2)*(mub*muw + muc) + (alp/2)*(1 + (k-1)*muw) + mub*(1-muw) -
-    mug - N*muc + (1/2)*sqrt(N^2*(mub*muw + muc)^2 + alp^2*(1 + (k-1)*muw)^2 + 
-                               2*alp*(mub*muw + muc)*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
-  
-  df_sol_k_1[nrow(df_sol_k_1)+1,] <- c(i, alp,
-                                   max_eig_1, max_eig_k,
-                                   outl1, outlk)
-  
-  print(paste0("i:",i))
-}
-
-df_sol_k_1 <- df_sol_k_1[-1,]
-df_plot <- df_sol_k_1[,c(1,3,4,5,6)]
-
-colnames(df_plot) <- c("k","real 1 patch","real k patches",
-                       "pred 1 patch","pred k patches")
-df_plot <- reshape2::melt(df_plot, id.vars = "k")
-gg_1_vs_k <- ggplot(df_plot) + 
-  geom_line(aes(k,value, colour = variable)) + 
-  ylab("Right most eigenvalue") + 
-  xlab("Number of patches") +
-  labs(color='') +
-  theme_bw()
-
-gg_1_vs_k
-
-################
-alp <- 1
-a <- alp
-b <- alp*muw
-c <- mub*muw + muc
 gammas = deaths + alphas + deltas
 mub <- 0.1
 mug <- gammas[1]
 k <-  1
-outl1 <- (1/2)*(2*a + (k-1)*b + N*c  + 
-                 sqrt((k-1)^2*b^2 + (2*(k+1)*N - 4*k)*b*c + N^2*c^2))
-outl1 <- outl1 + (mub*(1-muw) - N*muc - mug)
 
 outl1 <- (N/2)*(mub*muw + muc) + (alp/2)*(1 + (k-1)*muw) + mub*(1-muw) -
   mug - N*muc + (1/2)*sqrt(N^2*(mub*muw + muc)^2 + alp^2*(1 + (k-1)*muw)^2 + 
@@ -301,13 +352,16 @@ jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
 plot_eigen(jacobian) + 
   geom_point(aes(outl1,0), colour = "red")
 
-k <- 2
+k <- 4
 
 betas <- rep(mub, N)
+# ran_vec <- sample(1:N,k)
 betas[1:k] <- betas[1:k] + alp/k
+# betas[1:k] <- betas[1:k] + alp/k
 jacobian_k <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
   diag(gammas + colSums(MIGRATION))
 
+alp <- alp/k
 outlk <- (N/2)*(mub*muw + muc) + (alp/2)*(1 + (k-1)*muw) + mub*(1-muw) -
   mug - N*muc + (1/2)*sqrt(N^2*(mub*muw + muc)^2 + alp^2*(1 + (k-1)*muw)^2 + 
                              2*alp*(mub*muw + muc)*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
