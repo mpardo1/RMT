@@ -227,7 +227,7 @@ x_inter <- 0.7650498
 gg_betas <- ggplot(df_err_bet_g) + 
   geom_line(aes(var_bet, mean_err_mean), color ="#A40E4C", size = 0.4) + 
   geom_point(aes(var_bet, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
-  theme_bw() + xlab(TeX("$\\sigma_{\\beta}/\\mu_{\\beta}$")) + 
+  theme_bw() + xlab(TeX("CV")) + 
   ylab("Mean squared error")  +
   # geom_vline(xintercept = x_inter, color = "blue", linetype = "longdash") +
   theme(text = element_text(size = 15), legend.position = "bottom") 
@@ -252,6 +252,7 @@ ggsave(path, plot = gg_betas, device = "pdf")
 # Test whether the mean square error for the predicted outlier
 # decrease when increasing the size of the network
 # The j position for the sigma vector.
+x_inter <- 0.75
 j <- which(df_err_bet$var_bet <= (x_inter + 0.001) & 
              df_err_bet$var_bet >= (x_inter - 0.001))[1]
 
@@ -338,7 +339,10 @@ gg_arr <- ggarrange(gg_betas +
           geom_vline(xintercept = 0.75, color = "blue", linetype = "longdash")  +
             ggtitle(TeX("$N = 200$")),
           gg_betas_err_N + ylab("") + 
-            ggtitle(TeX("$\\sigma_\\beta/\\mu_{\\beta} = 0.75$")))
+            ggtitle(TeX("$CV = 0.75$")),
+          labels = c("a", "b"))
+
+gg_arr
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
 path <- paste0(Path,"arr_bet_rand",
