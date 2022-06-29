@@ -157,6 +157,20 @@ mudel <- 0
 deltas <- rep(mudel, N) # disease-related death rates
 gammas = deaths + alphas + deltas
 
+muw <- 0.2 
+sw <- 0.05
+rhow <- 0 #original rho (Gamma of baron et al)
+Gammaw <- 0 #gamma of baron et al
+rw <- 0
+cw <- 0
+
+muc <- 0.001
+sc <- 0.0001
+rhoc <- 0
+Gammac <- 0
+rc <- 0
+cc <- 0
+
 COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
 diag(COMMUTING) <- 0
 
@@ -321,9 +335,10 @@ path <- paste0(Path,"rand_bet_N_",
 ggsave(path, plot = gg_betas_err_N, device = "pdf")
 
 gg_arr <- ggarrange(gg_betas +
+          geom_vline(xintercept = 0.75, color = "blue", linetype = "longdash")  +
             ggtitle(TeX("$N = 200$")),
           gg_betas_err_N + ylab("") + 
-            ggtitle(TeX("$\\sigma_\\beta = 0.75$")))
+            ggtitle(TeX("$\\sigma_\\beta/\\mu_{\\beta} = 0.75$")))
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
 path <- paste0(Path,"arr_bet_rand",

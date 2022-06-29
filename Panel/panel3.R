@@ -343,10 +343,49 @@ df_plot$type <- substr(df_plot$variable,1,4)
 df_plot$variable <- substr(df_plot$variable,5,12)
 
 gg_1_vs_k <- ggplot(df_plot) + 
-  geom_line(aes(k,value, colour = variable, linetype = type), alpha=0.6) + 
-  ylab("Right most eigenvalue") + 
+  geom_line(aes(k,value, colour = variable, linetype = type), alpha=0.6, size = 1) + 
+  ylab("Rightmost eigenvalue") + 
   xlab("Number of patches") +
   labs(color='') +
-  theme_bw() + theme(text = element_text(size = text_size))
+  theme_bw() + theme(text = element_text(size = text_size),
+                     legend.position="bottom")
 
 gg_1_vs_k
+
+#### Outlier vs number of k patches modified ###
+alp_cte = 2.5
+alp_vec <- seq(0.5,2,0.1)
+df_sol_k_outl <- data.frame(k = 0, alph = 0, max_eig_k = 0 , pred_eig_k = 0)
+
+for(i in c(1:(N/2))){
+  betas <- rep(mub, N)
+  betas[1:i] <- betas[1:i] + alp_cte/i
+  jacobian_k <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+    diag(gammas + colSums(MIGRATION))
+  
+  eig_jac_k <- eigen_mat(jacobian_k)
+  max_eig_k <- max(eig_jac_k$re)
+  
+  k <- i
+  alp <- alp_cte/i
+  
+  outlk <- (N/2)*(mub*muw + muc) + (alp/2)*(1 + (k-1)*muw) + mub*(1-muw) -
+    mug - N*muc + (1/2)*sqrt(N^2*(mub*muw + muc)^2 + alp^2*(1 + (k-1)*muw)^2 + 
+                               2*alp*(mub*muw + muc)*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
+  
+  
+  df_sol_k_outl[nrow(df_sol_k_outl)+1,] <- c(i, alp, max_eig_k, outlk)
+  
+  print(paste0("i:",i))
+}
+df_sol_k_outl <- df_sol_k_outl[-1,]
+local_r0 <- which(df_sol_k_outl$alph < mug)[1]
+
+k_patches<- ggplot(df_sol_k_outl) + 
+  geom_line(aes(k, max_eig_k)) + 
+  xlab("Number of modified patches, k") +
+  ylab("Rightmost eigenvalue") + 
+  geom_vline(xintercept = local_r0, color = "blue", linetype = "dashed") +
+  theme_bw()  + theme(text = element_text(size = text_size))
+
+ggarrange(gg_1_vs_k, k_patches, common.legend = TRUE, labels = c("a","b"))
