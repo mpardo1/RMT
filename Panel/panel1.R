@@ -40,8 +40,8 @@ Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.001
-sc <- 0.0002
+muc <- 0.6
+sc <- 0.2
 rhoc <- 0
 Gammac <- 0
 rc <- 0
@@ -104,10 +104,11 @@ library(latex2exp)
 stab_par <- 0.1
 unstab_par <- 0.25
 
+dif <- 0.04
 # Create annotate for labels at each point in the area graph:
 annotation <- data.frame(
-  x = c(stab_par + 0.05, stab_par + 0.05, unstab_par + 0.05),
-  y = c(stab_par + 0.05,unstab_par + 0.05 , stab_par + 0.05),
+  x = c(stab_par + dif, stab_par + dif, unstab_par + dif),
+  y = c(stab_par + dif,unstab_par + dif, stab_par + dif),
   label = c("c", "d", "e")
 )
 
@@ -126,8 +127,8 @@ plot_area <- ggplot(df_sol) +
   scale_y_continuous(breaks=c(0,0.25,0.50, 0.75), limits = c(0, 0.75),
                      labels = c("0", "0.25", "0.50", "0.75")) +
   coord_fixed() +
-  theme(text = element_text(size = 25), legend.position = "bottom") +
-  guides(colour = guide_legend(override.aes = list(size=4))) 
+  theme(text = element_text(size = 15), legend.position = "bottom") +
+  guides(colour = guide_legend(override.aes = list(size=3))) 
 
 color_points <- "#EAF2EF"
 plot_area <-  ggplot(df_sol) +
@@ -139,15 +140,18 @@ plot_area <-  ggplot(df_sol) +
                      labels = c("0", "0.25", "0.50")) +
   scale_y_continuous(breaks=c(0,0.25,0.50, 0.75), limits = c(0, 0.75),
                      labels = c("0", "0.25", "0.50", "0.75")) +
-  geom_point(aes(stab_par,stab_par), colour= color_points, size = 3) +
-  geom_point(aes(stab_par,unstab_par), colour= color_points, size = 3) +
-  geom_point(aes(unstab_par,stab_par), colour= color_points, size = 3) +
+  geom_point(aes(stab_par,stab_par),
+             colour= color_points, size = 1.5) +
+  geom_point(aes(stab_par,unstab_par),
+             colour= color_points, size = 1.5, shape = 17) +
+  geom_point(aes(unstab_par,stab_par),
+             colour= color_points, size = 1.5, shape = 17) +
   geom_text(data=annotation, aes( x=x, y=y, label=label),
             color=color_points, 
-            size=9 , angle=0, fontface="bold" ) +
+            size=5.5 , angle=0, fontface="bold" ) +
   coord_fixed() +
-  theme(text = element_text(size = 25), legend.position = "bottom") +
-  guides(colour = guide_legend(override.aes = list(size=4)))  
+  theme(text = element_text(size = 15), legend.position = "bottom") +
+  guides(colour = guide_legend(override.aes = list(size=3)))  
 
 plot_area
 # plot_area <- plot_area + labs(title = "b")
@@ -211,6 +215,10 @@ ggsave(path,
 
 
 #------------------------------------------------------------------------#
+col_stab <- "#2E86AB"
+col_unst_c <- "#A23B72"
+col_unst_b <- "#F18F01"
+
 #### Plots RMT and Integration ####
 sus_init <- rep(100000, N) # initial susceptibles
 inf_init <- rep(100, N)    # initial infecteds
@@ -226,12 +234,14 @@ diag(COMMUTING) <- 0
 # COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
 # COMMUTING[sample.int(N^2, round(p*N^2))] <- 0
 
-jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+jacobian_stab <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
   diag(deaths + alphas + deltas + colSums(MIGRATION))
+
+eig_stab <- eigen_mat(jacobian_stab)
 
 # Plot the eigenvalues of the system
 library("ggforce")
-eigen_stab <- plot_eigen_rmt(jacobian,
+eigen_stab <- plot_eigen_rmt(jacobian_stab,
                              N,mub,mug = mud + mua + mudel,
                              muw,sw,rhow,Gammaw,
                              muc,sc,rhoc,Gammac,
@@ -250,7 +260,7 @@ plot_inf_stab <- plot_int(N, sol, state = "INF")  +
   theme_bw() + theme(legend.position = "none")
 
 vec_col <-  vector(mode="character", length=N)
-vec_col[1:N] <- color_stab
+vec_col[1:N] <- col_stab
 
 plot_inf_stab <- plot_inf_stab +
   xlim(c(0,20))  + 
@@ -267,12 +277,13 @@ diag(COMMUTING) <- 0
 # COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
 # COMMUTING[sample.int(N^2, round(p*N^2))] <- 0
 
-jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+jacobian_uns_com <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
   diag(deaths + alphas + deltas + colSums(MIGRATION))
 
+eig_uns_com <- eigen_mat(jacobian_uns_com)
 # Plot the eigenvalues of the system
 library("ggforce")
-eigen_unstab_com <- plot_eigen_rmt(jacobian,
+eigen_unstab_com <- plot_eigen_rmt(jacobian_uns_com,
                                    N,mub,mug = mud + mua + mudel,
                                    muw,sw,rhow,Gammaw,
                                    muc,sc,rhoc,Gammac,
@@ -294,7 +305,7 @@ plot_inf_unstab_com <- plot_int(N, sol, state = "INF")  +
 plot_inf_unstab_com
 # plot_int(N, sol, state = "TOT")
 vec_col <-  vector(mode="character", length=N)
-vec_col[1:N] <- "#BB4430"
+vec_col[1:N] <- col_unst_c
 
 plot_inf_unstab_com <- plot_inf_unstab_com +
   xlim(c(0,20))  + 
@@ -310,12 +321,13 @@ diag(COMMUTING) <- 0
 # COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
 # COMMUTING[sample.int(N^2, round(p*N^2))] <- 0
 
-jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+jacobian_uns_bet <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
   diag(deaths + alphas + deltas + colSums(MIGRATION))
 
+eig_uns_bet <- eigen_mat(jacobian_uns_bet)
 # Plot the eigenvalues of the system
 library("ggforce")
-eigen_unstab_bet <- plot_eigen_rmt(jacobian,
+eigen_unstab_bet <- plot_eigen_rmt(jacobian_uns_bet,
                                    N,mub,mug = mud + mua + mudel,
                                    muw,sw,rhow,Gammaw,
                                    muc,sc,rhoc,Gammac,
@@ -335,13 +347,74 @@ plot_inf_unstab_bet <- plot_int(N, sol, state = "INF")  +
 plot_inf_unstab_bet
 # plot_int(N, sol, state = "TOT")
 vec_col <-  vector(mode="character", length=N)
-vec_col[1:N] <- "#BB4430"
+vec_col[1:N] <- col_unst_b
 
 plot_inf_unstab_bet <- plot_inf_unstab_bet +
   xlim(c(0,20))  + 
   scale_colour_manual(values = vec_col) 
 plot_inf_unstab_bet
 
+
+###### ALL EIGENVALUE DIST ####
+eig_uns_com$lab <- "unstab_com"
+eig_uns_bet$lab <- "unstab_bet"
+eig_stab$lab <- "stab"
+eig_full <- rbind(rbind(eig_uns_com,eig_uns_bet),eig_stab)
+ggplot(eig_full) + 
+  geom_point(aes(re,im), size = 0.2) +
+  theme_bw() + coord_fixed() +
+  theme(text = element_text(size = size_text),
+        legend.position = "bottom") +
+  guides(colour = guide_legend(override.aes = list(size=3)))
+
+mug <- gammas[1]
+tau <- 0
+c_stab <- stab_par*(1-stab_par) - mug - N*muc
+r_stab <- sqrt(stab_par^2*sw^2 + 2*stab_par*tau + sc^2)*sqrt(N)
+o_stab <- stab_par - mug + stab_par*stab_par*(N-1)
+
+c_unstab_c <- stab_par*(1-unstab_par) - mug - N*muc
+r_unstab_c <- sqrt(stab_par^2*sw^2 + 2*stab_par*tau + sc^2)*sqrt(N)
+o_unstab_c <- stab_par - mug + stab_par*unstab_par*(N-1)
+
+c_unstab_b <- unstab_par*(1-stab_par) - mug - N*muc
+r_unstab_b <- sqrt(unstab_par^2*sw^2 + 2*unstab_par*tau + sc^2)*sqrt(N)
+o_unstab_b <- unstab_par - mug + unstab_par*stab_par*(N-1)
+
+colors <- c("c" = col_stab, 
+            "d" = col_unst_c,
+            "e" = col_unst_b)
+
+eigen_full <- ggplot(eig_full) + 
+  geom_point(aes(re,im), size = 0.2) +
+  theme_bw() + coord_fixed() +
+  theme(text = element_text(size = size_text),
+        legend.position = "bottom") +
+  guides(colour = guide_legend(override.aes = list(size=3))) +
+  geom_ellipse(aes(x0 = c_stab, y0 = 0, 
+                   a = r_stab,
+                   b = r_stab, 
+                   angle = 0, color = "c")) +
+  geom_ellipse(aes(x0 = c_unstab_c, y0 = 0, 
+                   a = r_unstab_c,
+                   b = r_unstab_c, 
+                   angle = 0, color = "d"))  +
+  geom_ellipse(aes(x0 = c_unstab_b, y0 = 0, 
+                   a = r_unstab_b,
+                   b = r_unstab_b, 
+                   angle = 0, color = "e")) +
+  geom_point(aes(o_stab,0), 
+             color = col_stab, shape = 21) +
+  geom_point(aes(o_unstab_c,0), 
+             color = col_unst_c, shape = 24) +
+  geom_point(aes(o_unstab_b,0),
+             color = col_unst_b, shape = 24) +
+  geom_vline(xintercept = 0, color = "blue", linetype = "dashed")  +
+  scale_color_manual(values = colors,
+                     name = " Scenario")
+  
+eigen_full  
+  
 ##### Construct panel1 ####
 library("ggpubr")
 size_text <- 16
@@ -364,7 +437,7 @@ gginf <- ggarrange(plot_inf_stab + labs(title = "c") +
                      theme(text = element_text(size = size_text)),
                    plot_inf_unstab_com + labs(title = "d") +
                      rremove("xlab")  + rremove("ylab") +
-                     scale_y_continuous( breaks=c(0, 6000, 12500)) +
+                     scale_y_continuous( breaks=c(0, 6000, 12000)) +
                      theme(text = element_text(size = size_text)),
                    plot_inf_unstab_bet + labs(title = "e") +
                       rremove("xlab")  + rremove("ylab") +
@@ -379,7 +452,7 @@ gginf  <- annotate_figure(gginf,
 
 gginf
 
-ggall <- ggarrange(ggeigen,gginf, ncol = 2)
+ggall <- ggarrange(eigen_full,gginf, ncol = 2)
 
 ggall
 path <- paste0(Path,"gg_g0,95_muc_0,001_sc0,0001_sw0,05.png")

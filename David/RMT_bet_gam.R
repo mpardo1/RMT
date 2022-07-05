@@ -230,7 +230,8 @@ gg_betas <- ggplot(df_err_bet_g) +
   theme_bw() + xlab(TeX("CV")) + 
   ylab("Mean squared error")  +
   # geom_vline(xintercept = x_inter, color = "blue", linetype = "longdash") +
-  theme(text = element_text(size = 15), legend.position = "bottom") 
+  theme(text = element_text(size = 15), legend.position = "bottom",
+        plot.margin = margin(1, 1, 1, 1, "cm")) 
 gg_betas
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
@@ -434,4 +435,239 @@ path <- paste0(Path,"rand_gamm_N_",
                "a",format(alphas[1],decimal.mark=","),
                "t",format(thetas[1],decimal.mark=","),".pdf")
 ggsave(path, plot = gg_gammas_err_N, device = "pdf")
+
+####TEST Sigma or mu importance####
+## Sigma
+mut = 1
+sm = 0.5
+mu_vec <- rgamma(101, shape = (mum/sm)^2, rate = mum/(sm^2))
+s_vec <- seq(0,0.9,0.01)
+df_err_bet_fixed_fm <- data.frame(muw = muw, sw = sw, muc = muc, sc = sc, 
+                         mual = 0, sal = 0, max_eig = 0, out_mean = 0 ,
+                         count_re = 0)
+
+count = 1
+while(count < 50){
+  for(j in c(1:length(s_vec))){
+    st <- s_vec[j]
+    if(mut <= st){
+      st <- 0.2
+      mut <- 0.5
+    }
+    print(paste0("j:", j))
+    betas = rgamma(N, shape = (mut/st)^2, rate = mut/(st^2))
+    # Compute Jacobian
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    # Compute eigenvalues
+    eig <- eigen_mat(jacobian)
+    max_eig <- max(eig$re)
+    betas = rep(mean(betas),N)
+    # Compute Jacobian
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    # Compute eigenvalues
+    eig <- eigen_mat(jacobian)
+    max_eig_mean <- max(eig$re)
+    df_err_bet_fixed_fm[nrow(df_err_bet_fixed_fm)+1,] <- c(muw, sw, muc, sc, mut,
+                                         st, max_eig, max_eig_mean , count) 
+  }
+  print(paste0("count:", count))
+  count = count + 1 
+}
+
+df_err_bet_fixed_fm$err_mean <- (df_err_bet_fixed_fm$out_mean - df_err_bet_fixed_fm$max_eig)^2/df_err_bet_fixed_fm$out_mean
+df_err_bet_fixed_fm$var_bet <- (df_err_bet_fixed_fm$sal)/(df_err_bet_fixed_fm$mual)
+df_err_bet_g_fm <- df_err_bet_fixed_fm %>% group_by(sal) %>%
+  summarise(mean_err_mean = mean(err_mean))
+df_err_bet_g_fm <- df_err_bet_g_fm[-1,]
+
+library("latex2exp")
+x_inter <- 0.7650498
+gg_betas_fm <- ggplot(df_err_bet_g_fm) + 
+  geom_line(aes(sal, mean_err_mean), color ="#A40E4C", size = 0.4) + 
+  geom_point(aes(sal, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
+  theme_bw() + xlab(TeX("$\\sigma_{\\beta}$")) + 
+  ylab("Mean squared error")  +
+  # geom_vline(xintercept = x_inter, color = "blue", linetype = "longdash") +
+  theme(text = element_text(size = 15), legend.position = "bottom",
+        plot.margin = margin(1, 1, 1, 1, "cm")) 
+gg_betas_fm
+
+## mu
+mut = 1
+sm = 0.1
+mu_vec <- seq(0.2,1,0.01)
+s_vec <- seq(0,0.9,0.01)
+df_err_bet_fixed_mu <- data.frame(muw = muw, sw = sw, muc = muc, sc = sc, 
+                                   mual = 0, sal = 0, max_eig = 0, out_mean = 0 ,
+                                   count_re = 0)
+
+count = 1
+while(count < 50){
+  for(j in c(1:length(mu_vec))){
+    mut <- mu_vec[j]
+    if(mut <= st){
+      st <- 0.2
+      mut <- 0.5
+    }
+    print(paste0("j:", j))
+    betas = rgamma(N, shape = (mut/st)^2, rate = mut/(st^2))
+    # Compute Jacobian
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    # Compute eigenvalues
+    eig <- eigen_mat(jacobian)
+    max_eig <- max(eig$re)
+    betas = rep(mean(betas),N)
+    # Compute Jacobian
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    # Compute eigenvalues
+    eig <- eigen_mat(jacobian)
+    max_eig_mean <- max(eig$re)
+    df_err_bet_fixed_mu[nrow(df_err_bet_fixed_mu)+1,] <- c(muw, sw, muc, sc, mut,
+                                                             st, max_eig, max_eig_mean , count) 
+  }
+  print(paste0("count:", count))
+  count = count + 1 
+}
+
+df_err_bet_fixed_mu$err_mean <- (df_err_bet_fixed_mu$out_mean - df_err_bet_fixed_mu$max_eig)^2/df_err_bet_fixed_mu$out_mean
+df_err_bet_fixed_mu$var_bet <- (df_err_bet_fixed_mu$sal)/(df_err_bet_fixed_mu$mual)
+df_err_bet_g <- df_err_bet_fixed_mu %>% group_by(mual) %>%
+  summarise(mean_err_mean = mean(err_mean))
+df_err_bet_g <- df_err_bet_g[-1,]
+
+library("latex2exp")
+x_inter <- 0.7650498
+gg_betas_fs <- ggplot(df_err_bet_g) + 
+  geom_line(aes(mual, mean_err_mean), color ="#A40E4C", size = 0.4) + 
+  geom_point(aes(mual, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
+  theme_bw() + xlab(TeX("$\\mu_{\\beta}$")) + 
+  ylab("Mean squared error")  +
+  # geom_vline(xintercept = x_inter, color = "blue", linetype = "longdash") +
+  theme(text = element_text(size = 15), legend.position = "bottom",
+        plot.margin = margin(1, 1, 1, 1, "cm")) 
+gg_betas_fs
+
+
+ggarrange(gg_betas_fm + ggtitle(TeX("$\\mu_{\\beta} = 1$")),
+          gg_betas_fs + rremove("ylab") + ggtitle(TeX("$\\sigma_{\\beta} = 0.1$")))
+
+## fixed CV vary sigma
+CV = 0.5
+s_vec <- seq(0.1,0.9,0.01)
+# mu = sigma/CV
+df_err_bet_fixed_CV <- data.frame(muw = muw, sw = sw, muc = muc, sc = sc, 
+                                  mual = 0, sal = 0, max_eig = 0, out_mean = 0 ,
+                                  CV = CV)
+
+count = 1
+while(count < 50){
+  for(j in c(1:length(s_vec))){
+    st <- s_vec[j]
+    mut <-  s_vec[j]/CV
+    if(mut <= st){
+      st <- 0.2
+      mut <- 0.5
+    }
+    print(paste0("j:", j))
+    betas = rgamma(N, shape = (mut/st)^2, rate = mut/(st^2))
+    # Compute Jacobian
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    # Compute eigenvalues
+    eig <- eigen_mat(jacobian)
+    max_eig <- max(eig$re)
+    betas = rep(mean(betas),N)
+    # Compute Jacobian
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    # Compute eigenvalues
+    eig <- eigen_mat(jacobian)
+    max_eig_mean <- max(eig$re)
+    df_err_bet_fixed_CV[nrow(df_err_bet_fixed_CV)+1,] <- c(muw, sw, muc, sc, mut,
+                                                           st, max_eig, max_eig_mean , CV) 
+  }
+  print(paste0("count:", count))
+  count = count + 1 
+}
+
+df_err_bet_fixed_CV$err_mean <- (df_err_bet_fixed_CV$out_mean -
+                                   df_err_bet_fixed_CV$max_eig)^2/df_err_bet_fixed_CV$out_mean
+df_err_bet_fixed_CV$var_bet <- (df_err_bet_fixed_CV$sal)/(df_err_bet_fixed_CV$mual)
+df_err_bet_g <- df_err_bet_fixed_CV %>% group_by(sal) %>%
+  summarise(mean_err_mean = mean(err_mean))
+df_err_bet_g <- df_err_bet_g[-1,]
+
+library("latex2exp")
+x_inter <- 0.7650498
+gg_betas_fCV <- ggplot(df_err_bet_g) + 
+  geom_line(aes(sal, mean_err_mean), color ="#A40E4C", size = 0.4) + 
+  geom_point(aes(sal, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
+  theme_bw() + xlab(TeX("$\\sigma_{\\beta}$")) + 
+  ylab("Mean squared error")  +
+  # geom_vline(xintercept = x_inter, color = "blue", linetype = "longdash") +
+  theme(text = element_text(size = 15), legend.position = "bottom",
+        plot.margin = margin(1, 1, 1, 1, "cm")) 
+gg_betas_fCV
+
+## fixed CV vary mu
+CV = 0.5
+mu_vec <- seq(0.1,0.9,0.01)
+# sigma = mu*CV
+df_err_bet_fixed_CV <- data.frame(muw = muw, sw = sw, muc = muc, sc = sc, 
+                                  mual = 0, sal = 0, max_eig = 0, out_mean = 0 ,
+                                  CV = CV)
+
+count = 1
+while(count < 50){
+  for(j in c(1:length(mu_vec))){
+    mut <- mu_vec[j]
+    st <-  mu_vec[j]*CV
+    if(mut <= st){
+      st <- 0.2
+      mut <- 0.5
+    }
+    print(paste0("j:", j))
+    betas = rgamma(N, shape = (mut/st)^2, rate = mut/(st^2))
+    # Compute Jacobian
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    # Compute eigenvalues
+    eig <- eigen_mat(jacobian)
+    max_eig <- max(eig$re)
+    betas = rep(mean(betas),N)
+    # Compute Jacobian
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    # Compute eigenvalues
+    eig <- eigen_mat(jacobian)
+    max_eig_mean <- max(eig$re)
+    df_err_bet_fixed_CV[nrow(df_err_bet_fixed_CV)+1,] <- c(muw, sw, muc, sc, mut,
+                                                           st, max_eig, max_eig_mean , CV) 
+  }
+  print(paste0("count:", count))
+  count = count + 1 
+}
+
+df_err_bet_fixed_CV$err_mean <- (df_err_bet_fixed_CV$out_mean -
+                                   df_err_bet_fixed_CV$max_eig)^2/df_err_bet_fixed_CV$out_mean
+df_err_bet_fixed_CV$var_bet <- (df_err_bet_fixed_CV$sal)/(df_err_bet_fixed_CV$mual)
+df_err_bet_g <- df_err_bet_fixed_CV %>% group_by(mual) %>%
+  summarise(mean_err_mean = mean(err_mean))
+df_err_bet_g <- df_err_bet_g[-1,]
+
+library("latex2exp")
+x_inter <- 0.7650498
+gg_betas_fCV <- ggplot(df_err_bet_g) + 
+  geom_line(aes(mual, mean_err_mean), color ="#A40E4C", size = 0.4) + 
+  geom_point(aes(mual, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
+  theme_bw() + xlab(TeX("$\\mu_{\\beta}$")) + 
+  ylab("Mean squared error")  +
+  # geom_vline(xintercept = x_inter, color = "blue", linetype = "longdash") +
+  theme(text = element_text(size = 15), legend.position = "bottom",
+        plot.margin = margin(1, 1, 1, 1, "cm")) 
+gg_betas_fCV
 

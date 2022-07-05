@@ -156,8 +156,9 @@ plot2 <- plot_stab.mean +
 
 gg_comp <- ggarrange(plot1,
                      plot2 + ylab(""),
-                     common.legend = TRUE, legend = "bottom",
-                     labels = c("a", "b"))
+                     common.legend = TRUE, legend = "bottom")
+                     # ,
+                     # labels = c("a", "b"))
 gg_comp
 
 ##### Numerical comparison rand and mean(bet) right most eigen #####

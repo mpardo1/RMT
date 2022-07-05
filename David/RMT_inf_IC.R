@@ -79,7 +79,7 @@ s_sus <- 100
 # alphag <- alphagamma(mu_sus,s_sus)
 # betag <- betagamma(mu_sus,s_sus)
 # sus_init <- rgamma(N,alphag,betag) 
-sus_init <- rep(10000, N) # initial susceptibles
+tot_init <- rep(10000, N) # initial susceptibles
 
 mu_inf <- 200
 s_inf <- 150
@@ -94,6 +94,7 @@ list_sol <- list()
 vec_init_inf <- seq(1,1000,20)
 for(i in c(1:length(vec_init_inf))){
   inf_init <- rep(vec_init_inf[i], N)    # initial infecteds
+  sus_init <- tot_init - inf_init
   end_time <- 20
   Deltas <- rep(0.6, N) # birth rate
   print(paste0("i:", i))
@@ -148,47 +149,75 @@ ggplot(df_inf) +
 
 
 ####### Rand or cte IC ########
-mui <- 4000
-si <- 2000
-inf_init <- rgamma(N, shape = (mui/si)^2, rate = mui/(si^2)) 
-# inf_init <- rep(mui, N)
+tot_init <- rep(5000, N) # initial susceptibles
+end_time <- 5
+## CTE
+mui <- 400
+si <- 0
+inf_init <- rep(mui,N)
+sus_init <- tot_init - inf_init
 
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
            sus_init,inf_init,end_time)
 
-plot_int(N, sol, state = "INF") +
-  theme_bw() 
+library("latex2exp")
+plot_cte <- plot_int(N, sol, state = "INF") +
+  theme_bw() + theme(legend.position="none") +
+  ggtitle(TeX("$\\mu_{inf} = 400, \\sigma_{inf} = 0$"))
+
+plot_cte
+
+### RAND BIG SIGMA
+mui <- 400
+si <- 500
+inf_init <- rgamma(N, shape = (mui/si)^2, rate = mui/(si^2)) 
+sus_init <- tot_init - inf_init
+
+sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+           COMMUTING,MIGRATION,
+           sus_init,inf_init,end_time)
 
 library("latex2exp")
-plot_cte_4 <- plot_int(N, sol, state = "INF") +
+plot_rand_hv <- plot_int(N, sol, state = "INF") +
   theme_bw() + theme(legend.position="none") +
-  ggtitle(TeX("$\\mu_{inf} = 4000, \\sigma_{inf} = 0$"))
+  ggtitle(TeX("$\\mu_{inf} = 400, \\sigma_{inf} = 500$")) 
 
-plot_rand_1 <- plot_rand_1 +
-  ggtitle(TeX("$\\mu_{inf} = 1000, \\sigma_{inf} = 2000$"))
+plot_rand_hv
 
+### RAND BIG SIGMA
+mui <- 400
+si <- 50
+inf_init <- rgamma(N, shape = (mui/si)^2, rate = mui/(si^2)) 
+sus_init <- tot_init - inf_init
+
+sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+           COMMUTING,MIGRATION,
+           sus_init,inf_init,end_time)
+
+library("latex2exp")
+plot_rand_lv <- plot_int(N, sol, state = "INF") +
+  theme_bw() + theme(legend.position="none") +
+  ggtitle(TeX("$\\mu_{inf} = 400, \\sigma_{inf} = 50$"))
+plot_rand_lv
+
+######
 library("ggpubr")
-gg1 <- ggarrange(plot_rand_1  + ylim(c(0,9000)) + xlim(c(0,5)),
-                 plot_rand_4 + ylim(c(0,9000)) + xlim(c(0,5)) + ylab(""),
-                 ncol = 2, nrow = 1)
+gg1 <- ggarrange(plot_rand_lv +
+                   rremove("xlab") + rremove("ylab"),
+                 plot_rand_hv +
+                   rremove("xlab") + rremove("ylab"))
 
-gg2 <- ggarrange(plot_inf_ci,
-                     plot_cte_4 + ylim(c(0,9000)) + xlim(c(0,5)),
-                      nrow = 1, ncol = 2)
-gg_full <- ggarrange(plot_inf_ci,
-                     plot_cte_4 + 
-                       ylim(c(0,9000)) + xlim(c(0,5)) + xlab("") +
-                       theme(text = element_text(size = size_let)),
-                     plot_rand_1  +
-                       ylim(c(0,9000)) + xlim(c(0,5)) +  
-                       theme(text = element_text(size = size_let)),
-                     plot_rand_4 + 
-                       ylim(c(0,9000)) + xlim(c(0,5)) + ylab("") +
-                       theme(text = element_text(size = size_let)),
-                     ncol = 2, nrow = 2,
-                     labels = c("a", "b", "c", "d"),
-                     align = "h")
+gg2 <- ggarrange(plot_cte +
+                   rremove("xlab") + rremove("ylab"),
+                 gg1 , nrow = 2, ncol = 1,
+                 widths = c(0.5,2))
+
+ggfull  <- annotate_figure(gg2,
+                            bottom = text_grob("Time", color = "black",
+                                               size = 15),
+                            left = text_grob("Number of infected individuals",
+                                             color = "black", rot = 90,  size = 15))
 
 Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/Gen/"
 path <- paste0(Path,"Rand_inf_ci_b0,1_g0,95_muc_0,01_sc0,002_muw0,6_sw0,05.png")
