@@ -18,13 +18,13 @@ color_unstab <- "#DB504A"
 size_let <- 15
 ####### GENERATE JACOBIAN ###############################
 # number of patches
-N <- 100
+N <- 50
 
 # epidemiological
 #all rates must lie in (0,1) except for betas
 
 Deltas <- rep(0.3, N) # birth rate
-mub <- 0.1
+mub <- 0.2
 sb <- 0.001
 betas <- rep(mub, N) # transmission rates 
 # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
@@ -84,8 +84,8 @@ eigen <-  eigen_mat(jacobian)
 # initial populations
 # for constant populations, set deltas = 0, Deltas = deaths
 
-sus_init <- rep(10000, N) # initial susceptibles
-inf_init <- rep(100, N)    # initial infecteds
+sus_init <- rep(1000, N) # initial susceptibles
+inf_init <- rep(10, N)    # initial infecteds
 
 end_time <- 50
 sol.stab <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
@@ -114,7 +114,7 @@ ggsave(path,
        plot = plot.inf.stab, device = "png")
 
 #### 1 PATCH modified ####
-alp_bet <- 1
+alp_bet <- 0.8
 
 betas <- rep(mub, N) 
 betas[1] <- alp_bet + betas[1]
@@ -154,12 +154,12 @@ ggsave(path,
        plot = plot.inf.1, device = "png")
 
 ##### Sum of all the infected by alpha ####
-sus_init <- rep(10000, N) # initial susceptibles
-inf_init <- rep(100, N)    # initial infecteds
+sus_init <- rep(1000, N) # initial susceptibles
+inf_init <- rep(10, N)    # initial infecteds
 
-end_time <- 50
-alp_bet_vec <- seq(0.65,2.5,0.01)
 end_time <- 500
+alp_bet_vec <- seq(0,2,0.01)
+# end_time <- 500
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
            sus_init,inf_init,end_time)
@@ -181,7 +181,8 @@ max_inf <- df_sum %>% summarise_if(is.numeric, max)
 time_max_vec <- c()
 len_vec <- length(alp_bet_vec)
 for(i in c(1:len_vec)){
-  ind <- which(df_sum[,i+1] == as.numeric(max_inf[i+1]) )[1]
+  vec <- df_sum[,i+1]
+  ind <- which(round(vec,1) == round(as.numeric(max_inf[i+1]),1))[1]
   time_max_vec[i] <- df_sum[ind,1]
 }
 
@@ -215,6 +216,7 @@ plot_time_max <-  ggplot(df_sum_group) +
   theme_bw() +
   theme(text = element_text(size = size_let)) 
 plot_time_max
+# + xlim(c(0.7,1.7)) + ylim(c(80,110))
 
 seq <- seq(1,len_vec,5 )
 colnames(df_sum) <- c("time",as.character(alp_bet_vec))
@@ -231,9 +233,49 @@ sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
   ylab("Sum of infected individuals") +
   xlim( c(0,10) ) +
   theme_bw() +
+  theme(text = element_text(size = size_let),
+        legend.position = "right") 
+
+sum_inf
+
+### Solve equation for alpha ####
+k <-  1
+mug <- gammas[1]
+outl1 <- function(x){
+  (N/2)*(mub*muw + muc) + (x/2)*(1 + (k-1)*muw) + mub*(1-muw) -
+    mug - N*muc + (1/2)*sqrt(N^2*(mub*muw + muc)^2 + x^2*(1 + (k-1)*muw)^2 + 
+                               2*x*(mub*muw + muc)*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
+} 
+curve(outl1(x), 0,3)
+abline(h = 0, lty = 3)
+uni <- uniroot(outl1, c(0, 3))$root
+print(paste0("i: ", i))
+
+betas <- rep(mub, N) 
+betas[1] <- betas[1] + uni
+sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+           COMMUTING,MIGRATION,
+           sus_init,inf_init,end_time)
+sol_inf <- sol[,c(1,(N+2):(2*N+1))]
+sum_inf <- rowSums(sol_inf[,2:(N+1)])
+df_root <- data.frame(time = as.data.frame(sol)$time , sum_inf = sum_inf)
+
+ggplot() + geom_line(data = df_root, aes(time,sum_inf))
+sum_inf <- ggplot(data = df_plot) +
+  geom_line(aes(x = time, y = value,
+                  color = as.numeric(as.character(variable)),
+                  group = variable)) +
+  geom_line(data = df_root, aes(time,sum_inf), linetype = "dashed") +
+  scale_colour_gradient(name = TeX("$\\beta^*$"),
+                        low = "#F8F053", high = "#4C0EF6") +
+  ylab("Sum of infected individuals") +
+  xlim( c(0,20) ) +
+  theme_bw() +
   theme(text = element_text(size = size_let), legend.position = "right") 
 
 sum_inf
+
+#### GGARRANGE ####
 require(grid) 
 gg1 <- ggarrange(plot.inf.stab + rremove("ylab") + rremove("xlab"),
                  plot.inf.1 + rremove("ylab") + rremove("xlab"),
@@ -431,3 +473,5 @@ Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
 path <- paste0(Path,"panel2.png")
 ggsave(path,
        plot = gg_full, device = "png")
+
+
