@@ -440,7 +440,7 @@ ggsave(path, plot = gg_gammas_err_N, device = "pdf")
 ## Sigma
 mut = 1
 sm = 0.5
-mu_vec <- rgamma(101, shape = (mum/sm)^2, rate = mum/(sm^2))
+# mu_vec <- rgamma(101, shape = (mum/sm)^2, rate = mum/(sm^2))
 s_vec <- seq(0,0.9,0.01)
 df_err_bet_fixed_fm <- data.frame(muw = muw, sw = sw, muc = muc, sc = sc, 
                          mual = 0, sal = 0, max_eig = 0, out_mean = 0 ,
@@ -603,7 +603,7 @@ df_err_bet_g <- df_err_bet_g[-1,]
 
 library("latex2exp")
 x_inter <- 0.7650498
-gg_betas_fCV <- ggplot(df_err_bet_g) + 
+gg_betas_fCV_s <- ggplot(df_err_bet_g) + 
   geom_line(aes(sal, mean_err_mean), color ="#A40E4C", size = 0.4) + 
   geom_point(aes(sal, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
   theme_bw() + xlab(TeX("$\\sigma_{\\beta}$")) + 
@@ -611,7 +611,7 @@ gg_betas_fCV <- ggplot(df_err_bet_g) +
   # geom_vline(xintercept = x_inter, color = "blue", linetype = "longdash") +
   theme(text = element_text(size = 15), legend.position = "bottom",
         plot.margin = margin(1, 1, 1, 1, "cm")) 
-gg_betas_fCV
+gg_betas_fCV_s
 
 ## fixed CV vary mu
 CV = 0.5
@@ -671,3 +671,18 @@ gg_betas_fCV <- ggplot(df_err_bet_g) +
         plot.margin = margin(1, 1, 1, 1, "cm")) 
 gg_betas_fCV
 
+gg1 <- ggarrange(gg_betas_fCV_s,
+                 gg_betas_fCV + rremove("ylab"),
+                 widths = c(1.1,1)) 
+
+gg1 <- annotate_figure(gg1, top = text_grob("CV = 0.5", 
+                                      color = "black", face = "bold", size = 14))
+
+gg2 <- ggarrange(gg_betas_fm ,
+          gg1, 
+          nrow = 2,
+          heights = c(1.3,2),
+          labels = c("a","b"))
+
+gg2 <- annotate_figure(gg2, top = text_grob(TeX("$\\mu_\\beta = 1$"), 
+                                            color = "black", face = "bold", size = 14))

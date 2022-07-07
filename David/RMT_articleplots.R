@@ -453,7 +453,7 @@ eig_comp %>%
   #scale_color_manual(values=c("#0000FF","#FF0000","#0000FF","#FF0000","#63B159","#63B159"))
 
 ####### COMMUTING: PANEL ################################
-
+library("copula")
 N <- 60
 
 # para los plots
@@ -495,7 +495,7 @@ sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
 ### FUNCTION FOR PLOTS
 
 plot_panelc <- function(N, sol, COMMUTING, IMIN = "N", IMAX = "N",CMMIN = "N", CMMAX = "N",
-                        colormean = "green", colorcomm = "#0000FF") {
+                        colormean = "red", colorcomm = "blue", size_text = 15) {
   
   comm_flows <- data.frame(variable = paste0(rep("S",N),as.character(c(1:N))),
                            incoming = rowSums(COMMUTING)/(N-1),
@@ -515,22 +515,45 @@ plot_panelc <- function(N, sol, COMMUTING, IMIN = "N", IMAX = "N",CMMIN = "N", C
   
   ggplot(filter(sol_df, variable != "Smean"), aes(time, value, group = variable)) + 
     geom_line(aes(colour = both), size = .5) +
-    scale_color_gradient(low = "white", high = colorcomm, na.value = "gray90", limits = c(CMMIN,CMMAX)) +
-    geom_line(data = filter(sol_df, variable == "Smean"), aes(y = value), color = colormean, size = 1.4) +
+    scale_color_gradient(low = "yellow", high = colorcomm,
+                         na.value = "white", limits = c(CMMIN,CMMAX)) +
+    # scale_fill_gradient(low="grey90", high="purple") +
+    geom_line(data = filter(sol_df, variable == "Smean"), aes(y = value), 
+              color = colormean, size = 1.2, linetype = "dashed") +
     ylab("Number of infected individuals") +
     ylim(c(IMIN,IMAX)) +
     theme(legend.position = "none") +
     guides(color = "none") +
-    theme_bw() +
-    theme(axis.text.x = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks = element_blank(),
-          axis.title.x = element_blank(),
-          axis.title.y = element_blank())
+    theme_bw() + 
+    theme(text = element_text(size = 15), legend.position = "bottom") 
 
 }
 
 ### UNSTABLE NETWORK
+library("copula")
+library("viridis")
+library("ggsci")
+library("grid")
+
+plotmobility <- function(mat){
+  diag(mat) <- NA
+  longData <- melt(mat)
+  ggplot(longData, aes(x = Var2, y = Var1)) + 
+    geom_raster(aes(fill=value)) + 
+    # scale_color_brewer(palette = "Dark2")+
+    scale_fill_gradient(low="yellow", high="blue", na.value = "white") +
+    theme_bw() +
+    theme(axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank(),
+          axis.title.y=element_blank(),
+          axis.text.y=element_blank(),
+          axis.ticks.y=element_blank(),
+          legend.position = "none") + 
+    theme_void()  +
+    coord_fixed() +
+    ylim(c(60,0)) 
+}
 
 plotmobility(COMMUTING)
 ggsave(file="unstnet.svg")
@@ -538,7 +561,6 @@ plot_panelc(N, sol, COMMUTING)
 ggsave(file="unstsol.svg")
 
 ### CONTROL
-
 nodes <- 4
 muwstar <- 0
 COMMUTINGA <- COMMUTINGB <- COMMUTINGC <- COMMUTINGD <- COMMUTINGE <- COMMUTINGF <- COMMUTING
@@ -613,14 +635,55 @@ CMMIN <- min(c(rowSums(COMMUTINGA)/(N-1),colSums(COMMUTINGA)/(N-1),
                rowSums(COMMUTINGD)/(N-1),colSums(COMMUTINGD)/(N-1),
                rowSums(COMMUTINGE)/(N-1),colSums(COMMUTINGE)/(N-1),
                rowSums(COMMUTINGF)/(N-1),colSums(COMMUTINGF)/(N-1)))              
+# 
+# commpanel <-ggarrange(plotmobility(COMMUTINGA, cmax = CMAX), plot_panelc(N, solA, COMMUTINGA, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
+#                      plotmobility(COMMUTINGB, cmax = CMAX), plot_panelc(N, solB, COMMUTINGB, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
+#                      plotmobility(COMMUTINGC, cmax = CMAX), plot_panelc(N, solC, COMMUTINGC, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
+#                      plotmobility(COMMUTINGD, cmax = CMAX), plot_panelc(N, solD, COMMUTINGD, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
+#                      plotmobility(COMMUTINGE, cmax = CMAX), plot_panelc(N, solE, COMMUTINGE, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
+#                      plotmobility(COMMUTINGF, cmax = CMAX), plot_panelc(N, solF, COMMUTINGF, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
+#                      ncol = 2, nrow = 6)
 
-commpanel <-ggarrange(plotmobility(COMMUTINGA, cmax = CMAX), plot_panelc(N, solA, COMMUTINGA, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                     plotmobility(COMMUTINGB, cmax = CMAX), plot_panelc(N, solB, COMMUTINGB, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                     plotmobility(COMMUTINGC, cmax = CMAX), plot_panelc(N, solC, COMMUTINGC, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                     plotmobility(COMMUTINGD, cmax = CMAX), plot_panelc(N, solD, COMMUTINGD, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                     plotmobility(COMMUTINGE, cmax = CMAX), plot_panelc(N, solE, COMMUTINGE, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                     plotmobility(COMMUTINGF, cmax = CMAX), plot_panelc(N, solF, COMMUTINGF, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                     ncol = 2, nrow = 6)
+
+commpanel11 <-ggarrange(plotmobility(COMMUTINGA), 
+                      plotmobility(COMMUTINGB), 
+                      plotmobility(COMMUTINGC),
+                      plot_panelc(N, solA, COMMUTINGA, IMIN = IMIN, 
+                                                           IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
+                        rremove("xlab") +  rremove("ylab"),
+                      plot_panelc(N, solB, COMMUTINGB, IMIN = IMIN,
+                                  IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)+ 
+                        rremove("xlab")+  rremove("ylab"),
+                      plot_panelc(N, solC, COMMUTINGC, IMIN = IMIN, 
+                                  IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)+ 
+                        rremove("xlab")+  rremove("ylab"),
+                      ncol = 3, nrow = 2, legend = "none")
+
+
+commpanel11<- annotate_figure(commpanel11, 
+                              left = textGrob("Number of Infected individuals",
+                                              rot = 90, vjust = 1, y = 0.3,gp = gpar(cex = 1.3)),
+                              bottom = textGrob("Time", gp = gpar(cex = 1.3)))
+
+commpanel12 <-ggarrange(plotmobility(COMMUTINGD), 
+                       plotmobility(COMMUTINGE), 
+                       plotmobility(COMMUTINGF),
+                       plot_panelc(N, solA, COMMUTINGA, IMIN = IMIN, 
+                                   IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
+                         rremove("xlab") +  rremove("ylab"),
+                       plot_panelc(N, solB, COMMUTINGB, IMIN = IMIN,
+                                   IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)+ 
+                         rremove("xlab")+  rremove("ylab"),
+                       plot_panelc(N, solC, COMMUTINGC, IMIN = IMIN, 
+                                   IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)+ 
+                         rremove("xlab")+  rremove("ylab"),
+                       ncol = 3, nrow = 2, legend = "none")
+
+
+commpanel <- ggarrange(commpanel11, commpanel21,
+                       commpanel12, commpanel22,
+                       nrow = 4, ncol = 1)
+
 
 commpanel <-ggarrange(plotmobility(COMMUTINGA, cmax = CMAX),
                       plotmobility(COMMUTINGB, cmax = CMAX),

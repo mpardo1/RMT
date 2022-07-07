@@ -10,7 +10,6 @@ plotmobility <- function(mob, color1 = "#0000FF"){
   if (is.matrix(mob) & (nrow(mob) == ncol(mob))) {
     
     diag(mob) <- rep(0,N)
-    
     mob <- mob[seq(N,1,-1),]
     
     mob <- as.data.frame(mob)
