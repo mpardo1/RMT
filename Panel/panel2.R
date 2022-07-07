@@ -1,10 +1,10 @@
 ####### RANDOM MATRICES FOR METAPOPULATION MODELS #######
-### 
+###
 ### parent script
 ###
 ### generate, plot and integrate metapopulation
 ### epidemiological models
-### 
+###
 rm(list = ls())
 source("~/RMT/David/RMT_genrandom.R")
 source("~/RMT/David/RMT_plotmobility.R")
@@ -26,7 +26,7 @@ N <- 50
 Deltas <- rep(0.3, N) # birth rate
 mub <- 0.2
 sb <- 0.001
-betas <- rep(mub, N) # transmission rates 
+betas <- rep(mub, N) # transmission rates
 # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
 thetas <- rep(0.3, N) # loss of immunity rates
 mud <- 0.3
@@ -39,7 +39,7 @@ gammas = deaths + alphas + deltas
 
 # mobility
 #commuting and migration networks
-muw <- 0.05 
+muw <- 0.05
 sw <- 0.01
 rhow <- 0 #original rho (Gamma of baron et al)
 Gammaw <- 0 #gamma of baron et al
@@ -75,7 +75,7 @@ plot_stab <- plot_eigen_rmt(jacobian,
                             muw,sw,rhow,Gammaw,
                             muc,sc,rhoc,Gammac,
                             tau = 0, alp = 0, K = 0) +
-  scale_y_continuous( breaks=c(0)) 
+  scale_y_continuous( breaks=c(0))
 # + xlim(c(-60,-50))
 print(plot_eigen(jacobian))
 eigen <-  eigen_mat(jacobian)
@@ -93,7 +93,7 @@ sol.stab <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            sus_init,inf_init,end_time)
 
 plot_stab <- plot_int1(N, sol.stab, state = "INF") +
-  theme_bw() +theme(legend.position="none") 
+  theme_bw() +theme(legend.position="none")
 plot_stab
 
 
@@ -116,7 +116,7 @@ ggsave(path,
 #### 1 PATCH modified ####
 alp_bet <- 0.8
 
-betas <- rep(mub, N) 
+betas <- rep(mub, N)
 betas[1] <- alp_bet + betas[1]
 
 jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
@@ -128,14 +128,14 @@ plot_eigen_rmt(jacobian,
                muw,sw,rhow,Gammaw,
                muc,sc,rhoc,Gammac,
                tau = 0, alp = alp_bet, K = 1) +
-  scale_y_continuous( breaks=c(0)) 
+  scale_y_continuous( breaks=c(0))
 
 
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
            sus_init,inf_init,end_time)
 
-#  Change color 
+#  Change color
 vec_col <-  vector(mode="character", length=N)
 vec_col[1:N] <- color_stab
 vec_col[1] <- color_unstab
@@ -158,7 +158,7 @@ sus_init <- rep(1000, N) # initial susceptibles
 inf_init <- rep(10, N)    # initial infecteds
 
 end_time <- 500
-alp_bet_vec <- seq(0,2,0.01)
+alp_bet_vec <- seq(1.7,1.8,0.01)
 # end_time <- 500
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
@@ -166,7 +166,7 @@ sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
 df_sum <- data.frame(time = sol[,1])
 for(i in c(1:length(alp_bet_vec))){
   print(paste0("i: ", i))
-  betas <- rep(mub, N) 
+  betas <- rep(mub, N)
   betas[1] <- betas[1] + alp_bet_vec[i]
   sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
              COMMUTING,MIGRATION,
@@ -176,16 +176,38 @@ for(i in c(1:length(alp_bet_vec))){
   df_sum[,ncol(df_sum)+1] <- sum_inf
 }
 
-## DF for maximum number of infected individuals and time of maximum.
-max_inf <- df_sum %>% summarise_if(is.numeric, max)
-time_max_vec <- c()
-len_vec <- length(alp_bet_vec)
-for(i in c(1:len_vec)){
-  vec <- df_sum[,i+1]
-  ind <- which(round(vec,1) == round(as.numeric(max_inf[i+1]),1))[1]
-  time_max_vec[i] <- df_sum[ind,1]
+vec_eq <- c()
+rm_ind <- c()
+rm_ind[1] <- 0
+for(i in c(1: (nrow(df_sum)-10))){
+  for(j in c(1:(ncol(df_sum)-1))){
+    if((floor(df_sum[i,j+1]) == floor(df_sum[i +30,j+1])) &
+       length(which(j==rm_ind)) == 0){
+      print("Cumple condición")
+      vec_eq[length(vec_eq) + 1] <- df_sum[i,j+1]
+      rm_ind[length(rm_ind)+1] <- j
+    }
+  }
 }
 
+vec_eq
+rm_ind
+## DF for maximum number of infected individuals and time of maximum.
+max_inf <- df_sum %>% summarise_if(is.numeric, max)
+max_inf_1 <- apply(df_sum, 2, max)
+#[2:length(apply(df_sum, 2, max))]
+df <- data.frame(max_inf,max_inf_1)
+time_max_vec <- c()
+ind_vec <- c()
+len_vec <- length(alp_bet_vec) - 2
+for(i in c(1:len_vec)){
+  vec <- df_sum[,i+1]
+  ind <- which(vec == vec_eq[i])[1]
+  # time_max_vec[i] <- df_sum[ind,1]
+  ind_vec[i] <- ind
+}
+
+time_max_vec <- df_sum[ind_vec,1]
 df_sum_group <- data.frame(alp <- alp_bet_vec[1:len_vec], 
                            max_inf <- t(max_inf)[1:len_vec],
                            time_max <- time_max_vec[1:len_vec])
@@ -222,6 +244,7 @@ seq <- seq(1,len_vec,5 )
 colnames(df_sum) <- c("time",as.character(alp_bet_vec))
 filt_sum <- df_sum[, seq]
 df_plot <- reshape2::melt(filt_sum, id.vars = c("time"))
+# df_plot <- reshape2::melt(df_sum, id.vars = c("time"))
 
 size_let <- 13
 sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
@@ -231,12 +254,12 @@ sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
   scale_colour_gradient(name = TeX("$\\beta^*$"),
                         low = "#F8F053", high = "#4C0EF6") +
   ylab("Sum of infected individuals") +
-  xlim( c(0,10) ) +
+  # xlim( c(0,10) ) +
   theme_bw() +
   theme(text = element_text(size = size_let),
         legend.position = "right") 
 
-sum_inf
+sum_inf + xlim(c(0,40)) 
 
 ### Solve equation for alpha ####
 k <-  1
