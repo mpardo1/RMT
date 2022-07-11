@@ -454,44 +454,12 @@ eig_comp %>%
 
 ####### COMMUTING: PANEL ################################
 library("copula")
-N <- 60
-
-# para los plots
-sus_init <- rep(100000, N) # initial susceptibles
-inf_init <- runif(N, min = 1400,1600)  # initial infecteds
-end_time <- 25
-
-Deltas <- rep(0.1, N) # birth rate
-mub <- 0.15
-sb <- 0.001
-betas <- rep(mub, N) # transmission rates
-#betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
-thetas <- rep(0.1, N) # loss of immunity rates
-mud <- 0.1
-deaths <- rep(mud, N) # not disease-related death rates
-mua <- 0.45
-alphas <- rep(mua, N) # recovery rates
-mudel <- 0
-deltas <- rep(mudel, N) # disease-related death rates
-#gammas = deaths + alphas + deltas
-
-muw <- 0.05
-sw <- 0.05/3
-rhow <- 0 #original rho (Gamma of baron et al)
-
-muc <- 0.05
-sc <- 0.05/4
-rhoc <- .001
-
-mub*muw*(N-1)+mub-mua-mud-mudel
-
-COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
-MIGRATION <- rand_mat_ell(N, muc, sc, rhoc, distrib = "beta")
-diag(COMMUTING) <- diag(MIGRATION) <- rep(0,N)
-sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-           COMMUTING,MIGRATION,
-           sus_init,inf_init,end_time)
-
+library("copula")
+library("viridis")
+library("ggsci")
+library("grid")
+library("reshape")
+library("ggpubr")
 ### FUNCTION FOR PLOTS
 
 plot_panelc <- function(N, sol, COMMUTING, colormean, color_low, color_high, IMIN = "N", IMAX = "N",CMMIN = "N", CMMAX = "N",
@@ -519,23 +487,17 @@ plot_panelc <- function(N, sol, COMMUTING, colormean, color_low, color_high, IMI
                          na.value = "white", limits = c(CMMIN,CMMAX)) +
     # scale_fill_gradient(low="grey90", high="purple") +
     geom_line(data = filter(sol_df, variable == "Smean"), aes(y = value), 
-              color = colormean, size = 1.2, linetype = "dashed") +
+              color = colormean, size = 0.8, linetype = "dashed") +
     ylab("No infected individuals") +
     ylim(c(IMIN,IMAX)) +
     theme(legend.position = "none") +
     guides(color = "none") +
     theme_bw() + 
     theme(text = element_text(size = 15), legend.position = "bottom") 
-
+  
 }
 
-### UNSTABLE NETWORK
-library("copula")
-library("viridis")
-library("ggsci")
-library("grid")
-library("reshape")
-
+### NETWORK
 plotmobility <- function(mat, low_col, high_col){
   diag(mat) <- NA
   longData <- melt(mat)
@@ -554,12 +516,51 @@ plotmobility <- function(mat, low_col, high_col){
           legend.position = "none") + 
     theme_void()  +
     coord_fixed() +
-    ylim(c(60,0)) 
+    ylim(c(N,0)) 
 }
 
+N <- 30
+
+# para los plots
+sus_init <- rep(100000, N) # initial susceptibles
+inf_init <- runif(N, min = 1400,1600)  # initial infecteds
+end_time <- 200
+end_time_rand <- 20
+
+Deltas <- rep(0.1, N) # birth rate
+mub <- 0.15
+sb <- 0.001
+betas <- rep(mub, N) # transmission rates
+#betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
+thetas <- rep(0.1, N) # loss of immunity rates
+mud <- 0.1
+deaths <- rep(mud, N) # not disease-related death rates
+mua <- 0.45
+alphas <- rep(mua, N) # recovery rates
+mudel <- 0
+deltas <- rep(mudel, N) # disease-related death rates
+#gammas = deaths + alphas + deltas
+
+muw <- 0.1
+sw <- 0.03/3
+rhow <- 0 #original rho (Gamma of baron et al)
+
+muc <- 0.005
+sc <- 0.005/4
+rhoc <- .001
+
+mub*muw*(N-1)+mub-mua-mud-mudel
+
+COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
+MIGRATION <- rand_mat_ell(N, muc, sc, rhoc, distrib = "beta")
+diag(COMMUTING) <- diag(MIGRATION) <- rep(0,N)
+sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+           COMMUTING,MIGRATION,
+           sus_init,inf_init,end_time_rand)
+
 col_low <- "#90F0CE"
-col_high <- "#063F95"
-col_mean <- "#3C1642"
+col_high <- "#3F83E9"
+col_mean <- "#000205"
 plot_stab_mob <- plotmobility(COMMUTING, col_low, col_high) + 
   theme(legend.position = "left") 
 ggsave(file="unstnet.svg")
@@ -574,6 +575,7 @@ gg_stable<- annotate_figure(gg_stable,
                                              x = 0.13,
                                              gp = gpar(cex = 1.3)))
 gg_stable
+ggsave(file="~/Documents/PHD/2022/RMT_SIR/Plots/panel4/unstnet.svg")
 ### CONTROL
 nodes <- 4
 muwstar <- 0
@@ -601,6 +603,8 @@ solC <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
             COMMUTINGC,MIGRATION,
             sus_init,inf_init,end_time)
 
+# RAND STRATEGIES #
+end_time <- end_time_rand
 # STRATEGY D
 inds <- sample(c(1:N^2), nodes*(N-1))
 COMMUTINGD[inds] <- muwstar
@@ -670,6 +674,7 @@ commpanel11<- annotate_figure(commpanel11,
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel11
+ggsave(file="~/Documents/PHD/2022/RMT_SIR/Plots/panel4/scenarioA.svg")
 
 #--------#
 commpanel12 <-ggarrange(plotmobility(COMMUTINGB, col_low, col_high),
@@ -684,6 +689,7 @@ commpanel12<- annotate_figure(commpanel12,
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel12
+ggsave(file="~/Documents/PHD/2022/RMT_SIR/Plots/panel4/scenarioB.svg")
 
 #--------#
 commpanel13 <-ggarrange(plotmobility(COMMUTINGC, col_low, col_high),
@@ -698,6 +704,7 @@ commpanel13<- annotate_figure(commpanel13,
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel13
+ggsave(file="~/Documents/PHD/2022/RMT_SIR/Plots/panel4/scenarioC.svg")
 
 #--------#
 commpanel21 <-ggarrange(plotmobility(COMMUTINGD, col_low, col_high),
@@ -712,6 +719,7 @@ commpanel21<- annotate_figure(commpanel21,
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel21
+ggsave(file="~/Documents/PHD/2022/RMT_SIR/Plots/panel4/scenarioD.svg")
 
 #--------#
 commpanel22 <-ggarrange(plotmobility(COMMUTINGE, col_low, col_high),
@@ -726,6 +734,7 @@ commpanel22<- annotate_figure(commpanel22,
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel22
+ggsave(file="~/Documents/PHD/2022/RMT_SIR/Plots/panel4/scenarioE.svg")
 
 #--------#
 commpanel23 <-ggarrange(plotmobility(COMMUTINGF, col_low, col_high),
@@ -740,6 +749,7 @@ commpanel23<- annotate_figure(commpanel23,
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel23
+ggsave(file="~/Documents/PHD/2022/RMT_SIR/Plots/panel4/scenarioF.svg")
 
 #--------#
 commpanel11 <-ggarrange(plotmobility(COMMUTINGA, col_low, col_high) + ggtitle("Scenario A"),                       plotmobility(COMMUTINGB, col_low, col_high) + ggtitle("Scenario B"), 
@@ -830,7 +840,7 @@ eig_comp <- data.frame(k = integer(0),
 nu <- muwstar - muw
 mug <- mud + mua + mudel
 
-for (nodes in seq(0,26,by = 2)) {
+for (nodes in seq(0,floor(N/4),by = 2)) {
   
   COMMUTINGA <- COMMUTINGB <- COMMUTINGC <- COMMUTINGD <- COMMUTINGE <- COMMUTINGF <- COMMUTING
   fs <- sample(c(1:N), nodes)
@@ -861,7 +871,8 @@ for (nodes in seq(0,26,by = 2)) {
                       sqrt((N*(mub*muw+muc))^2+((k-1)*mub*nu)^2+2*(mub*nu)*(mub*muw+muc)*(N+N*k-4*k))/2  +
                       mub*(1-muw) - mug - N*muc,
                     N*(mub*muw+muc)/2 + (k/2-1)*mub*nu/2 +
-                      sqrt((N*(mub*muw+muc))^2+mub*nu*(2*mub*muw+muc)*(N+3*N*k/2-2*(k/2+1))+((mub*nu)^2)*(2*k*(N-k/2)+(k/2-1)^2))/2 +
+                      sqrt((N*(mub*muw+muc))^2+mub*nu*(2*mub*muw+muc)*(N+3*N*k/2-2*(k/2+1))+
+                             ((mub*nu)^2)*(2*k*(N-k/2)+(k/2-1)^2))/2 +
                       mub*(1-muw) - mug - N*muc,
                     mub*(muw*(N-k)+muwstar*k/N)*(N-1)/N + mub - mug,
                     max(eigen_mat(jacA)$re),
@@ -880,9 +891,13 @@ eig_comp_pred <- select(eig_comp, k, LRP_in, LRP_inout, RMT_allr) %>%
   pivot_longer(cols = (2:ncol(.)), names_to = "prediction", values_to = "eigenvalue")
 
 eig_comp_pred %>% ggplot(aes(x = k, y = eigenvalue, color = prediction)) +
-  geom_line(size = 1) + 
-  geom_point(data = eig_comp_real, aes(x = k, y = eigenvalue, color = prediction)) +
-  scale_color_manual(values=c("#0000FF","#FF0000","#63B159","#0000FF","#0000FF","#FF0000","#63B159","#63B159","#63B159"))
+  geom_line(size = 0.8) + 
+  geom_point(data = eig_comp_real, 
+             aes(x = k, y = eigenvalue, color = prediction)) +
+  scale_color_manual(values=c("#0000FF","#FF0000","#63B159",
+                              "#0000FF","#0000FF","#FF0000",
+                              "#63B159","#63B159","#63B159")) + 
+  theme_bw()
 ggsave(file="commparison.svg")
 
 ####### MIGRATION: DIRECTED VS RANDOM EXODUS ############

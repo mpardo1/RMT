@@ -176,7 +176,8 @@ for(i in c(1:length(alp_bet_vec))){
   df_sum[,ncol(df_sum)+1] <- sum_inf
 }
 
-saveRDS(df_sum, file = "df_sum.rds")
+# saveRDS(df_sum, file = "df_sum.rds")
+# readRDS(file = "df_sum.rds")
 
 dec <- 0
 vec_eq <- c()
