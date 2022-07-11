@@ -494,8 +494,8 @@ sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
 
 ### FUNCTION FOR PLOTS
 
-plot_panelc <- function(N, sol, COMMUTING, IMIN = "N", IMAX = "N",CMMIN = "N", CMMAX = "N",
-                        colormean = "red", colorcomm = "blue", size_text = 15) {
+plot_panelc <- function(N, sol, COMMUTING, colormean, color_low, color_high, IMIN = "N", IMAX = "N",CMMIN = "N", CMMAX = "N",
+                        size_text = 15) {
   
   comm_flows <- data.frame(variable = paste0(rep("S",N),as.character(c(1:N))),
                            incoming = rowSums(COMMUTING)/(N-1),
@@ -515,12 +515,12 @@ plot_panelc <- function(N, sol, COMMUTING, IMIN = "N", IMAX = "N",CMMIN = "N", C
   
   ggplot(filter(sol_df, variable != "Smean"), aes(time, value, group = variable)) + 
     geom_line(aes(colour = both), size = .5) +
-    scale_color_gradient(low = "yellow", high = colorcomm,
+    scale_color_gradient(low = color_low, high = color_high,
                          na.value = "white", limits = c(CMMIN,CMMAX)) +
     # scale_fill_gradient(low="grey90", high="purple") +
     geom_line(data = filter(sol_df, variable == "Smean"), aes(y = value), 
               color = colormean, size = 1.2, linetype = "dashed") +
-    ylab("Number of infected individuals") +
+    ylab("No infected individuals") +
     ylim(c(IMIN,IMAX)) +
     theme(legend.position = "none") +
     guides(color = "none") +
@@ -534,14 +534,16 @@ library("copula")
 library("viridis")
 library("ggsci")
 library("grid")
+library("reshape")
 
-plotmobility <- function(mat){
+plotmobility <- function(mat, low_col, high_col){
   diag(mat) <- NA
   longData <- melt(mat)
-  ggplot(longData, aes(x = Var2, y = Var1)) + 
+  colnames(longData) <- c("X1", "X2", "value")
+  ggplot(longData, aes(x = X2, y = X1)) + 
     geom_raster(aes(fill=value)) + 
     # scale_color_brewer(palette = "Dark2")+
-    scale_fill_gradient(low="yellow", high="blue", na.value = "white") +
+    scale_fill_gradient(low=low_col, high=high_col, na.value = "white") +
     theme_bw() +
     theme(axis.title.x=element_blank(),
           axis.text.x=element_blank(),
@@ -555,11 +557,23 @@ plotmobility <- function(mat){
     ylim(c(60,0)) 
 }
 
-plotmobility(COMMUTING)
+col_low <- "#90F0CE"
+col_high <- "#063F95"
+col_mean <- "#3C1642"
+plot_stab_mob <- plotmobility(COMMUTING, col_low, col_high) + 
+  theme(legend.position = "left") 
 ggsave(file="unstnet.svg")
-plot_panelc(N, sol, COMMUTING)
+plot_stab_int <- plot_panelc(N, sol, COMMUTING,col_mean, col_low, col_high )
 ggsave(file="unstsol.svg")
 
+gg_stable <- ggarrange(plot_stab_mob,
+          plot_stab_int)
+
+gg_stable<- annotate_figure(gg_stable, 
+                              top = textGrob("Estable scenario:",
+                                             x = 0.13,
+                                             gp = gpar(cex = 1.3)))
+gg_stable
 ### CONTROL
 nodes <- 4
 muwstar <- 0
@@ -644,45 +658,131 @@ CMMIN <- min(c(rowSums(COMMUTINGA)/(N-1),colSums(COMMUTINGA)/(N-1),
 #                      plotmobility(COMMUTINGF, cmax = CMAX), plot_panelc(N, solF, COMMUTINGF, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
 #                      ncol = 2, nrow = 6)
 
+commpanel11 <-ggarrange(plotmobility(COMMUTINGA, col_low, col_high),
+                        plot_panelc(N, solA, COMMUTINGA,col_mean, col_low, col_high, IMIN = IMIN, 
+                                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
+                          rremove("xlab") +  rremove("ylab"),
+                        ncol = 1, nrow = 2, legend = "none")
 
-commpanel11 <-ggarrange(plotmobility(COMMUTINGA), 
-                      plotmobility(COMMUTINGB), 
-                      plotmobility(COMMUTINGC),
-                      plot_panelc(N, solA, COMMUTINGA, IMIN = IMIN, 
+commpanel11<- annotate_figure(commpanel11, 
+                              top = textGrob("Scenario A:", x = 0.1, gp = gpar(cex = 1.3)),
+                              left = textGrob("No Infected individuals",
+                                              rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
+                              bottom = textGrob("Time", gp = gpar(cex = 1.3)))
+commpanel11
+
+#--------#
+commpanel12 <-ggarrange(plotmobility(COMMUTINGB, col_low, col_high),
+                        plot_panelc(N, solB, COMMUTINGB,col_mean, col_low, col_high, IMIN = IMIN, 
+                                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
+                          rremove("xlab") +  rremove("ylab"),
+                        ncol = 1, nrow = 2, legend = "none")
+
+commpanel12<- annotate_figure(commpanel12, 
+                              top = textGrob("Scenario B:", x = 0.1, gp = gpar(cex = 1.3)),
+                              left = textGrob("No Infected individuals",
+                                              rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
+                              bottom = textGrob("Time", gp = gpar(cex = 1.3)))
+commpanel12
+
+#--------#
+commpanel13 <-ggarrange(plotmobility(COMMUTINGC, col_low, col_high),
+                        plot_panelc(N, solC, COMMUTINGC,col_mean, col_low, col_high, IMIN = IMIN, 
+                                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
+                          rremove("xlab") +  rremove("ylab"),
+                        ncol = 1, nrow = 2, legend = "none")
+
+commpanel13<- annotate_figure(commpanel13, 
+                              top = textGrob("Scenario C:", x = 0.1, gp = gpar(cex = 1.3)),
+                              left = textGrob("No Infected individuals",
+                                              rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
+                              bottom = textGrob("Time", gp = gpar(cex = 1.3)))
+commpanel13
+
+#--------#
+commpanel21 <-ggarrange(plotmobility(COMMUTINGD, col_low, col_high),
+                        plot_panelc(N, solD, COMMUTINGD,col_mean, col_low, col_high, IMIN = IMIN, 
+                                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
+                          rremove("xlab") +  rremove("ylab"),
+                        ncol = 1, nrow = 2, legend = "none")
+
+commpanel21<- annotate_figure(commpanel21, 
+                              top = textGrob("Scenario D:", x = 0.1, gp = gpar(cex = 1.3)),
+                              left = textGrob("No Infected individuals",
+                                              rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
+                              bottom = textGrob("Time", gp = gpar(cex = 1.3)))
+commpanel21
+
+#--------#
+commpanel22 <-ggarrange(plotmobility(COMMUTINGE, col_low, col_high),
+                        plot_panelc(N, solE, COMMUTINGE,col_mean, col_low, col_high, IMIN = IMIN, 
+                                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
+                          rremove("xlab") +  rremove("ylab"),
+                        ncol = 1, nrow = 2, legend = "none")
+
+commpanel22<- annotate_figure(commpanel22, 
+                              top = textGrob("Scenario E:", x = 0.1, gp = gpar(cex = 1.3)),
+                              left = textGrob("No Infected individuals",
+                                              rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
+                              bottom = textGrob("Time", gp = gpar(cex = 1.3)))
+commpanel22
+
+#--------#
+commpanel23 <-ggarrange(plotmobility(COMMUTINGF, col_low, col_high),
+                        plot_panelc(N, solF, COMMUTINGF,col_mean, col_low, col_high, IMIN = IMIN, 
+                                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
+                          rremove("xlab") +  rremove("ylab"),
+                        ncol = 1, nrow = 2, legend = "none")
+
+commpanel23<- annotate_figure(commpanel23, 
+                              top = textGrob("Scenario F:", x = 0.1, gp = gpar(cex = 1.3)),
+                              left = textGrob("No Infected individuals",
+                                              rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
+                              bottom = textGrob("Time", gp = gpar(cex = 1.3)))
+commpanel23
+
+#--------#
+commpanel11 <-ggarrange(plotmobility(COMMUTINGA, col_low, col_high) + ggtitle("Scenario A"),                       plotmobility(COMMUTINGB, col_low, col_high) + ggtitle("Scenario B"), 
+                      plotmobility(COMMUTINGC, col_low, col_high) + ggtitle("Scenario C"),
+                      plot_panelc(N, solA, COMMUTINGA,col_mean, col_low, col_high, IMIN = IMIN, 
                                                            IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
                         rremove("xlab") +  rremove("ylab"),
-                      plot_panelc(N, solB, COMMUTINGB, IMIN = IMIN,
+                      plot_panelc(N, solB, COMMUTINGB,col_mean, col_low, col_high, IMIN = IMIN,
                                   IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)+ 
                         rremove("xlab")+  rremove("ylab"),
-                      plot_panelc(N, solC, COMMUTINGC, IMIN = IMIN, 
+                      plot_panelc(N, solC, COMMUTINGC,col_mean, col_low, col_high, IMIN = IMIN, 
                                   IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)+ 
                         rremove("xlab")+  rremove("ylab"),
                       ncol = 3, nrow = 2, legend = "none")
 
 
 commpanel11<- annotate_figure(commpanel11, 
-                              left = textGrob("Number of Infected individuals",
+                              left = textGrob("No Infected individuals",
                                               rot = 90, vjust = 1, y = 0.3,gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 
-commpanel12 <-ggarrange(plotmobility(COMMUTINGD), 
-                       plotmobility(COMMUTINGE), 
-                       plotmobility(COMMUTINGF),
-                       plot_panelc(N, solA, COMMUTINGA, IMIN = IMIN, 
+commpanel12 <-ggarrange(plotmobility(COMMUTINGD, col_low, col_high), 
+                       plotmobility(COMMUTINGE, col_low, col_high), 
+                       plotmobility(COMMUTINGF, col_low, col_high),
+                       plot_panelc(N, solA, COMMUTINGA,col_mean, col_low, col_high, IMIN = IMIN, 
                                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
                          rremove("xlab") +  rremove("ylab"),
-                       plot_panelc(N, solB, COMMUTINGB, IMIN = IMIN,
+                       plot_panelc(N, solB, COMMUTINGB,col_mean, col_low, col_high, IMIN = IMIN,
                                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)+ 
                          rremove("xlab")+  rremove("ylab"),
-                       plot_panelc(N, solC, COMMUTINGC, IMIN = IMIN, 
+                       plot_panelc(N, solC, COMMUTINGC,col_mean, col_low, col_high, IMIN = IMIN, 
                                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)+ 
                          rremove("xlab")+  rremove("ylab"),
                        ncol = 3, nrow = 2, legend = "none")
 
+commpanel12<- annotate_figure(commpanel12, 
+                              left = textGrob("No Infected individuals",
+                                              rot = 90, vjust = 1, y = 0.3,gp = gpar(cex = 1.3)),
+                              bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 
-commpanel <- ggarrange(commpanel11, commpanel21,
-                       commpanel12, commpanel22,
-                       nrow = 4, ncol = 1)
+
+commpanel <- ggarrange(commpanel11, commpanel12,
+                       nrow = 2, ncol = 1)
 
 
 commpanel <-ggarrange(plotmobility(COMMUTINGA, cmax = CMAX),

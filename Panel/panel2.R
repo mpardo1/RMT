@@ -158,7 +158,7 @@ sus_init <- rep(1000, N) # initial susceptibles
 inf_init <- rep(10, N)    # initial infecteds
 
 end_time <- 500
-alp_bet_vec <- seq(1.7,1.8,0.01)
+alp_bet_vec <- seq(0.5,2.2,0.01)
 # end_time <- 500
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
@@ -176,43 +176,23 @@ for(i in c(1:length(alp_bet_vec))){
   df_sum[,ncol(df_sum)+1] <- sum_inf
 }
 
+saveRDS(df_sum, file = "df_sum.rds")
+
+dec <- 0
 vec_eq <- c()
-rm_ind <- c()
-rm_ind[1] <- 0
-for(i in c(1: (nrow(df_sum)-10))){
-  for(j in c(1:(ncol(df_sum)-1))){
-    if((floor(df_sum[i,j+1]) == floor(df_sum[i +30,j+1])) &
-       length(which(j==rm_ind)) == 0){
-      print("Cumple condición")
-      vec_eq[length(vec_eq) + 1] <- df_sum[i,j+1]
-      rm_ind[length(rm_ind)+1] <- j
-    }
-  }
+max_inf <- as.numeric(ifelse(df_sum[nrow(df_sum),] > 500, df_sum[nrow(df_sum),],500))
+for(i in c(1: (ncol(df_sum)-1))){
+  # ind <- which(floor(max_inf[i+1]) == floor(df_sum[,i+1]))[1]
+  ind <- which(round(max_inf[i+1],dec) == round(df_sum[,i+1],dec))[1]
+  vec_eq[length(vec_eq) + 1] <- df_sum[ind,1]
 }
 
-vec_eq
-rm_ind
-## DF for maximum number of infected individuals and time of maximum.
-max_inf <- df_sum %>% summarise_if(is.numeric, max)
-max_inf_1 <- apply(df_sum, 2, max)
-#[2:length(apply(df_sum, 2, max))]
-df <- data.frame(max_inf,max_inf_1)
-time_max_vec <- c()
-ind_vec <- c()
-len_vec <- length(alp_bet_vec) - 2
-for(i in c(1:len_vec)){
-  vec <- df_sum[,i+1]
-  ind <- which(vec == vec_eq[i])[1]
-  # time_max_vec[i] <- df_sum[ind,1]
-  ind_vec[i] <- ind
-}
-
-time_max_vec <- df_sum[ind_vec,1]
+len_vec <- length(alp_bet_vec)
+time_max_vec <- vec_eq
 df_sum_group <- data.frame(alp <- alp_bet_vec[1:len_vec], 
                            max_inf <- t(max_inf)[1:len_vec],
                            time_max <- time_max_vec[1:len_vec])
 
-df_sum_group <-  df_sum_group[-1,]
 colnames(df_sum_group) <-  c("alpha", "Max_inf", "Time_max")
 library("latex2exp")
 plot_inf_max <- ggplot(df_sum_group) + 
@@ -222,13 +202,6 @@ plot_inf_max <- ggplot(df_sum_group) +
   theme_bw() +
   theme(text = element_text(size = size_let)) 
 plot_inf_max
-
-# Check why it happens the fluctuations
-df_plot_filt <- df_sum[,c(1,65)]
-colnames(df_plot_filt) <- c("Time", "I")
-ggplot(df_plot_filt) + 
-  geom_line(aes(Time, log10(I))) + 
-  ylim(c(58675.2,58675.3))
 
 plot_time_max <-  ggplot(df_sum_group) + 
   geom_line(aes(alpha, Time_max), colour = "#69995D" , size = 0.5) + 
@@ -259,7 +232,7 @@ sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
   theme(text = element_text(size = size_let),
         legend.position = "right") 
 
-sum_inf + xlim(c(0,40)) 
+sum_inf + xlim(c(0,20)) 
 
 ### Solve equation for alpha ####
 k <-  1
@@ -496,5 +469,3 @@ Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
 path <- paste0(Path,"panel2.png")
 ggsave(path,
        plot = gg_full, device = "png")
-
-
