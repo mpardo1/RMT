@@ -5,7 +5,11 @@
 ### plots for the article
 ### works over "RMT_parent.R"
 ###
-
+rm(list = ls())
+source("~/RMT/David/RMT_genrandom.R")
+source("~/RMT/David/RMT_plotmobility.R")
+source("~/RMT/David/d_functions_eigen_int.R")
+library("viridis")
 ####### BASE PARAMETERS #################################
 
 # number of patches
@@ -462,6 +466,12 @@ library("reshape")
 library("ggpubr")
 ### FUNCTION FOR PLOTS
 
+if( getwd() == "/home/marta"){
+  Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/panel4/"
+}else{
+  Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel4/"
+}
+
 plot_panelc <- function(N, sol, COMMUTING, colormean, color_low, color_high, IMIN = "N", IMAX = "N",CMMIN = "N", CMMAX = "N",
                         size_text = 15) {
   
@@ -563,9 +573,9 @@ col_high <- "#3F83E9"
 col_mean <- "#000205"
 plot_stab_mob <- plotmobility(COMMUTING, col_low, col_high) + 
   theme(legend.position = "left") 
-ggsave(file="unstnet.svg")
+ggsave(file=paste0(Path,"unstnet.svg"))
 plot_stab_int <- plot_panelc(N, sol, COMMUTING,col_mean, col_low, col_high )
-ggsave(file="unstsol.svg")
+ggsave(file=paste0(Path,"unstsol.svg"))
 
 gg_stable <- ggarrange(plot_stab_mob,
           plot_stab_int)
@@ -575,7 +585,7 @@ gg_stable<- annotate_figure(gg_stable,
                                              x = 0.13,
                                              gp = gpar(cex = 1.3)))
 gg_stable
-ggsave(file="~/Documents/PHD/2022/RMT_SIR/Plots/panel4/unstnet.svg")
+ggsave(file=paste0(Path,"stable.svg"))
 ### CONTROL
 nodes <- 4
 muwstar <- 0
@@ -597,7 +607,7 @@ solB <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
 
 # STRATEGY C
 fcs <- sample(c(1:N), nodes/2)
-fcs <- fs[c(1:nodes/2)]
+fcs <- fs[c(1:(nodes/2))]
 COMMUTINGC[fcs,] <- COMMUTINGC[,fcs] <- muwstar
 solC <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
             COMMUTINGC,MIGRATION,
@@ -606,14 +616,14 @@ solC <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
 # RAND STRATEGIES #
 end_time <- end_time_rand
 # STRATEGY D
-inds <- sample(c(1:N^2), nodes*(N-1))
+inds <- sample(c(1:N^2), nodes*N)
 COMMUTINGD[inds] <- muwstar
 solD <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
             COMMUTINGD,MIGRATION,
             sus_init,inf_init,end_time)
 
 # STRATEGY E
-rinds <- inds[c(1:(N^2)*nodes/(N-1)/2)]
+rinds <- inds[c(1:(nodes*N/2))]
 COMMUTINGE[rinds] <- muwstar
 COMMUTINGE <- t(COMMUTINGE)
 COMMUTINGE[rinds] <- muwstar
@@ -674,7 +684,7 @@ commpanel11<- annotate_figure(commpanel11,
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel11
-ggsave(file="~/Documents/PHD/2022/RMT_SIR/Plots/panel4/scenarioA.svg")
+ggsave(file=paste0(Path,"scenarioA.svg"))
 
 #--------#
 commpanel12 <-ggarrange(plotmobility(COMMUTINGB, col_low, col_high),
@@ -689,7 +699,7 @@ commpanel12<- annotate_figure(commpanel12,
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel12
-ggsave(file="~/Documents/PHD/2022/RMT_SIR/Plots/panel4/scenarioB.svg")
+ggsave(file=paste0(Path,"scenarioB.svg"))
 
 #--------#
 commpanel13 <-ggarrange(plotmobility(COMMUTINGC, col_low, col_high),
@@ -704,7 +714,7 @@ commpanel13<- annotate_figure(commpanel13,
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel13
-ggsave(file="~/Documents/PHD/2022/RMT_SIR/Plots/panel4/scenarioC.svg")
+ggsave(file=paste0(Path,"scenarioC.svg"))
 
 #--------#
 commpanel21 <-ggarrange(plotmobility(COMMUTINGD, col_low, col_high),
@@ -719,7 +729,7 @@ commpanel21<- annotate_figure(commpanel21,
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel21
-ggsave(file="~/Documents/PHD/2022/RMT_SIR/Plots/panel4/scenarioD.svg")
+ggsave(file=paste0(Path,"scenarioD.svg"))
 
 #--------#
 commpanel22 <-ggarrange(plotmobility(COMMUTINGE, col_low, col_high),
@@ -734,7 +744,7 @@ commpanel22<- annotate_figure(commpanel22,
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel22
-ggsave(file="~/Documents/PHD/2022/RMT_SIR/Plots/panel4/scenarioE.svg")
+ggsave(file=paste0(Path,"scenarioE.svg"))
 
 #--------#
 commpanel23 <-ggarrange(plotmobility(COMMUTINGF, col_low, col_high),
@@ -749,80 +759,7 @@ commpanel23<- annotate_figure(commpanel23,
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel23
-ggsave(file="~/Documents/PHD/2022/RMT_SIR/Plots/panel4/scenarioF.svg")
-
-#--------#
-commpanel11 <-ggarrange(plotmobility(COMMUTINGA, col_low, col_high) + ggtitle("Scenario A"),                       plotmobility(COMMUTINGB, col_low, col_high) + ggtitle("Scenario B"), 
-                      plotmobility(COMMUTINGC, col_low, col_high) + ggtitle("Scenario C"),
-                      plot_panelc(N, solA, COMMUTINGA,col_mean, col_low, col_high, IMIN = IMIN, 
-                                                           IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
-                        rremove("xlab") +  rremove("ylab"),
-                      plot_panelc(N, solB, COMMUTINGB,col_mean, col_low, col_high, IMIN = IMIN,
-                                  IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)+ 
-                        rremove("xlab")+  rremove("ylab"),
-                      plot_panelc(N, solC, COMMUTINGC,col_mean, col_low, col_high, IMIN = IMIN, 
-                                  IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)+ 
-                        rremove("xlab")+  rremove("ylab"),
-                      ncol = 3, nrow = 2, legend = "none")
-
-
-commpanel11<- annotate_figure(commpanel11, 
-                              left = textGrob("No Infected individuals",
-                                              rot = 90, vjust = 1, y = 0.3,gp = gpar(cex = 1.3)),
-                              bottom = textGrob("Time", gp = gpar(cex = 1.3)))
-
-commpanel12 <-ggarrange(plotmobility(COMMUTINGD, col_low, col_high), 
-                       plotmobility(COMMUTINGE, col_low, col_high), 
-                       plotmobility(COMMUTINGF, col_low, col_high),
-                       plot_panelc(N, solA, COMMUTINGA,col_mean, col_low, col_high, IMIN = IMIN, 
-                                   IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
-                         rremove("xlab") +  rremove("ylab"),
-                       plot_panelc(N, solB, COMMUTINGB,col_mean, col_low, col_high, IMIN = IMIN,
-                                   IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)+ 
-                         rremove("xlab")+  rremove("ylab"),
-                       plot_panelc(N, solC, COMMUTINGC,col_mean, col_low, col_high, IMIN = IMIN, 
-                                   IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)+ 
-                         rremove("xlab")+  rremove("ylab"),
-                       ncol = 3, nrow = 2, legend = "none")
-
-commpanel12<- annotate_figure(commpanel12, 
-                              left = textGrob("No Infected individuals",
-                                              rot = 90, vjust = 1, y = 0.3,gp = gpar(cex = 1.3)),
-                              bottom = textGrob("Time", gp = gpar(cex = 1.3)))
-
-
-commpanel <- ggarrange(commpanel11, commpanel12,
-                       nrow = 2, ncol = 1)
-
-
-commpanel <-ggarrange(plotmobility(COMMUTINGA, cmax = CMAX),
-                      plotmobility(COMMUTINGB, cmax = CMAX),
-                      plotmobility(COMMUTINGC, cmax = CMAX),
-                      plotmobility(COMMUTINGD, cmax = CMAX),
-                      plotmobility(COMMUTINGE, cmax = CMAX),
-                      plot_panelc(N, solA, COMMUTINGA, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                      plot_panelc(N, solB, COMMUTINGB, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                      plot_panelc(N, solC, COMMUTINGC, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                      plot_panelc(N, solD, COMMUTINGD, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                      plot_panelc(N, solE, COMMUTINGE, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                      ncol = 6, nrow = 2)
-
-commpanel <-ggarrange(plotmobility(COMMUTINGA, cmax = CMAX),
-                      plotmobility(COMMUTINGB, cmax = CMAX),
-                      plotmobility(COMMUTINGC, cmax = CMAX),
-                      plot_panelc(N, solA, COMMUTINGA, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                      plot_panelc(N, solB, COMMUTINGB, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                      plot_panelc(N, solC, COMMUTINGC, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                      plotmobility(COMMUTINGD, cmax = CMAX),
-                      plotmobility(COMMUTINGE, cmax = CMAX),
-                      plotmobility(COMMUTINGF, cmax = CMAX),
-                      plot_panelc(N, solD, COMMUTINGD, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                      plot_panelc(N, solE, COMMUTINGE, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                      plot_panelc(N, solF, COMMUTINGF, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
-                      ncol = 3, nrow = 4)
-
-commpanel
-ggsave(file="commpanel.svg", plot=commpanel)
+ggsave(file=paste0(Path,"scenarioF.svg"))
 
 ### COMPARISON
 
@@ -840,18 +777,18 @@ eig_comp <- data.frame(k = integer(0),
 nu <- muwstar - muw
 mug <- mud + mua + mudel
 
-for (nodes in seq(0,floor(N/4),by = 2)) {
+for (nodes in seq(0,floor(N/2),by = 2)) {
   
   COMMUTINGA <- COMMUTINGB <- COMMUTINGC <- COMMUTINGD <- COMMUTINGE <- COMMUTINGF <- COMMUTING
   fs <- sample(c(1:N), nodes)
   COMMUTINGA[fs,] <- muwstar
   COMMUTINGB[,fs] <- muwstar
   fcs <- sample(c(1:N), nodes/2)
-  fcs <- fs[c(1:nodes/2)]
+  fcs <- fs[c(1:(nodes/2))]
   COMMUTINGC[fcs,] <- COMMUTINGC[,fcs] <- muwstar
-  inds <- sample(c(1:N^2), nodes*(N-1))
+  inds <- sample(c(1:N^2), nodes*N)
   COMMUTINGD[inds] <- muwstar
-  rinds <- inds[c(1:(N^2)*nodes/(N-1)/2)]
+  rinds <- inds[c(1:(nodes*N/2))]
   COMMUTINGE[rinds] <- muwstar
   COMMUTINGE <- t(COMMUTINGE)
   COMMUTINGE[rinds] <- muwstar
