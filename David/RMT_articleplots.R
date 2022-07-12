@@ -529,7 +529,7 @@ plotmobility <- function(mat, low_col, high_col){
     ylim(c(N,0)) 
 }
 
-N <- 30
+N <- 300
 
 # para los plots
 sus_init <- rep(100000, N) # initial susceptibles
