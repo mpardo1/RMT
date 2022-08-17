@@ -90,8 +90,8 @@ for(i in c(1:length(beta_vec))){
 
  df_sol <- df_sol[-1,]
 
-path <- paste0("~/RMT/David/OUTPUT/area_gen_",Sys.Date(),".csv")
-write.csv(df_sol, path,row.names = TRUE)
+# path <- paste0("~/RMT/David/OUTPUT/area_gen_",Sys.Date(),".csv")
+# write.csv(df_sol, path,row.names = TRUE)
 
 # path <- "~/RMT/David/OUTPUT/area_gen_2022-03-30.csv"
 # df_sol <- read.csv(file = path)

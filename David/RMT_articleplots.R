@@ -498,7 +498,7 @@ plot_panelc <- function(N, sol, COMMUTING, colormean, color_low, color_high, IMI
     # scale_fill_gradient(low="grey90", high="purple") +
     geom_line(data = filter(sol_df, variable == "Smean"), aes(y = value), 
               color = colormean, size = 0.8, linetype = "dashed") +
-    ylab("No infected individuals") +
+    ylab("Infected individuals") +
     ylim(c(IMIN,IMAX)) +
     theme(legend.position = "none") +
     guides(color = "none") +
@@ -529,8 +529,8 @@ plotmobility <- function(mat, low_col, high_col){
     ylim(c(N,0)) 
 }
 
-N <- 300
-
+N <- 100
+N <- 30
 # para los plots
 sus_init <- rep(100000, N) # initial susceptibles
 inf_init <- runif(N, min = 1400,1600)  # initial infecteds
@@ -566,7 +566,7 @@ MIGRATION <- rand_mat_ell(N, muc, sc, rhoc, distrib = "beta")
 diag(COMMUTING) <- diag(MIGRATION) <- rep(0,N)
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
-           sus_init,inf_init,end_time_rand)
+           sus_init,inf_init,end_time)
 
 col_low <- "#90F0CE"
 col_high <- "#3F83E9"
@@ -578,14 +578,17 @@ plot_stab_int <- plot_panelc(N, sol, COMMUTING,col_mean, col_low, col_high )
 ggsave(file=paste0(Path,"unstsol.svg"))
 
 gg_stable <- ggarrange(plot_stab_mob,
-          plot_stab_int)
+                       plot_stab_int, 
+                       nrow  =2, labels = c("Unstable scenario",""),
+                       vjust = 1.1)
 
-gg_stable<- annotate_figure(gg_stable, 
-                              top = textGrob("Estable scenario:",
-                                             x = 0.13,
-                                             gp = gpar(cex = 1.3)))
+# gg_stable<- annotate_figure(gg_stable, 
+#                               top = textGrob("Stable scenario:",
+#                                              x = 0.13,
+#                                              gp = gpar(cex = 1.3)))
 gg_stable
-ggsave(file=paste0(Path,"stable.svg"))
+ggsave(file=paste0(Path,"unstable.svg"))
+
 ### CONTROL
 nodes <- 4
 muwstar <- 0
@@ -614,7 +617,7 @@ solC <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
             sus_init,inf_init,end_time)
 
 # RAND STRATEGIES #
-end_time <- end_time_rand
+end_time <- 200
 # STRATEGY D
 inds <- sample(c(1:N^2), nodes*N)
 COMMUTINGD[inds] <- muwstar
@@ -680,7 +683,7 @@ commpanel11 <-ggarrange(plotmobility(COMMUTINGA, col_low, col_high),
 
 commpanel11<- annotate_figure(commpanel11, 
                               top = textGrob("Scenario A:", x = 0.1, gp = gpar(cex = 1.3)),
-                              left = textGrob("No Infected individuals",
+                              left = textGrob("Infected individuals",
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel11
@@ -695,7 +698,7 @@ commpanel12 <-ggarrange(plotmobility(COMMUTINGB, col_low, col_high),
 
 commpanel12<- annotate_figure(commpanel12, 
                               top = textGrob("Scenario B:", x = 0.1, gp = gpar(cex = 1.3)),
-                              left = textGrob("No Infected individuals",
+                              left = textGrob("",
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel12
@@ -705,12 +708,12 @@ ggsave(file=paste0(Path,"scenarioB.svg"))
 commpanel13 <-ggarrange(plotmobility(COMMUTINGC, col_low, col_high),
                         plot_panelc(N, solC, COMMUTINGC,col_mean, col_low, col_high, IMIN = IMIN, 
                                     IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
-                          rremove("xlab") +  rremove("ylab"),
+                          rremove("xlab") +  rremove("ylab") ,
                         ncol = 1, nrow = 2, legend = "none")
 
 commpanel13<- annotate_figure(commpanel13, 
                               top = textGrob("Scenario C:", x = 0.1, gp = gpar(cex = 1.3)),
-                              left = textGrob("No Infected individuals",
+                              left = textGrob("Infected individuals",
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel13
@@ -725,7 +728,7 @@ commpanel21 <-ggarrange(plotmobility(COMMUTINGD, col_low, col_high),
 
 commpanel21<- annotate_figure(commpanel21, 
                               top = textGrob("Scenario D:", x = 0.1, gp = gpar(cex = 1.3)),
-                              left = textGrob("No Infected individuals",
+                              left = textGrob("",
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel21
@@ -740,7 +743,7 @@ commpanel22 <-ggarrange(plotmobility(COMMUTINGE, col_low, col_high),
 
 commpanel22<- annotate_figure(commpanel22, 
                               top = textGrob("Scenario E:", x = 0.1, gp = gpar(cex = 1.3)),
-                              left = textGrob("No Infected individuals",
+                              left = textGrob("Infected individuals",
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel22
@@ -755,11 +758,60 @@ commpanel23 <-ggarrange(plotmobility(COMMUTINGF, col_low, col_high),
 
 commpanel23<- annotate_figure(commpanel23, 
                               top = textGrob("Scenario F:", x = 0.1, gp = gpar(cex = 1.3)),
-                              left = textGrob("No Infected individuals",
+                              left = textGrob("",
                                               rot = 90, vjust = 1, y = 0.3, gp = gpar(cex = 1.3)),
                               bottom = textGrob("Time", gp = gpar(cex = 1.3)))
 commpanel23
 ggsave(file=paste0(Path,"scenarioF.svg"))
+
+
+####
+plotmob <- ggarrange(plotmobility(COMMUTINGA, col_low, col_high),
+                  plotmobility(COMMUTINGB, col_low, col_high),
+                  plotmobility(COMMUTINGC, col_low, col_high),
+                  plotmobility(COMMUTINGD, col_low, col_high),
+                  plotmobility(COMMUTINGE, col_low, col_high),
+                  plotmobility(COMMUTINGF, col_low, col_high),
+                  nrow = 2, ncol = 3, labels = c("Strategy A","Strategy B",
+                                                 "Strategy C","Strategy D",
+                                                 "Strategy E","Strategy F"),
+                  legend = "none")
+
+plotmob
+ggsave(file=paste0(Path,"mob_plots.svg"))
+
+plotint <- ggarrange(plot_panelc(N, solA, COMMUTINGA,col_mean, col_low, col_high, IMIN = IMIN, 
+                                 IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
+                       rremove("xlab") +  rremove("ylab") ,
+                     plot_panelc(N, solB, COMMUTINGB,col_mean, col_low, col_high, IMIN = IMIN, 
+                                 IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
+                       rremove("xlab") +  rremove("ylab") ,
+                     plot_panelc(N, solC, COMMUTINGC,col_mean, col_low, col_high, IMIN = IMIN, 
+                                 IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
+                       rremove("xlab") +  rremove("ylab") ,
+                     plot_panelc(N, solD, COMMUTINGD,col_mean, col_low, col_high, IMIN = IMIN, 
+                                 IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
+                       rremove("xlab") +  rremove("ylab") ,
+                     plot_panelc(N, solE, COMMUTINGE,col_mean, col_low, col_high, IMIN = IMIN, 
+                                 IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
+                       rremove("xlab") +  rremove("ylab") ,
+                     plot_panelc(N, solF, COMMUTINGF,col_mean, col_low, col_high, IMIN = IMIN, 
+                                 IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
+                       rremove("xlab") +  rremove("ylab") ,
+                  nrow = 2, ncol = 3, labels = c("Strategy A","Strategy B",
+                                                 "Strategy C","Strategy D",
+                                                 "Strategy E","Strategy F"),
+                  legend = "none", vjust = 1.3,
+                  heights = c(0.8,0.8,0.8,0.8,0.8,0.8) ,
+                  align = "h")
+
+plotint<- annotate_figure(plotint, 
+                              left = textGrob("Infected individuals",
+                                              rot = 90, vjust = 1, y = 0.5, gp = gpar(cex = 1.3)),
+                              bottom = textGrob("Time", gp = gpar(cex = 1.3)))
+
+plotint
+ggsave(file=paste0(Path,"int_plots.svg"))
 
 ### COMPARISON
 
@@ -777,7 +829,7 @@ eig_comp <- data.frame(k = integer(0),
 nu <- muwstar - muw
 mug <- mud + mua + mudel
 
-for (nodes in seq(0,floor(N/2),by = 2)) {
+for (nodes in seq(0,floor(N/4),by = 2)) {
   
   COMMUTINGA <- COMMUTINGB <- COMMUTINGC <- COMMUTINGD <- COMMUTINGE <- COMMUTINGF <- COMMUTING
   fs <- sample(c(1:N), nodes)
@@ -834,8 +886,8 @@ eig_comp_pred %>% ggplot(aes(x = k, y = eigenvalue, color = prediction)) +
   scale_color_manual(values=c("#0000FF","#FF0000","#63B159",
                               "#0000FF","#0000FF","#FF0000",
                               "#63B159","#63B159","#63B159")) + 
-  theme_bw()
-ggsave(file="commparison.svg")
+  theme_bw() + theme(text = element_text(size = 15))
+ggsave(file=paste0(Path,"commparison.svg"))
 
 ####### MIGRATION: DIRECTED VS RANDOM EXODUS ############
 
