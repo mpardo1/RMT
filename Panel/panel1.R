@@ -559,8 +559,13 @@ gginf  <- annotate_figure(gg_grid,
                           left = text_grob("Number of infected individuals",
                                            color = "black", rot = 90,  size = 15))
 
-ggarr1 <- plot_grid(plot_area, gginf)
-plot_grid(ggarr1,eigen_full,
+ggarr1 <- plot_grid(plot_area + ggtitle("a"), 
+                    NULL,
+                    gginf,
+                    rel_widths = c(1,0.1,1),
+                    ncol = 3) 
+plot_grid(ggarr1,
+          eigen_full  + ggtitle("b"),
           nrow = 2,
           ncol = 1,
           rel_heights = c(1.6,1))
