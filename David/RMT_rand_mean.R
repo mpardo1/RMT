@@ -61,8 +61,9 @@ df_epi <- data.frame(mean = mub, mean_arit = 0, sigma = 0, max_rand = 0, max_mea
 sig_vec <- seq(0,1,0.01)
 len <- length(sig_vec)
 count = 0
-while( count < 1000){
+while( count < 100){
   for(i in c(1:len)){
+    print(paste0("count:",count))
     ##### Random beta ####
     sb <- sig_vec[i]
     betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 

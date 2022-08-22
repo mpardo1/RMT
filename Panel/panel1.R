@@ -52,7 +52,7 @@ MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
 diag(MIGRATION) <- 0
 # ----------------------------------------------------------------------#
 ##### Plot Stability #####
-step <- 0.005
+step <- 0.0025
 beta_vec <- seq(0.01,0.9,step)
 muw_vec <- seq(0.01,0.9,step)
 df_sol <- data.frame(beta = 0, gamma = 0, N = 0, muw = 0, state = FALSE)
@@ -484,7 +484,7 @@ eigen_full <- ggplot(eig_full) +
   geom_point(aes(o_stab,0), 
              color = col_stab, shape = 21) +
   geom_point(aes(o_unstab_b,0),
-             color = col_unst_b, shape = 21, size = 1.8) +
+             color = col_unst_b, shape = 19, size = 2.4) +
   geom_point(aes(o_unstab_c,0), 
              color = col_unst_c, shape = 21, size = 0.6) +
   geom_vline(xintercept = 0, color = "blue", linetype = "dashed")  +
@@ -516,7 +516,7 @@ gginf <- ggarrange(plot_inf_stab + labs(title = "c") +
                      theme(text = element_text(size = size_text)),
                    plot_inf_unstab_com + labs(title = "d") +
                      rremove("xlab")  + rremove("ylab") +
-                     scale_y_continuous( breaks=c(0, 6000, 12000)) +
+                     scale_y_continuous( breaks=c(0,7500, 15000)) +
                      theme(text = element_text(size = size_text)),
                    plot_inf_unstab_bet + labs(title = "e") +
                       rremove("xlab")  + rremove("ylab") +

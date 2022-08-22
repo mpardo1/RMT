@@ -138,7 +138,7 @@ plot_stab.mean
 library("ggpubr")
 text_size <- 15
 plot1 <- plot_stab.rand +
-  xlim(c(0,10))  +
+  xlim(c(0,5))  +
          # scale_y_continuous(breaks=c(0, 200, 400,600,800))  + 
   ylab("Infected infividuals") +
   theme_bw()+
@@ -148,7 +148,7 @@ vec_col <-  vector(mode="character", length=N)
 vec_col[1:N] <- "#9821B3"
  
 plot2 <- plot_stab.mean +
-  xlim(c(0,10))  + 
+  xlim(c(0,5))  + 
   scale_colour_manual(values = vec_col) +
   ylab("Infected infividuals") +
   # scale_y_continuous(breaks=c(0, 200, 400,600,800)) +
@@ -165,10 +165,12 @@ gg_comp
 # Read from a CSV 
 
 Path <- "~/RMT/David/OUTPUT/"
-path <- paste0(Path,"rand_bet_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_2022-04-01.csv")
+path <- paste0(Path,"rand_bet_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_2022-08-22.csv")
 df_rand <- read.csv(file = path)
+df_rand <- df_rand[,-1]
 df_rand <- df_rand[-1,]
-
+colnames(df_rand) <- c( "mean", "mean_arit" , "sigma" ,
+                        "max_rand" , "max_mean", "sq_err")
 df_rand$diff_max <- df_rand$max_rand - df_rand$max_mean
 df_rand_group <- df_rand %>%  group_by(sigma) %>% 
   summarise(mean = mean(sq_err), n = n())
@@ -179,7 +181,7 @@ err_max_inf <- ggplot(df_rand_group) +
   geom_point(aes(sigma,mean), size = 1, colour = "#7018D5" ) +
   xlab(TeX("$\\sigma_{\\beta}$")) +
   ylab("Mean squared error") +
-  ylim(c(0,0.2)) +
+  ylim(c(0,0.12)) +
   theme_bw() +
   theme(text = element_text(size = text_size),
         plot.margin = margin(1, 1, 1, 1, "cm")) 
@@ -203,11 +205,13 @@ im_cte <- ggplot() +
                              b=margin_ud+0.3, unit = "cm"))
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel3/diagram_rand_bet.png"
+Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/panel3/circ-1.png"
 diagram_rand <- readPNG(Path)
 im_rand <- ggplot() + 
   background_image(diagram_rand) +
   # This ensures that the image leaves so me space at the edges
   theme(plot.margin = margin(t=margin_ud+0.3, l=margin_lr, r=margin_lr, b=margin_ud, unit = "cm"))
+
 
 library("ggpubr")
 gg1 <- ggarrange(plot1, plot2, nrow = 1, ncol = 2, common.legend = TRUE)

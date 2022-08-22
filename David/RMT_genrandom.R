@@ -275,10 +275,12 @@ plot_eigen_rmt <- function(jacobian,
     
     plot_eigen_rmt <- plot_eigen(jacobian) +
       coord_fixed() +
-      geom_vline(xintercept = 0, color = "blue") +
-      geom_point(aes(x = outl, y = 0), color = "red") +
-      geom_point(aes(x = outl2, y = 0), color = "red") +
-      geom_ellipse(aes(x0 = center, y0 = 0, a = (1+rho)*radius, b = (1-rho)*radius, angle = 0), color = "red") +
+      geom_vline(xintercept = 0, color = "#8C2F39", linetype = "dashed") +
+      geom_point(aes(x = outl, y = 0), color = "#1B5299") +
+      geom_point(aes(x = outl2, y = 0), color = "#1B5299") +
+      geom_ellipse(aes(x0 = center, y0 = 0, 
+                       a = (1+rho)*radius, b = (1-rho)*radius, angle = 0),
+                   color = "#1B5299") +
       theme_bw()
     
   }else if( K > 1 ){
@@ -296,11 +298,12 @@ plot_eigen_rmt <- function(jacobian,
     
     plot_eigen_rmt <- plot_eigen(jacobian) +
       coord_fixed() +
-      geom_vline(xintercept = 0, color = "blue") +
-      geom_point(aes(x = outl, y = 0), color = "red") +
-      geom_point(aes(x = outl2, y = 0), color = "red") +
-      geom_point(aes(x = outl3, y = 0), color = "red") +
-      geom_ellipse(aes(x0 = center, y0 = 0, a = (1+rho)*radius, b = (1-rho)*radius, angle = 0), color = "red") +
+      geom_vline(xintercept = 0, color = "#8C2F39") +
+      geom_point(aes(x = outl, y = 0), color = "#1B5299") +
+      geom_point(aes(x = outl2, y = 0), color = "#1B5299") +
+      geom_point(aes(x = outl3, y = 0), color = "#1B5299") +
+      geom_ellipse(aes(x0 = center, y0 = 0, a = (1+rho)*radius, 
+                       b = (1-rho)*radius, angle = 0), color = "#1B5299") +
       theme_bw()
   }else{
     out <- max(eigen_mat(jacobian)$re)
