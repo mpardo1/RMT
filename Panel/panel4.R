@@ -57,10 +57,10 @@ plot_panelc <- function(N, sol, COMMUTING, colormean, color_low = "#FFFFFF", col
               color = colormean, size = 0.8, linetype = "dashed") +
     ylab("Infected individuals") +
     ylim(c(IMIN,IMAX)) +
-    theme(legend.position = "none") +
     guides(color = "none") +
     theme_bw() + 
-    theme(text = element_text(size = 15), legend.position = "bottom") 
+    theme(text = element_text(size = 12), legend.position = "none",
+          plot.margin = unit(c(0,0,0,0),"cm")) 
   
 }
 
@@ -446,7 +446,7 @@ gg_eigen_full <- ggplot(eigenT) +
   geom_point(aes(outlF,0), 
              color = col_stabF, shape = 23, size = 1.5) +
   geom_vline(xintercept = 0, color = "blue",  linetype = "dashed") +
-  theme_bw()
+  theme_bw() + theme(text = element_text(size = 12))
 
 gg_eigen_full
  #######
@@ -484,7 +484,9 @@ plotmobility <- function(mob, color1 = "#0000FF", cmin = "N", cmax = "N"){
       geom_tile(aes(fill = mob)) +
       scale_fill_gradient(low = collow, high = color1, na.value = "yellow", limits = c(cmin,cmax)) +
       theme_void() +
-      theme(legend.position="none", panel.background=element_blank()) +
+      theme(legend.position="none",
+            panel.background=element_blank(),
+            plot.margin = unit(c(0.1,0.1,0.1,0.1),"cm")) +
       coord_fixed()
     
   } else {
@@ -573,59 +575,53 @@ intF <- plot_panelc(N, solF, COMMUTINGF,col_mean, col_lrand, col_rand, IMIN = IM
                     IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)  + ylim(c(0,100))
 intF
 text_tit = 15
-gstab <- plot_grid(mobstab + ggtitle("Unstable Scenario"),
-          int ,
-          plot_eig_lines + ggtitle("a") + theme(legend.position = "bottom"),
-          nrow = 3, rel_heights = c(0.8,1,1.5),
-          align = "v")
 
-                
-gdet <- plot_grid(mobA + ylab("") + ggtitle("Scenario A \n"),
+######PANEL 4#####
+gstab <- plot_grid(NULL,
+          mobstab + ggtitle("Unstable Scenario\n"),
+          int + theme(aspect.ratio = 1) ,
+          NULL,
+          nrow = 4, align = "v")
+
+
+gdet <- plot_grid(mobA + ylab("") + ggtitle("Scenario A \n") ,
                   mobB + ggtitle("Scenario B \n"),
                   mobC + ggtitle("Scenario C \n"),
-                  intA + rremove("ylab") + rremove("xlab"),
-                  intB + rremove("ylab") + rremove("xlab"),
-                  intC + rremove("ylab") + rremove("xlab"), 
-                  ncol = 3, nrow = 2,rel_heights = c(1,1),
-                  align = "v")
-
-gdet <- annotate_figure(gdet,
-                left = textGrob("Infected individuals",
-                                rot = 90, vjust = 1, y = 0.35, gp = gpar(cex = 1.3)),
-                bottom = textGrob("Time", gp = gpar(cex = 1.3)))
-
-grand <- plot_grid(mobD + ylab("") + ggtitle("Scenario D \n"),
+                  intA + theme(aspect.ratio = 1) ,
+                  intB  + theme(aspect.ratio = 1) + rremove("ylab") ,
+                  intC  + theme(aspect.ratio = 1) + rremove("ylab"), 
+                  mobD + ylab("") + ggtitle("Scenario D \n"),
                   mobE + ggtitle("Scenario E \n"),
                   mobF + ggtitle("Scenario F \n"),
-                  intD + rremove("ylab") + rremove("xlab"),
-                  intE + rremove("ylab") + rremove("xlab"),
-                  intF + rremove("ylab") + rremove("xlab"), 
-                  ncol = 3, nrow = 2,rel_heights = c(1,1),
-                  align = "v")
+                  intD + theme(aspect.ratio = 1)  ,
+                  intE + theme(aspect.ratio = 1) + rremove("ylab") ,
+                  intF + theme(aspect.ratio = 1) + rremove("ylab") ,
+                  ncol = 3, nrow = 4, align = "v")
 
-grand <- annotate_figure(grand,
-                        left = textGrob("Infected individuals",
-                                        rot = 90, vjust = 1, y = 0.35, gp = gpar(cex = 1.3)),
-                        bottom = textGrob("Time", gp = gpar(cex = 1.3)))
+plotb <- plot_grid(gstab,
+          NULL,
+          gdet,
+          ncol = 3,
+          rel_widths = c(1,0.2,3))
 
-plotr <- plot_grid(gdet,
-          grand,
-          gg_eigen_full + ggtitle("b"),
-          ncol = 1, nrow = 3,
-          rel_heights = c(2,2,1))
+# plotu <- plot_grid( plot_eig_lines + ggtitle("a") + 
+#                       theme(legend.position = "none", aspect.ratio = 1),
+#                   gg_eigen_full + ggtitle("b"),
+#                   ncol = 2, nrow = 1,
+#                   rel_widths = c(1,3))
 
-plotl <- plot_grid(mobstab + ggtitle("Unstable Scenario\n"),
-                   int ,
-                   plot_eig_lines + ggtitle("a") + theme(legend.position = "none"),
-                   nrow = 3, rel_heights = c(0.8,1,2),
-                   align = "v")
-
-plot_grid(plotl, plotr, ncol = 2, rel_widths = c(1,3))
-
+plotm <- plot_grid( plotb,
+                    NULL,
+                    gg_eigen_full,
+                    nrow = 3, rel_heights = c(4,0.3,1))
 legend <- get_legend(
   # create some space to the left of the legend
-  plot_eig_lines + theme(legend.box.margin = margin(0, 0, 0, 12))
+  plot_eig_lines +
+    theme(legend.box.margin = margin(0, 0, 0, 12), legend.position = "bottom")
 )
+
+plot_grid(uplot, legend, nrow = 2, rel_heights = c(3, .4))
+
 # commpanel11 <-ggarrange(plotmobility(COMMUTINGA, col_low, col_high),
 #                         plot_panelc(N, solA, COMMUTINGA,col_mean, col_low, col_high, IMIN = IMIN, 
 #                                     IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + 
@@ -840,14 +836,14 @@ eig_comp_pred <- select(eig_comp, k, LRP_in, LRP_inout, RMT_allr) %>%
   pivot_longer(cols = (2:ncol(.)), names_to = "prediction", values_to = "eigenvalue")
 
 # plot_eig_lines <- 
-  eig_comp_pred %>% ggplot(aes(x = k, y = eigenvalue, color = prediction)) +
+plot_lines <-  eig_comp_pred %>% ggplot(aes(x = k, y = eigenvalue, color = prediction)) +
   geom_line(size = 0.8) + 
   geom_point(data = eig_comp_real, 
              aes(x = k, y = eigenvalue, color = prediction)) +
   scale_color_manual(values=c("#0000FF","#FF0000","#63B159",
                               "#0000FF","#0000FF","#FF0000",
                               "#63B159","#63B159","#63B159")) + 
-  theme_bw() + theme(text = element_text(size = 15))
+  theme_bw() + theme(text = element_text(size = 12))
 ggsave(file=paste0(Path,"commparison.svg"))
 
 ####### MIGRATION: DIRECTED VS RANDOM EXODUS ############
