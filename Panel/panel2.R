@@ -11,6 +11,7 @@ source("~/RMT/David/RMT_plotmobility.R")
 source("~/RMT/David/d_functions_eigen_int.R")
 library("viridis")
 library("ggpubr")
+library("latex2exp")
 
 ###### COLORS & SIZE#####
 color_stab <- "#FDC016"
@@ -87,7 +88,7 @@ eigen_stab <-  eigen_mat(jacobian)
 sus_init <- rep(10000, N) # initial susceptibles
 inf_init <- rep(100, N)    # initial infecteds
 
-end_time <- 200
+end_time <- 500
 sol.stab <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
                 COMMUTING,MIGRATION,
                 sus_init,inf_init,end_time)
@@ -229,8 +230,8 @@ unst_stab
 sus_init <- rep(1000, N) # initial susceptibles
 inf_init <- rep(10, N)    # initial infecteds
 
-end_time <- 200
-alp_bet_vec <- seq(0,1,0.01)
+end_time <- 500
+alp_bet_vec <- seq(0,2,0.03)
 # end_time <- 500
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
@@ -248,73 +249,73 @@ for(i in c(1:length(alp_bet_vec))){
   df_sum[,ncol(df_sum)+1] <- sum_inf
 }
 
-alp_bet_vec <- seq(0,1,0.01)
-# end_time <- 500
-df_bet_out <- data.frame(alp = 0, re = 0)
-for(i in c(1:length(alp_bet_vec))){
-  alp <- alp_bet_vec[i]
-  a <- mub*muw +muc
-  b <- alp
-  c <- alp*muw
-  
-  outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
-  outl1 <- outl + (mub*(1-muw) - N*muc - mug)
-  outl2 <- (1/2)*(N*a + b - sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
-  outl2 <- outl2 + (mub*(1-muw) - N*muc - mug)
+ alp_bet_vec <- seq(0,1,0.01)
+ # end_time <- 500
+ df_bet_out <- data.frame(alp = 0, re = 0)
+ for(i in c(1:length(alp_bet_vec))){
+   alp <- alp_bet_vec[i]
+   a <- mub*muw +muc
+   b <- alp
+   c <- alp*muw
+#
+   outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+   outl1 <- outl + (mub*(1-muw) - N*muc - mug)
+   outl2 <- (1/2)*(N*a + b - sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
+   outl2 <- outl2 + (mub*(1-muw) - N*muc - mug)
 
-  df_bet_out[nrow(df_bet_out) + 1,] <- c(alp_bet_vec[i], outl1)
-  df_bet_out[nrow(df_bet_out) + 2,] <- c(alp_bet_vec[i], outl2)
-}
+   df_bet_out[nrow(df_bet_out) + 1,] <- c(alp_bet_vec[i], outl1)
+   df_bet_out[nrow(df_bet_out) + 2,] <- c(alp_bet_vec[i], outl2)
+ }
 
-df_bet_out$im <- 0
-eigen_unst$alp = 0
+ df_bet_out$im <- 0
+ eigen_unst$alp = 0
 
-plot_alp <- ggplot(eigen_unst, aes(re,im)) + 
-  geom_point(size = 0.3) +
+ plot_alp <- ggplot(eigen_unst, aes(re,im)) +
+   geom_point(size = 0.3) +
   geom_point(data = df_bet_out, aes(re,im, colour = alp),
-             size = 0.8) +
+              size = 0.8) +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
-                        low = "#F8F053", high = "#4C0EF6") +
-  scale_y_continuous( breaks=c(0)) +
+                         low = "#F8F053", high = "#4C0EF6") +
+   scale_y_continuous( breaks=c(0)) +
   theme(text = element_text(size = size_text))  + theme_bw() +
-  geom_ellipse(aes(x0 = c_stab, y0 = 0, 
+  geom_ellipse(aes(x0 = c_stab, y0 = 0,    
                    a = r_stab,
-                   b = r_stab, 
-                   angle = 0))  +
-  geom_point(aes(o_stab,0), 
+                   b = r_stab,
+                  angle = 0))  +
+  geom_point(aes(o_stab,0),
              color = color_stab, shape = 8, size = 2.8) +
-  geom_point(aes(outl1,0), 
+  geom_point(aes(outl1,0),
              color = color_unstab, shape = 8, size = 2.8) +
-  geom_point(aes(outl2,0),
+ geom_point(aes(outl2,0),
              color = color_unstab, shape = 8, size = 2.8) +
-  geom_vline(xintercept = 0, color = "blue", linetype = "dashed") 
-# + 
-#   scale_color_discrete(name = " ", 
-#                      labels = c("Equal transmission","Perturbed case"))
-  # coord_fixed()
-
-plot_alp
-
-plot_alp + geom_ellipse(aes(x0 = c_stab, y0 = 0, 
+  geom_vline(xintercept = 0, color = "blue", linetype = "dashed")
+ plot_alp
+ plot_alp + geom_ellipse(aes(x0 = c_stab, y0 = 0,
                            a = r_stab,
-                           b = r_stab, 
-                           angle = 0, color = "black")) 
+                           b = r_stab,
+                           angle = 0, color = "black"))
 # saveRDS(df_sum, file = "df_sum.rds")
 # readRDS(file = "df_sum.rds")
 
 dec <- 0
+max_vec <- c()
 vec_eq <- c()
-max_inf <- as.numeric(ifelse(df_sum[nrow(df_sum),] > 500, df_sum[nrow(df_sum),],500))
+for(i in c(1:(ncol(df_sum)-1))){
+  max_vec[i] <- max(df_sum[,1+i])
+}
 for(i in c(1: (ncol(df_sum)-1))){
   # ind <- which(floor(max_inf[i+1]) == floor(df_sum[,i+1]))[1]
-  ind <- which(round(max_inf[i+1],dec) == round(df_sum[,i+1],dec))[1]
+  ind <- which(max_vec[i] == df_sum[,i+1])[1]
+  if(is.na(which(max_vec[i] == df_sum[,i+1])[1])){
+    break
+  }
   vec_eq[length(vec_eq) + 1] <- df_sum[ind,1]
 }
 
 len_vec <- length(alp_bet_vec)
 time_max_vec <- vec_eq
 df_sum_group <- data.frame(alp <- alp_bet_vec[1:len_vec], 
-                           max_inf <- t(max_inf)[1:len_vec],
+                           max_inf <- t(max_vec)[1:len_vec],
                            time_max <- time_max_vec[1:len_vec])
 
 colnames(df_sum_group) <-  c("alpha", "Max_inf", "Time_max")
@@ -325,7 +326,7 @@ plot_inf_max <- ggplot(df_sum_group) +
   ylab("Max of infected individuals") +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
                         low = "#F8F053", high = "#4C0EF6") +
-  scale_y_continuous( breaks=c(0,1000,2000,2900)) +
+  # scale_y_continuous( breaks=c(0,1000,2000,2900)) +
   theme_bw() +
   theme(text = element_text(size = size_let), legend.position = "none") 
 plot_inf_max
@@ -333,18 +334,18 @@ plot_inf_max
 plot_time_max <-  ggplot(df_sum_group) + 
   geom_line(aes(alpha, Time_max), size = 0.5) + 
   geom_point(aes(alpha, Time_max, color= alpha) , size = 1) +
-  scale_y_continuous( breaks=c(0,50,100,150, 190)) +
+  # scale_y_continuous( breaks=c(0,50,100,150, 190)) +
   xlab(TeX("$\\beta^*$")) +
-  ylab("Time of max of infected individuals") +
+  ylab("Time to max of infected individuals") +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
                         low = "#F8F053", high = "#4C0EF6") +
   theme_bw() +
   theme(text = element_text(size = size_let), legend.position = "none") 
 plot_time_max 
-+ xlim(c(0,1.75))
+# + xlim(c(0,1.75))
 # + xlim(c(0.7,1.7)) + ylim(c(80,110))
 
- seq <- seq(1,len_vec,5 )
+seq <- seq(1,len_vec,5 )
 colnames(df_sum) <- c("time",as.character(alp_bet_vec))
 # filt_sum <- df_sum[, seq]
 # df_plot <- reshape2::melt(filt_sum, id.vars = c("time"))
@@ -394,178 +395,15 @@ sum_inf <- ggplot(data = df_plot) +
                 group = variable)) +
   geom_line(data = df_root, aes(time,sum_inf), linetype = "dashed") +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
-                        low = "#F8F053", high = "#4C0EF6") +
+                        low = "#F8F053", high = "#4C0EF6", breaks = c(0,0.5,1,1.5,2)) +
   ylab("Sum of infected individuals") +
-  xlim( c(0,40) ) +
+  xlim( c(0,30) ) +
   theme_bw() +
   theme(text = element_text(size = size_let), legend.position = "right") 
 
 sum_inf
 
-
-# plot_time_max <- plot_time_max + xlim(c(uni,1.75))
-# plot_inf_max <- plot_inf_max + xlim(c(uni,1.75)) + ylim(c(0,6000))
-
-
-
-#### GGARRANGE ####
-require(grid) 
-gg1 <- ggarrange(plot.inf.stab + rremove("ylab") + rremove("xlab"),
-                 plot.inf.1 + rremove("ylab") + rremove("xlab"),
-                 nrow=1)
-gg1<- annotate_figure(gg1, left = textGrob("Infected individuals", rot = 90, vjust = 1, gp = gpar(cex = 1.3)),
-                      bottom = textGrob("Time", gp = gpar(cex = 1.3)))
-
-gg2 <- ggarrange(sum_inf  + rremove("xlab") + ylab("Sum Infected"), 
-                 gg1, ncol = 1, labels = c("a", "b"))
-
-gg3 <- ggarrange(plot_inf_max  +
-                   rremove("xlab") + 
-                   ylab("Maximum Infected"), 
-                 plot_time_max + 
-                   ylab("Time for maximum"),
-                 ncol = 1)
-ggall <- ggarrange(gg2,
-                   gg3,
-                   widths = c(1.8,1),
-                   labels = c("","c"))
-ggall
-## Save image
-Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
-path <- paste0(Path,"Sum_inf_b0,1_g0,5_muc_0,01_sc0,001_muw0,05_sw0,001.png")
-ggsave(path,
-       plot = sum_inf, device = "png")
-
-
-##### Area stability #####
-step <- 0.001
-beta_vec <- seq(0,0.1,step)
-alp_vec <- seq(0,2.5,step)
-df_sol <- data.frame(beta = 0, gamma = 0, N = 0, alp = 0, state = FALSE)
-N = 100
-mug <- gammas[1]
-for(i in c(1:length(beta_vec))){
-  print(paste0(" i : ", i))
-  for(j in c(1:length(alp_vec))){
-    a <- beta_vec[i]*muw + muc
-    b <- alp_vec[j]
-    c <- alp_vec[j]*muw
-    outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
-    outl <- outl + (mub*(1-muw) - N*muc - mug)
-    state <- ifelse(outl < 0, TRUE, FALSE)
-    df_sol[nrow(df_sol) + 1,1:4] <- list(beta_vec[i], gammas[1], N, alp_vec[j])
-    df_sol[nrow(df_sol) ,5] <- state
-  }
-}
-
-df_sol <- df_sol[-1,]
-
-library("latex2exp")
-df_sol$Stability <- ifelse(df_sol$state == TRUE, "Stable", "Unstable")
-plot_area <- ggplot(df_sol) +
-  geom_point(aes(beta,alp, colour = Stability)) + theme_bw()  +
-  scale_color_manual(values=c("#3066BE", "#A63446")) +
-  ylab(TeX("$\\alpha$")) +
-  xlab(TeX("$\\beta$")) +
-  # ggtitle(""*gamma/beta~": 4")
-  ggtitle(paste0("N: ",N)) +
-  theme(text = element_text(size = size_let), legend.position = "bottom") +
-  guides(colour = guide_legend(override.aes = list(size=5)))
-plot_area
-
-Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
-path <- paste0(Path,"Area_g0,5_muc_0,01_sc0,001_muw0,08_sw0,05.png")
-ggsave(path,
-       plot = plot_area, device = "png")
-
-path <- paste0("~/RMT/David/OUTPUT/area_gen_beta_alp_",Sys.Date(),".csv")
-write.csv(df_sol, path,row.names = TRUE)
-
-#### PLOTS #####
-# Stability
-vec_col <-  vector(mode="character", length=N)
-vec_col[1:N] <- "#A63446"
-
-size_let <- 13
-plot.inf.stab <- plot_int1(N, sol.stab, state = "INF") +
-  scale_colour_manual(values = vec_col) +
-  theme_bw() +
-  theme(text = element_text(size = size_let), legend.position="none")
-
-plot.inf.stab
-
-# 1 patch different transmission rate:
-vec_col <-  vector(mode="character", length=N)
-vec_col[1:N] <- "#A63446"
-vec_col[1] <- "#3066BE"
-
-plot.inf.1 <- plot_int1(N, sol, state = "INF") +
-  scale_colour_manual(values = vec_col) +
-  theme_bw() + theme(legend.position="none") +
-  theme(text = element_text(size = size_let))
-
-plot.inf.1
-
-# Max infected
-library("tidyverse")
-Path <- "~/RMT/David/OUTPUT/"
-path <- paste0(Path,"Suminf_g0,5_muc_0,001_sc0,0001_muw0,2_sw0,05_t2000_2022-04-04.csv")
-alp_bet_vec <- seq(0,2.5,0.01)
-df_sum <- read.csv(file = path)
-df_sum <- df_sum[,-1]
-max_inf <- df_sum %>% summarise_if(is.numeric, max)
-time_max_vec <- c()
-for(i in c(1:251)){
-  ind <- which(df_sum[,i+1] == as.numeric(max_inf[i+1]) )
-  time_max_vec[i] <- df_sum[ind,1]
-}
-
-df_sum_group <- data.frame(alp <- alp_bet_vec[1:251], 
-                           max_inf <- t(max_inf)[1:251],
-                           time_max <- time_max_vec[1:251])
-
-df_sum_group <-  df_sum_group[-1,]
-colnames(df_sum_group) <-  c("alpha", "Max_inf", "Time_max")
-
-library("latex2exp")
-plot_inf_max <- ggplot(df_sum_group) + 
-  geom_line(aes(alpha, Max_inf, color = alpha)) + 
-  xlab(TeX("$\\alpha$")) +
-  ylab("Max of infected individuals") +
-  theme_bw() +
-  theme(text = element_text(size = size_let)) 
-
-
-# Time max infected
-plot_time_max <-  ggplot(df_sum_group) + 
-  geom_line(aes(alpha, Time_max)) + 
-  xlab(TeX("$\\alpha$")) +
-  ylab("Time of max of infected individuals") +
-  theme_bw() +
-  theme(text = element_text(size = size_let)) 
-
-
-colnames(df_sum) <- c("time",as.character(alp_bet_vec))
-df_sum_filt <- df_sum[,c(1,seq(1,ncol(df_sum),7))]
-df_plot <- reshape2::melt(df_sum_filt, id.vars = c("time"))
-
-# Sum of infected
-sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
-                                      color = as.numeric(as.character(variable)),
-                                      group = variable)) +
-  geom_line() +
-  scale_colour_gradient(name = ""*alpha~" ", 
-                        low = "blue", high = "red",
-                        limits = c(0,5),
-                        breaks = c(0,1,5),
-                        labels = c(0,1,5)) +
-  ylab("Sum of infected individuals") +
-  xlim(c(0,20)) +
-  ggtitle("") + 
-  theme_bw() +
-  theme(text = element_text(size = size_let), legend.position = "top") 
-
-sum_inf
+ 
 
 # # Area:
 # path <- "~/RMT/David/OUTPUT/Areaepi_g0,5_muc_0,001_sc0,0001_muw0,1_sw0,05_2022-04-01.csv"
@@ -584,23 +422,23 @@ sum_inf
 #   theme(text = element_text(size = size_let), legend.position = "top") +
 #   guides(colour = guide_legend(override.aes = list(size=3)))
 # plot_area
-
-## join all plots
-library("ggpubr")
-gg_1 <- ggarrange(plot.inf.stab,
-                  plot.inf.1,
-                  plot_inf_max,
-                  ncol = 3,nrow = 1,
-                  labels = c("a", "b", "c"))
-
-gg_2 <- ggarrange(plot_area,
-                  sum_inf,plot_time_max,
-                  ncol = 3,nrow = 1,
-                  labels = c("d", "e", "f"))
-
-gg_full <- ggarrange(gg_1,gg_2,
-                     nrow = 2, ncol = 1)
-gg_full
+# 
+# ## join all plots
+# library("ggpubr")
+# gg_1 <- ggarrange(plot.inf.stab,
+#                   plot.inf.1,
+#                   plot_inf_max,
+#                   ncol = 3,nrow = 1,
+#                   labels = c("a", "b", "c"))
+# 
+# gg_2 <- ggarrange(plot_area,
+#                   sum_inf,plot_time_max,
+#                   ncol = 3,nrow = 1,
+#                   labels = c("d", "e", "f"))
+# 
+# gg_full <- ggarrange(gg_1,gg_2,
+#                      nrow = 2, ncol = 1)
+# gg_full
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
 path <- paste0(Path,"panel2.png")
@@ -624,7 +462,7 @@ grid1 <- plot_grid(plot.inf.stab +
                    nrow = 1)
 
 
-plotsum <- plot_grid(sum_inf + xlim(c(0,30)) + theme(legend.position = "none") + ggtitle("a")+ 
+plotsum <- plot_grid(sum_inf + theme(legend.position = "none") + ggtitle("a")+ 
                        theme(plot.title = element_text(size = text_tit, face = "bold")),
                      grid1 ,
            ncol = 2, nrow = 1,
