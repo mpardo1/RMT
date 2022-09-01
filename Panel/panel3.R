@@ -54,7 +54,7 @@ MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
 diag(MIGRATION) <- 0
 ##### Random beta ####
 mub <- 0.3
-sb <- 0.4
+sb <- 0.6
 betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 
 
 jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
@@ -386,3 +386,129 @@ k_patches<- ggplot(df_sol_k_outl) +
   theme_bw()  + theme(text = element_text(size = text_size))
 
 ggarrange(gg_1_vs_k, k_patches, common.legend = TRUE, labels = c("a","b"))
+
+#### RAND BETAS compare 2 situations ####
+# Compare a rand betas where the real variance is small compare with one with big real variance
+# number of patches
+N <- 100
+
+# epidemiological
+#all rates must lie in (0,1) except for betas
+
+Deltas <- rep(0.6, N) # birth rate
+# betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
+thetas <- rep(0.4, N) # loss of immunity rates
+mud <- 0.6
+deaths <- rep(mud, N) # not disease-related death rates
+mua <- 0.45
+alphas <- rep(mua, N) # recovery rates
+mudel <- 0
+deltas <- rep(mudel, N) # disease-related death rates
+gammas = deaths + alphas + deltas
+mug <- gammas[1]
+# mobility
+#commuting and migration networks
+muw <- 0.6
+sw <- 0.3
+rhow <- 0 #original rho (Gamma of baron et al)
+Gammaw <- 0 #gamma of baron et al
+rw <- 0
+cw <- 0
+
+muc <- 0.01
+sc <- 0.002
+rhoc <- 0
+Gammac <- 0
+rc <- 0
+cc <- 0
+
+COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
+diag(COMMUTING) <- 0
+# COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
+# COMMUTING[sample.int(N^2, round(p*N^2))] <- 0
+
+MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
+diag(MIGRATION) <- 0
+##### Random beta ####
+mub <- 0.3
+sb <- 0.6
+betas1 <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 
+
+var(betas1)
+
+jacobian1 <- (COMMUTING + diag(N)) %*% diag(betas1) + MIGRATION -
+  diag(deaths + alphas + deltas + colSums(MIGRATION))
+
+mub <- mean(betas1)
+
+print(plot_eigen(jacobian1))
+
+sus_init <- rep(100, N) # Initial susceptibles
+inf_init <- rep(100, N)
+end_time <- 40
+sol.rand1 <- int(N, Deltas,betas1,deaths,thetas,alphas,deltas,
+                COMMUTING,MIGRATION,
+                sus_init,inf_init,end_time)
+
+plot_stab.rand1 <- plot_int(N, sol.rand1, state = "INF") +
+  theme_bw() + theme(legend.position="none") 
+plot_stab.rand1
+
+##### Random beta ####
+mub <- 0.3
+sb <- 0.6
+betas2 <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 
+
+var(betas2)
+
+jacobian2 <- (COMMUTING + diag(N)) %*% diag(betas2) + MIGRATION -
+  diag(deaths + alphas + deltas + colSums(MIGRATION))
+
+mub <- mean(betas)
+
+print(plot_eigen(jacobian2))
+
+sus_init <- rep(100, N) # Initial susceptibles
+inf_init <- rep(100, N)
+end_time <- 40
+sol.rand2 <- int(N, Deltas,betas2,deaths,thetas,alphas,deltas,
+                COMMUTING,MIGRATION,
+                sus_init,inf_init,end_time)
+
+plot_stab.rand2 <- plot_int(N, sol.rand2, state = "INF") +
+  theme_bw() + theme(legend.position="none") 
+plot_stab.rand2
+
+library("cowplot")
+plot_6 <- plot_grid(plot_stab.rand1 + ggtitle(paste0("var :", var(betas1), 
+                                           "mean:", mean(betas1))),
+          plot_stab.rand2 + ggtitle(paste0("var :", var(betas2), 
+                                            "mean:", mean(betas2))))
+
+#### EROROR
+df_sol_rand <- data.frame(mub = numeric(0), 
+                          sb = numeric(0),
+                          outcte = numeric(0),
+                          outrand = numeric(0),
+                          meanbet = numeric(0),
+                          varbet = numeric(0))
+
+out_cte <- mub - mug + muw*mub*(N-1)
+sb <- 0.8
+max_it <- 10000
+for(i in c(1:max_it)){
+  betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 
+  jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+    diag(gammas + colSums(MIGRATION))
+  outl_rand <- max(eigen_mat(jacobian)$re)
+  df_sol_rand[(nrow(df_sol_rand)+1), ] <- c(mub, sb, out_cte, outl_rand,mean(betas),var(betas))
+}
+
+df_sol_rand$sqmean <- (df_sol_rand$meanbet - df_sol_rand$mub)^2
+df_sol_rand$sqvar <- (df_sol_rand$varbet - df_sol_rand$sb)^2
+df_sol_rand$sqout <- ((df_sol_rand$outcte - df_sol_rand$outrand)/df_sol_rand$outcte)^2
+
+ggplot(df_sol_rand) + 
+  geom_line(aes(sqmean,sqout), color = "red") + 
+  geom_point(aes(sqvar, sqout), color = "blue") +
+  theme_bw()
