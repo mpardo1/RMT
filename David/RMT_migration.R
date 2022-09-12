@@ -148,8 +148,6 @@ stragDEF <- function(k, muwstar){
 
 #----------------------------------------------------------------------------#
 
-####### Parameter values #####
-
 # N <- 100
 N <- 40
 # para los plots
@@ -195,8 +193,6 @@ COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
 MIGRATION <- rand_mat_ell(N, muc, sc, rhoc, distrib = "beta")
 # MIGRATION <- matrix(0,N,N)
 diag(COMMUTING) <- diag(MIGRATION) <- rep(0,N)
-
-# Unstable scenario
 sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
            COMMUTING,MIGRATION,
            sus_init,inf_init,end_time)
@@ -232,23 +228,21 @@ plot_eigen(jacobian) +
                    a = r_unstab,
                    b = r_unstab, 
                    angle = 0), color = col_circ) + geom_point(aes(o_unstab,0), 
-                                          color = col_unstab, shape = 21) +
+                                                              color = col_unstab, shape = 21) +
   geom_vline(xintercept = 0) +
   theme_bw()
-#---------------------------------------------------------------------------#
 
-################# STRATEGIES ####################
+### CONTROL
 nodes <- 4
 muwstar <- 0
 COMMUTINGA <- COMMUTINGB <- COMMUTINGC <- COMMUTINGD <- COMMUTINGE <- COMMUTINGF <- COMMUTING
 
-# TARGETED STRATEGIES#
 # STRATEGY A
 fs <- sample(c(1:N), nodes)
 COMMUTINGA[fs,] <- muwstar
 solA <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-           COMMUTINGA,MIGRATION,
-           sus_init,inf_init,end_time)
+            COMMUTINGA,MIGRATION,
+            sus_init,inf_init,end_time)
 
 jacobianA <- (COMMUTINGA + diag(N)) %*% diag(betas) + MIGRATION -
   diag(deaths + alphas + deltas + colSums(MIGRATION))
@@ -363,20 +357,20 @@ jacobianE <- (COMMUTINGE + diag(N)) %*% diag(betas) + MIGRATION -
 nu <- muwstar - muw
 outlE <- stragDEF(nodes,nu)
 
-# # correlation:
-# MAT_CORR <- jacobianE
-# vec1 <- MAT_CORR[upper.tri(MAT_CORR)]
-# vec2 <- MAT_CORR[lower.tri(MAT_CORR)]
-# rhoa <- cor(vec1,vec2)
-# 
-# MAT_CORR <-  COMMUTINGE
-# vec1 <- MAT_CORR[upper.tri(MAT_CORR)]
-# vec2 <- MAT_CORR[lower.tri(MAT_CORR)]
-# rhoa <- cor(vec1,vec2)
-# # rhoa <- length(rinds)/(N^2) - N
-# rhoa <- (mub^2*rhoa*sw^2)/(mub^2*sw+sc)^2
+# correlation:
+MAT_CORR <- jacobianE
+vec1 <- MAT_CORR[upper.tri(MAT_CORR)]
+vec2 <- MAT_CORR[lower.tri(MAT_CORR)]
+rhoa <- cor(vec1,vec2)
 
-# No me sale con lo teórico puse los ejes así a ojo.
+MAT_CORR <-  COMMUTINGE
+vec1 <- MAT_CORR[upper.tri(MAT_CORR)]
+vec2 <- MAT_CORR[lower.tri(MAT_CORR)]
+rhoa <- cor(vec1,vec2)
+# rhoa <- length(rinds)/(N^2) - N
+rhoa <- (mub^2*rhoa*sw^2)/(mub^2*sw+sc)^2
+
+# No me sale con lo teórico puse el radio así a ojo.
 ar <- 0.05
 br <-  0.008
 plot_eigen(jacobianE) + 
@@ -388,7 +382,6 @@ plot_eigen(jacobianE) +
              color = col_stabE, shape = 21) +
   geom_vline(xintercept = 0) +
   theme_bw()
-
 # STRATEGY F
 COMMUTINGF <- COMMUTINGF*(1-nodes/N)
 solF <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
@@ -410,9 +403,8 @@ plot_eigen(jacobianF) +
              color = col_stabF, shape = 21) +
   geom_vline(xintercept = 0) +
   theme_bw()
-#------------------------------------------------------------------------#
 
-############ EIGENVALUES ALL STRATEGIES ###############
+####EIGENFULL###
 eigstab <- eigen_mat(jacobian)
 eigstab$str <- ""
 eigstab$type <- "" 
@@ -433,7 +425,7 @@ eigenE$str <- "E"
 eigenE$type <- "rand" 
 eigenF <- eigen_mat(jacobianF)
 eigenF$str <- "F"
- eigenF$type <- "rand" 
+eigenF$type <- "rand" 
 
 eigenT <- rbind(eigstab,eigenA,eigenB,eigenC,eigenD,eigenE,eigenF)
 
@@ -499,24 +491,28 @@ gg_eigen_full <- ggplot(eigenT) +
   theme_bw() + theme(text = element_text(size = 12))
 
 gg_eigen_full
-#---------------------------------------------------------------------------#
+#######
 
-############## MOBILITY PLOTS #############################
+#### MOB HEAT MAP########
+
+###########################################################
+
+
 CMAXDET <- max(c(COMMUTINGA,COMMUTINGB,COMMUTINGC))
 CMAXRAND <- max(c(COMMUTINGD,COMMUTINGE, COMMUTINGF))
 
 IMAX <- max(unlist(c(select(as.data.frame(solA), c((N+2):(2*N+1))),
-            select(as.data.frame(solB), c((N+2):(2*N+1))),
-            select(as.data.frame(solC), c((N+2):(2*N+1))),
-            select(as.data.frame(solD), c((N+2):(2*N+1))),
-            select(as.data.frame(solE), c((N+2):(2*N+1))),
-            select(as.data.frame(solF), c((N+2):(2*N+1)))))) + 50
+                     select(as.data.frame(solB), c((N+2):(2*N+1))),
+                     select(as.data.frame(solC), c((N+2):(2*N+1))),
+                     select(as.data.frame(solD), c((N+2):(2*N+1))),
+                     select(as.data.frame(solE), c((N+2):(2*N+1))),
+                     select(as.data.frame(solF), c((N+2):(2*N+1)))))) + 50
 IMIN <- min(unlist(c(select(as.data.frame(solA), c((N+2):(2*N+1))),
-              select(as.data.frame(solB), c((N+2):(2*N+1))),
-              select(as.data.frame(solC), c((N+2):(2*N+1))),
-              select(as.data.frame(solD), c((N+2):(2*N+1))),
-              select(as.data.frame(solE), c((N+2):(2*N+1))),
-              select(as.data.frame(solF), c((N+2):(2*N+1)))))) - 50
+                     select(as.data.frame(solB), c((N+2):(2*N+1))),
+                     select(as.data.frame(solC), c((N+2):(2*N+1))),
+                     select(as.data.frame(solD), c((N+2):(2*N+1))),
+                     select(as.data.frame(solE), c((N+2):(2*N+1))),
+                     select(as.data.frame(solF), c((N+2):(2*N+1)))))) - 50
 CMMAX <- max(c(rowSums(COMMUTINGA)/(N-1),colSums(COMMUTINGA)/(N-1),
                rowSums(COMMUTINGB)/(N-1),colSums(COMMUTINGB)/(N-1),
                rowSums(COMMUTINGC)/(N-1),colSums(COMMUTINGC)/(N-1),
@@ -529,18 +525,27 @@ CMMIN <- min(c(rowSums(COMMUTINGA)/(N-1),colSums(COMMUTINGA)/(N-1),
                rowSums(COMMUTINGD)/(N-1),colSums(COMMUTINGD)/(N-1),
                rowSums(COMMUTINGE)/(N-1),colSums(COMMUTINGE)/(N-1),
                rowSums(COMMUTINGF)/(N-1),colSums(COMMUTINGF)/(N-1)))              
-
-
+# 
+# commpanel <-ggarrange(plotmobility(COMMUTINGA, cmax = CMAX), plot_panelc(N, solA, COMMUTINGA, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
+#                      plotmobility(COMMUTINGB, cmax = CMAX), plot_panelc(N, solB, COMMUTINGB, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
+#                      plotmobility(COMMUTINGC, cmax = CMAX), plot_panelc(N, solC, COMMUTINGC, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
+#                      plotmobility(COMMUTINGD, cmax = CMAX), plot_panelc(N, solD, COMMUTINGD, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
+#                      plotmobility(COMMUTINGE, cmax = CMAX), plot_panelc(N, solE, COMMUTINGE, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
+#                      plotmobility(COMMUTINGF, cmax = CMAX), plot_panelc(N, solF, COMMUTINGF, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
+#                      ncol = 2, nrow = 6)
 col_lstab <- "#ACA8C4"
 col_stab <- "#615E71"
 col_ldet <- "#B1C2B6"
 col_det <- "#40B565"
 col_lrand <- "#7F9BD5"
 col_rand <- "#567DD1"
-mobstab <- plotmobility(COMMUTING, cmax = CMAXDET, color1 =col_stab )
+reescale = 1
+mobstab <- plotmobility(reescale*COMMUTING, cmax = CMAXDET, color1 =col_stab )
 mobstab
-mobA <- plotmobility(COMMUTINGA , cmax = CMAXDET, color1 =col_det )
+mobA <- plotmobility(reescale*COMMUTINGA , cmax = CMAXDET, color1 =col_det )
+# mobA <- plotmobilityMPA(reescale*COMMUTINGA - 1, col_det )
 mobA
+
 mobB <- plotmobility(COMMUTINGB, cmax = CMAXDET, color1 =col_det )
 mobB
 mobC <- plotmobility(COMMUTINGC, cmax = CMAXDET, color1 =col_det )
@@ -556,13 +561,13 @@ mobF
 int <- plot_panelc(N, sol, COMMUTING,col_mean, col_lstab, col_stab )
 int
 intA <- plot_panelc(N, solA, COMMUTINGA,col_mean, col_ldet, col_det, IMIN = IMIN, 
-            IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + ylim(c(0,100))
+                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + ylim(c(0,100))
 intA
 intB <- plot_panelc(N, solB, COMMUTINGB,col_mean, col_ldet, col_det, IMIN = IMIN, 
-            IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + ylim(c(0,100))
+                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + ylim(c(0,100))
 intB
 intC <- plot_panelc(N, solC, COMMUTINGC,col_mean, col_ldet, col_det, IMIN = IMIN, 
-            IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)  + ylim(c(0,100))
+                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)  + ylim(c(0,100))
 intC
 intD <- plot_panelc(N, solD, COMMUTINGD,col_mean, col_lrand, col_rand, IMIN = IMIN, 
                     IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + ylim(c(0,100))
@@ -574,9 +579,9 @@ intF <- plot_panelc(N, solF, COMMUTINGF,col_mean, col_lrand, col_rand, IMIN = IM
                     IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)  + ylim(c(0,100))
 intF
 text_tit = 15
-#-----------------------------------------------------------------------------#
 
-############ COMPARISON PLOT #############
+### COMPARISON
+
 eig_comp <- data.frame(k = integer(0),
                        RMT = numeric(0),
                        LRP_in = numeric(0),
@@ -589,7 +594,7 @@ eig_comp <- data.frame(k = integer(0),
                        Real_sparse = numeric(0),
                        Real_corr = numeric(0),
                        Real_dec = numeric(0)
-                       )
+)
 
 nu <- muwstar - muw
 mug <- mud + mua + mudel
@@ -623,24 +628,24 @@ for (nodes in seq(0,max_nodes,by = 2)) {
   k <- nodes
   eig_comp[k+1,] <- c(k,
                       mub - mug + muw*mub*(N-1),
-                    N*(mub*muw+muc)/2 + (k-1)*mub*nu/2 +
-                      sqrt((N*(mub*muw+muc))^2+((k-1)*mub*nu)^2+2*(mub*nu)*(mub*muw+muc)*(N+N*k-4*k))/2  +
-                      mub*(1-muw) - mug - N*muc,
-                    N*(mub*muw+muc)/2 + (k-1)*mub*nu/2 +
-                      sqrt((N*(mub*muw+muc))^2+((k-1)*mub*nu)^2+2*(mub*nu)*(mub*muw+muc)*(N+N*k-4*k))/2  +
-                      mub*(1-muw) - mug - N*muc,
-                    N*(mub*muw+muc)/2 + (k/2-1)*mub*nu/2 +
-                      sqrt((N*(mub*muw+muc))^2+mub*nu*(2*mub*muw+muc)*(N+3*N*k/2-2*(k/2+1))+
-                             ((mub*nu)^2)*(2*k*(N-k/2)+(k/2-1)^2))/2 +
-                      mub*(1-muw) - mug - N*muc,
-                    mub*(muw*(N-k)+muwstar*k/N)*(N-1)/N + mub - mug,
-                    max(eigen_mat(jacA)$re),
-                    max(eigen_mat(jacB)$re),
-                    max(eigen_mat(jacC)$re),
-                    max(eigen_mat(jacD)$re),
-                    max(eigen_mat(jacE)$re),
-                    max(eigen_mat(jacF)$re)
-                    )
+                      N*(mub*muw+muc)/2 + (k-1)*mub*nu/2 +
+                        sqrt((N*(mub*muw+muc))^2+((k-1)*mub*nu)^2+2*(mub*nu)*(mub*muw+muc)*(N+N*k-4*k))/2  +
+                        mub*(1-muw) - mug - N*muc,
+                      N*(mub*muw+muc)/2 + (k-1)*mub*nu/2 +
+                        sqrt((N*(mub*muw+muc))^2+((k-1)*mub*nu)^2+2*(mub*nu)*(mub*muw+muc)*(N+N*k-4*k))/2  +
+                        mub*(1-muw) - mug - N*muc,
+                      N*(mub*muw+muc)/2 + (k/2-1)*mub*nu/2 +
+                        sqrt((N*(mub*muw+muc))^2+mub*nu*(2*mub*muw+muc)*(N+3*N*k/2-2*(k/2+1))+
+                               ((mub*nu)^2)*(2*k*(N-k/2)+(k/2-1)^2))/2 +
+                        mub*(1-muw) - mug - N*muc,
+                      mub*(muw*(N-k)+muwstar*k/N)*(N-1)/N + mub - mug,
+                      max(eigen_mat(jacA)$re),
+                      max(eigen_mat(jacB)$re),
+                      max(eigen_mat(jacC)$re),
+                      max(eigen_mat(jacD)$re),
+                      max(eigen_mat(jacE)$re),
+                      max(eigen_mat(jacF)$re)
+  )
 }
 
 eig_comp <- filter(eig_comp, !is.na(k))
@@ -660,9 +665,9 @@ plot_lines <-  eig_comp_pred %>% ggplot(aes(x = k, y = eigenvalue, color = predi
                               "#63B159","#63B159","#63B159")) + 
   theme_bw() + theme(text = element_text(size = 12))
 ggsave(file=paste0(Path,"commparison.svg"))
-#-----------------------------------------------------------------------------#
 
-###### PANEL 4 #####
+
+######PANEL 4#####
 gstab <- plot_grid(NULL,
                    mobstab + ggtitle("Unstable Scenario\n"),
                    int + theme(aspect.ratio = 1) ,
@@ -690,25 +695,447 @@ plotb <- plot_grid(gstab,
                    ncol = 3,
                    rel_widths = c(1,0.2,3))
 
-
+# plotu <- plot_grid( plot_eig_lines + ggtitle("a") + 
+#                       theme(legend.position = "none", aspect.ratio = 1),
+#                   gg_eigen_full + ggtitle("b"),
+#                   ncol = 2, nrow = 1,
+#                   rel_widths = c(1,3))
 
 plotm <- plot_grid( plotb,
                     NULL,
                     gg_eigen_full,
                     nrow = 3, rel_heights = c(4,0.3,1))
-plotm
+
 # This is to get the legend for the eigenvalues vs k plot.
-# legend <- get_legend(
-#   # create some space to the left of the legend
-#   plot_eig_lines +
-#     theme(legend.box.margin = margin(0, 0, 0, 12), legend.position = "bottom")
-# )
-# 
-# plotu <- plot_grid( plot_eig_lines + ggtitle("a") +
-#                       theme(legend.position = "none", aspect.ratio = 1),
-#                   gg_eigen_full + ggtitle("b"),
-#                   ncol = 2, nrow = 1,
-#                   rel_widths = c(1,3))
-# 
-# plot_grid(uplot, legend, nrow = 2, rel_heights = c(3, .4))
-# 
+legend <- get_legend(
+  # create some space to the left of the legend
+  plot_eig_lines +
+    theme(legend.box.margin = margin(0, 0, 0, 12), legend.position = "bottom")
+)
+
+plot_grid(uplot, legend, nrow = 2, rel_heights = c(3, .4))
+
+
+####### MIGRATION: DIRECTED VS RANDOM EXODUS ############
+
+# base parameters + reduced muw (to induce stability with control)
+muc <- 0.001
+sc <- 0.0005
+
+mucstar <- 0.005
+MIGRATION <- rand_mat_cor_beta(N, muc*N, sc*N, rhoc, Gammac, rc, cc)[[1]]
+
+# control: two rows
+f1 <- 30
+f2 <- 55
+MIGRATION[f1,c(1:(f1-1),(f1+1):N)] <- MIGRATION[f2,c(1:(f2-1),(f2+1):N)] <- mucstar
+
+# control: two columns
+c1 <- 45
+c2 <- 80
+MIGRATION[c(1:(c1-1),(c1+1):N),c1] <- MIGRATION[c(1:(c2-1),(c2+1):N),c2] <- mucstar
+
+# control: one row and one column
+fc <- 65
+MIGRATION[fc,c(1:(fc-1),(fc+1):N)] <- MIGRATION[c(1:(fc-1),(fc+1):N),fc] <- mucstar
+
+# control: random
+MIGRATION[sample(c(1:N^2),2*(N-1))] <- mucstar
+
+
+diag(COMMUTING) <- diag(MIGRATION) <- rep(0,N)
+sum(colSums(MIGRATION) > 1)
+mobplot <- plotmobility(MIGRATION)
+mobplot
+#print(mobplot, vp = viewport(angle = -90))
+jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION - diag(colSums(MIGRATION) + deaths + alphas + deltas)
+
+plot_eigen_rmt(jacobian,
+               N,mub,mug = mud + mua + mudel,
+               muw,sw,rhow,Gammaw,
+               muc,sc,rhoc,Gammac,
+               tau = 0) #+ xlim(c(-215,-210))
+
+sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+           COMMUTING,MIGRATION,
+           sus_init,inf_init,end_time)
+plot_int(N, sol, state = "INF")
+
+####### CORRELATIONS: MONOTONICITY IN GAMMA #############
+
+N <- 500
+
+muw <- .05
+sw <- .01
+rhow <- .1
+rw <- cw <- .7
+COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
+
+muc <- 0.001
+sc <- 0.0005
+rhoc <- 0
+Gammac <- 0
+MIGRATION <- rand_mat_ell(N, muc, sc, rhoc, distrib = "beta")
+
+outlier_df <- data.frame("Gammaw" = vector(), "realGammaw" = vector(), "bgpred" = vector(), "rmtpred" = vector(), "real" = vector())
+for (Gammaw in seq(0.01,0.99,by = .005)) {
+  
+  if ((Gammaw/sqrt(rw*cw) < 1) & ((N*rhow-2*Gammaw)/(N-(rw+cw)) < 1)) {
+    
+    gCOMMUTING <- rand_mat_cor_beta(N, muw*N, sw*N, rhow, Gammaw, rw, cw)  
+    
+    COMMUTING <- gCOMMUTING[[1]]
+    diag(COMMUTING) <- rep(0,N)
+    
+    diag(COMMUTING) <- diag(MIGRATION) <- rep(0,N)
+    sum(colSums(MIGRATION) > 1)
+    
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION - diag(colSums(MIGRATION) + deaths + alphas + deltas)
+    
+    sigma <- sqrt(mub^2*sw^2 + sc^2)
+    rho <- (mub^2*rhow*sw^2 + rhoc*sc^2)/(sigma^2)
+    Gamma <- (mub^2*Gammaw*(sw^2)/N + Gammac*(sc^2)/N)/(sigma^2)
+    
+    outlier_df <- rbind(outlier_df, c(Gammaw,
+                                      gCOMMUTING[[2]][4,2],
+                                      mub - mud - mua - mudel + mub*muw*(N-1) +
+                                        (1/2)*(N*mub*muw+N*muc)*(1+rho/Gamma)*(sqrt(1+(4*Gamma*sigma^2)/((mub*muw + muc)^2))-1),
+                                      mub - mud - mua - mudel + mub*muw*(N-1),
+                                      max(eigen_mat(jacobian)$re)))
+    print(Gammaw)
+  }
+}
+
+names(outlier_df) <- c("Gammaw", "realGammaw", "bgpred", "rmtpred", "real")
+
+outlier_df <- pivot_longer(outlier_df, cols = (2:ncol(outlier_df)) , names_to = "prediction", values_to = "outlier")
+
+filter(outlier_df, prediction %in% c("realGammaw")) %>%
+  ggplot(aes(x = Gammaw, y = outlier, color = prediction)) +
+  geom_line(size = 1)
+
+filter(outlier_df, prediction %in% c("bgpred", "rmtpred", "real")) %>%
+  ggplot(aes(x = Gammaw, y = outlier, color = prediction)) +
+  geom_line(size = 1)
+
+outlier_df <- pivot_wider(outlier_df, names_from = prediction, values_from = outlier) %>%
+  mutate(bgpredreal = mub - mud - mua - mudel + mub*muw*(N-1) +
+           (1/2)*(N*mub*muw+N*muc)*(1+rho/realGammaw)*(sqrt(1+(4*realGammaw*sigma^2)/((mub*muw + muc)^2))-1))
+
+outlier_df %>%
+  ggplot(aes(x = Gammaw, y = N*realGammaw)) +
+  geom_point() +
+  geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE) +
+  geom_line(aes(x = Gammaw, y = rmtpred)) +
+  geom_line(aes(x = Gammaw, y = bgpred))
+
+filter(outlier_df, prediction %in% c("bgpred", "rmtpred", "real", "bgpredreal")) %>%
+  ggplot(aes(x = Gammaw, y = outlier, color = prediction)) +
+  geom_line(size = 1)
+
+####### CORRELATIONS: INSTABILITY #######################
+
+N <- 200
+
+mub <- 0.02
+betas <- rep(mub, N) # transmission rates
+mud <- 0.1282
+deaths <- rep(mud, N)
+mua <- 0.25
+alphas <- rep(mua, N)
+mudel <- 0
+deltas <- rep(mudel, N)
+
+# re-scaling only mu and sigma: RMT and BG are indistinguishable
+# muw <- 0.09
+# sw <- 0.06
+# rhow <- 0.45
+# Gammaw <- 0.3
+# rw <- 0.4
+# cw <- 0.4
+
+# re-scaling all parameters: ellipse is lost, outlier is still accurate
+muw <- 0.09
+sw <- 0.06
+rhow <- 0.45
+Gammaw <- 0.3*N
+rw <- 0.4*N
+cw <- 0.4*N
+
+(Gammaw/sqrt(rw*cw) < 1) & ((N*rhow-2*Gammaw)/(N-(rw+cw)) < 1)
+
+muc <- muw/100
+sc <- sw/120
+rhoc <- rhow/100
+Gammac <- Gammaw/100
+rc <- rw/100
+cc <- cw/100
+
+(Gammac/sqrt(rc*cc) < 1) & ((N*rhoc-2*Gammac)/(N-(rc+cc)) < 1)
+
+COMMUTING <- rand_mat_cor_beta(N, N*muw, sqrt(N)*sqrt(N)*sw, rhow, Gammaw, rw, cw)[[1]]
+MIGRATION <- rand_mat_cor_norm(N, N*muc, sqrt(N)*sqrt(N)*sc, rhoc, Gammac, rc, cc)[[1]]
+# COM[[2]]
+# MIG[[2]]
+# COMMUTING <- COM[[1]]
+# MIGRATION <- MIG[[1]]
+#MIGRATION <- matrix(rep(0,N^2), nrow = N)
+#muc <- sc <- rhoc <- Gammac <- 0
+diag(COMMUTING) <- diag(MIGRATION) <- rep(0,N)
+jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION - diag(colSums(MIGRATION) + deaths + alphas + deltas)
+eigmayor <- eigen_mat(jacobian)
+redmayor <- plotmobility(COMMUTING[1:80,1:80])
+
+COMMUTING <- rand_mat_cor_norm(N, N*muw, sqrt(N)*sqrt(N)*sw, -rhow, -Gammaw, rw, cw)[[1]]
+MIGRATION <- rand_mat_cor_norm(N, N*muc, sqrt(N)*sqrt(N)*sc, -rhoc, -Gammac, rc, cc)[[1]]
+diag(COMMUTING) <- diag(MIGRATION) <- rep(0,N)
+jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION - diag(colSums(MIGRATION) + deaths + alphas + deltas)
+eigmenor <- eigen_mat(jacobian)
+redmenor <- plotmobility(COMMUTING[1:80,1:80])
+
+COMMUTING <- rand_mat_cor_norm(N, N*muw, sqrt(N)*sqrt(N)*sw, rhow, 0.001, 0.001, 0.001)[[1]]
+MIGRATION <- rand_mat_ell(N, muc, sc, rhoc, distrib = "beta")
+diag(COMMUTING) <- diag(MIGRATION) <- rep(0,N)
+jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION - diag(colSums(MIGRATION) + deaths + alphas + deltas)
+eigRMT <- eigen_mat(jacobian)
+reduncor <- plotmobility(COMMUTING[1:80,1:80])
+
+sig <- sqrt((mub*sw)^2 + sc^2)
+rho <- (rhow*((mub*sw)^2) + rhoc*sc^2)/sig^2
+Gamma <- (Gammaw*((mub*sw)^2) + Gammac*sc^2)/sig^2
+
+outlierREmayor <- max(eigmayor$re)
+outlierREmenor <- max(eigmenor$re)
+outlierRMT <- (N-1)*mub*muw + mub - mud - mua - mudel
+outlierBGmayor <- (N-1)*mub*muw + mub - mud - mua - mudel +
+  (N/2)*(mub*muw+muc)*(1+rho/Gamma)*(sqrt(1+(4*Gamma*sig^2/(N*(mub*muw+muc)^2)))-1)
+outlierBGmenor <- (N-1)*mub*muw + mub - mud - mua - mudel +
+  (N/2)*(mub*muw+muc)*(1+rho/Gamma)*(sqrt(1-(4*Gamma*sig^2/(N*(mub*muw+muc)^2)))-1)
+
+center <- mub*(1-muw)-mua-mud-mudel-N*muc
+radius <- sqrt(N)*sig
+
+color0 <- "black"
+color1 <- "red"
+color2 <- "blue"
+color3 <- "green"
+color4 <- "purple"
+
+BGvsRMT <- ggplot(data = eigmenor) + 
+  geom_ellipse(aes(x0 = center, y0 = 0, a = (1+rho)*radius,
+                   b = (1-rho)*radius, angle = 0), color = color1) +
+  geom_vline(xintercept = 0, color = color2, linetype = "dashed") +
+  geom_point(aes(x = outlierRMT, y = 0), color = color1) +
+  geom_point(aes(x = outlierBGmenor, y = 0), color = color3) +
+  geom_point(aes(x = outlierBGmayor, y = 0), color = color4) +
+  geom_point(aes(re,im), size = 0.05, color = color3, alpha = .5) +
+  geom_point(data = eigmayor, aes(re,im), size = 0.05, color = color4, alpha = .5) +
+  geom_point(data = eigRMT, aes(re,im), size = 0.05, color = color0, alpha = .5) +#+ xlim(c(-0.7,-0.6))
+  labs(x="Real part", y="Imaginary part") +
+  theme_bw()
+
+ggsave(file="BGvsRMT.svg", plot=BGvsRMT, width=10, height=8)
+
+# prueba <- data.frame(param = numeric(0), eigen_dist = numeric(0))
+# ind <- 0
+# for (mub in seq(0,1,by = .05)) {
+#   if ((Gammaw/sqrt(rw*cw) < 1) & ((N*rhow-2*Gammaw)/(N-(rw+cw)) < 1)) {
+#   
+#   ind <- ind+1
+#   sig <- sqrt((mub*sw)^2 + sc^2)
+#   rho <- (rhow*((mub*sw)^2) + rhoc*sc^2)/sig^2
+#   Gamma <- (Gammaw*((mub*sw)^2) + Gammac*sc^2)/sig^2
+#   
+#   outlierRMT <- (N-1)*mub*muw + mub - mud - mua - mudel
+#   outlierBG <- (N-1)*mub*muw + mub - mud - mua - mudel +
+#     (N/2)*(mub*muw+muc)*(1+rho/Gamma)*(sqrt(1+(4*Gamma*sig^2/(N*(mub*muw+muc)^2)))-1)
+#   
+#   prueba[ind,] <- c(mub,abs(outlierRMT-outlierBG))
+#   }
+# }
+# ggplot(data = prueba, aes(x = param, y = eigen_dist)) + geom_point() #+ coord_fixed()
+
+####### CORRELATIONS: MOBILITY NETWORKS #################
+
+N <- 30
+
+# positive rhow vs negative rhow
+rhow <- .85
+rhow <- -.85
+COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
+diag(COMMUTING) <- rep(0,N)
+plotmobility(COMMUTING)
+
+ggsave(file="mobnet_negrho.svg")
+
+# high rw/cw (exchange values)
+muw <- 0.2
+sw <- 0.06
+rhow <- 0 #original rho (Gamma of baron et al)
+Gammaw <- .15 #gamma of baron et al
+rw <- .7*N
+cw <- .1*N
+(Gammaw/sqrt(rw*cw) < 1) & ((N*rhow-2*Gammaw)/(N-(rw+cw)) < 1)
+
+COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
+COMMUTING <- rand_mat_cor_beta(N, muw*N, sw*N, rhow, Gammaw, rw, cw)[[1]]
+diag(COMMUTING) <- rep(0,N)
+plotmobility(COMMUTING)
+
+ggsave(file="mobnet_posr.svg")
+
+# positive vs negative Gammaw
+muw <- 0.25
+sw <- 0.1
+rhow <- 0 #original rho (Gamma of baron et al)
+Gammaw <- .22*N #gamma of baron et al
+Gammaw <- -.22*N #gamma of baron et al
+rw <- .25*N
+cw <- .25*N
+(Gammaw/sqrt(rw*cw) < 1) & ((N*rhow-2*Gammaw)/(N-(rw+cw)) < 1)
+
+COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
+COMMUTING <- rand_mat_cor_beta(N, muw*N, sw*N, rhow, Gammaw, rw, cw)[[1]]
+diag(COMMUTING) <- rep(0,N)
+plotmobility(COMMUTING)
+
+ggsave(file="mobnet_negG.svg")
+
+# "high" Gammaw and rhow
+
+muw <- 0.25
+sw <- 0.1
+rhow <- 0.85 #original rho (Gamma of baron et al)
+Gammaw <- .4*N #gamma of baron et al
+rw <- .45*N #positive
+cw <- .45*N #positive
+(abs(Gammaw)/sqrt(rw*cw) < 1) & (rw+cw<N) & (abs(N*rhow-2*Gammaw)/(N-(rw+cw)) < 1)
+
+# negative values generate a network with the same properties
+
+muw <- 0.25
+sw <- 0.1
+rhow <- -0.85 #original rho (Gamma of baron et al)
+Gammaw <- -.4*N #gamma of baron et al
+rw <- .45*N #positive
+cw <- .45*N #positive
+(abs(Gammaw)/sqrt(rw*cw) < 1) & (rw+cw<N) & (abs(N*rhow-2*Gammaw)/(N-(rw+cw)) < 1)
+
+COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
+COMMUTING <- rand_mat_cor_beta(N, muw*N, sw*N, rhow, Gammaw, rw, cw)[[1]]
+diag(COMMUTING) <- rep(0,N)
+plotmobility(COMMUTING)
+
+# preventing disease
+
+muw <- 0.25
+sw <- 0.1
+rhow <- 0.35 #original rho (Gamma of baron et al)
+Gammaw <- -.1*N #gamma of baron et al
+rw <- .15*N #positive
+cw <- .15*N #positive
+(abs(Gammaw)/sqrt(rw*cw) < 1) & (rw+cw<N) & (abs(N*rhow-2*Gammaw)/(N-(rw+cw)) < 1)
+
+COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
+COMMUTING <- rand_mat_cor_beta(N, muw*N, sw*N, rhow, Gammaw, rw, cw)[[1]]
+diag(COMMUTING) <- rep(0,N)
+plotmobility(COMMUTING)
+
+####### CORRELATIONS: PANEL #################
+
+N <- 200
+
+mub <- 0.02
+betas <- rep(mub, N) # transmission rates
+mud <- 0.1282
+deaths <- rep(mud, N)
+mua <- 0.25
+alphas <- rep(mua, N)
+mudel <- 0
+deltas <- rep(mudel, N)
+
+# re-scaling all parameters: ellipse is lost, outlier is still accurate
+muw <- 0.09
+sw <- 0.06
+rhow <- 0.45
+Gammaw <- 0.3*N
+rw <- 0.4*N
+cw <- 0.4*N
+
+muc <- muw/100
+sc <- sw/120
+rhoc <- rhow/100
+Gammac <- Gammaw/100
+rc <- rw/100
+cc <- cw/100
+
+COMMUTING <- rand_mat_cor_beta(N, N*muw, sqrt(N)*sqrt(N)*sw, rhow, Gammaw, rw, cw)[[1]]
+MIGRATION <- rand_mat_cor_beta(N, N*muc, sqrt(N)*sqrt(N)*sc, rhoc, Gammac, rc, cc)[[1]]
+diag(COMMUTING) <- diag(MIGRATION) <- rep(0,N)
+jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION - diag(colSums(MIGRATION) + deaths + alphas + deltas)
+eigmayor <- eigen_mat(jacobian)
+redmayor <- plotmobility(COMMUTING[1:60,1:60])
+
+COMMUTING <- rand_mat_cor_beta(N, N*muw, sqrt(N)*sqrt(N)*sw, -rhow, -Gammaw, rw, cw)[[1]]
+MIGRATION <- rand_mat_cor_beta(N, N*muc, sqrt(N)*sqrt(N)*sc, -rhoc, -Gammac, rc, cc)[[1]]
+diag(COMMUTING) <- diag(MIGRATION) <- rep(0,N)
+jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION - diag(colSums(MIGRATION) + deaths + alphas + deltas)
+eigmenor <- eigen_mat(jacobian)
+redmenor <- plotmobility(COMMUTING[1:60,1:60])
+
+COMMUTING <- rand_mat_cor_beta(N, N*muw, sqrt(N)*sqrt(N)*sw, rhow, 0.001, 0.001, 0.001)[[1]]
+MIGRATION <- rand_mat_cor_beta(N, N*muc, sqrt(N)*sqrt(N)*sc, rhoc, 0.00001, 0.00001, 0.00001)[[1]]
+diag(COMMUTING) <- diag(MIGRATION) <- rep(0,N)
+jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION - diag(colSums(MIGRATION) + deaths + alphas + deltas)
+eigRMT <- eigen_mat(jacobian)
+reduncor <- plotmobility(COMMUTING[1:60,1:60])
+
+sig <- sqrt((mub*sw)^2 + sc^2)
+rho <- (rhow*((mub*sw)^2) + rhoc*sc^2)/sig^2
+Gamma <- (Gammaw*((mub*sw)^2) + Gammac*sc^2)/sig^2
+
+outlierREmayor <- max(eigmayor$re)
+outlierREmenor <- max(eigmenor$re)
+outlierRMT <- (N-1)*mub*muw + mub - mud - mua - mudel
+outlierBGmayor <- (N-1)*mub*muw + mub - mud - mua - mudel +
+  (N/2)*(mub*muw+muc)*(1+rho/Gamma)*(sqrt(1+(4*Gamma*sig^2/(N*(mub*muw+muc)^2)))-1)
+outlierBGmenor <- (N-1)*mub*muw + mub - mud - mua - mudel +
+  (N/2)*(mub*muw+muc)*(1+rho/Gamma)*(sqrt(1-(4*Gamma*sig^2/(N*(mub*muw+muc)^2)))-1)
+
+center <- mub*(1-muw)-mua-mud-mudel-N*muc
+radius <- sqrt(N)*sig
+
+color0 <- "black"
+color1 <- "red"
+color2 <- "blue"
+color3 <- "green"
+color4 <- "purple"
+
+BGvsRMT <- ggplot(data = eigmenor) + 
+  geom_ellipse(aes(x0 = center, y0 = 0, a = (1+rho)*radius,
+                   b = (1-rho)*radius, angle = 0), color = color2) +
+  geom_vline(xintercept = 0, color = color2, linetype = "dashed") +
+  geom_point(aes(x = outlierRMT, y = 0), size = 3, color = color1, shape = 15) +
+  geom_point(aes(x = outlierBGmenor, y = 0), size = 3, color = color3, shape = 16) +
+  geom_point(aes(x = outlierBGmayor, y = 0), size = 3, color = color4, shape = 17) +
+  geom_point(aes(re,im), size = 1.7, color = color3, shape = 16) +  #, alpha = .4
+  geom_point(data = eigmayor, aes(re,im), size = 1.7, color = color4, shape = 17) +
+  geom_point(data = eigRMT, aes(re,im), size = 1.7, color = color1, shape = 15) +#+ xlim(c(-0.7,-0.6))
+  labs(x="Real part", y="Imaginary part") +
+  theme_bw()
+BGvsRMT
+ggsave(file="BGvsRMT.svg", plot=BGvsRMT)
+
+ggsave(file="redmenor.svg", plot=redmenor)
+ggsave(file="redmayor.svg", plot=redmayor)
+ggsave(file="reduncor.svg", plot=reduncor)
+
+corpanel <-ggarrange(ggarrange(redmenor, reduncor, redmayor, labels = c("A", "B", "C"),
+                               ncol = 3, nrow = 1),
+                     BGvsRMT,
+                     ncol = 1, nrow = 2)
+corpanel
+
+ggsave(file="corpanel.svg", plot=corpanel)
+ggsave(corpanel, file="corpanel.eps", device = cairo_ps, fallback_resolution = 600)
+
