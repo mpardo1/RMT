@@ -429,6 +429,7 @@ diag(COMMUTING) <- 0
 
 MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
 diag(MIGRATION) <- 0
+
 ##### Random beta ####
 mub <- 0.3
 sb <- 0.6
@@ -485,7 +486,7 @@ plot_6 <- plot_grid(plot_stab.rand1 + ggtitle(paste0("var :", var(betas1),
           plot_stab.rand2 + ggtitle(paste0("var :", var(betas2), 
                                             "mean:", mean(betas2))))
 
-#### EROROR
+#### ERROR with theoretical values:
 df_sol_rand <- data.frame(mub = numeric(0), 
                           sb = numeric(0),
                           outcte = numeric(0),
@@ -493,22 +494,88 @@ df_sol_rand <- data.frame(mub = numeric(0),
                           meanbet = numeric(0),
                           varbet = numeric(0))
 
-out_cte <- mub - mug + muw*mub*(N-1)
 sb <- 0.8
-max_it <- 10000
+sb_vec <- seq(0,2,0.001)
+max_it <- length(sb_vec)
 for(i in c(1:max_it)){
+  sb <- sb_vec[i]
   betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 
+  if(sb == 0){
+    betas <- rep(mub,N)
+  }
   jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
     diag(gammas + colSums(MIGRATION))
   outl_rand <- max(eigen_mat(jacobian)$re)
-  df_sol_rand[(nrow(df_sol_rand)+1), ] <- c(mub, sb, out_cte, outl_rand,mean(betas),var(betas))
+  out_cte <- mean(betas) - mug + muw*mub*(N-1)
+  
+  df_sol_rand[(nrow(df_sol_rand)+1), ] <- c(mub, sb, out_cte, 
+                                            outl_rand,mean(betas),var(betas))
 }
 
-df_sol_rand$sqmean <- (df_sol_rand$meanbet - df_sol_rand$mub)^2
-df_sol_rand$sqvar <- (df_sol_rand$varbet - df_sol_rand$sb)^2
+df_sol_rand$sqCV <- sqrt(df_sol_rand$sb)/df_sol_rand$mub
+df_sol_rand$sqvar <- sqrt(df_sol_rand$varbet)
 df_sol_rand$sqout <- ((df_sol_rand$outcte - df_sol_rand$outrand)/df_sol_rand$outcte)^2
 
-ggplot(df_sol_rand) + 
-  geom_line(aes(sqmean,sqout), color = "red") + 
-  geom_point(aes(sqvar, sqout), color = "blue") +
+library("latex2exp")
+plot1 <- ggplot(df_sol_rand) + 
+  geom_line(aes(sqCV,sqout), color = "red") + 
+  xlab("CV") + 
+  ylab("squared normalized error") +
   theme_bw()
+
+plot2 <- ggplot(df_sol_rand) + 
+  geom_line(aes(sb, sqout), color = "blue") +
+  xlab(TeX("\\sigma")) + 
+  ylab("squared normalized error") +
+  theme_bw()
+
+library("cowplot")
+plot_grid(plot1, plot2)
+
+
+#### ERROR with theoretical values:
+df_sol_rand <- data.frame(mub = numeric(0), 
+                          sb = numeric(0),
+                          outcte = numeric(0),
+                          outrand = numeric(0),
+                          meanbet = numeric(0),
+                          varbet = numeric(0))
+
+sb <- 0.8
+sb_vec <- seq(0,2,0.001)
+max_it <- length(sb_vec)
+for(i in c(1:max_it)){
+  sb <- sb_vec[i]
+  betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 
+  if(sb == 0){
+    betas <- rep(mub,N)
+  }
+  jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+    diag(gammas + colSums(MIGRATION))
+  outl_rand <- max(eigen_mat(jacobian)$re)
+  out_cte <- mean(betas) - mug + muw*mub*(N-1)
+  
+  df_sol_rand[(nrow(df_sol_rand)+1), ] <- c(mub, sb, out_cte, 
+                                            outl_rand,mean(betas),var(betas))
+}
+
+df_sol_rand$sqCV <- sqrt(df_sol_rand$sb)/df_sol_rand$mub
+df_sol_rand$sqCV <- df_sol_rand$varbet/df_sol_rand$meanbet
+df_sol_rand$sqvar <- sqrt(df_sol_rand$varbet)
+df_sol_rand$sqout <- ((df_sol_rand$outcte - df_sol_rand$outrand)/df_sol_rand$outcte)^2
+
+library("latex2exp")
+plot1 <- ggplot(df_sol_rand) + 
+  geom_line(aes(sqCV,sqout), color = "red") + 
+  xlab("CV") + 
+  ylab("squared normalized error") +
+  theme_bw()
+
+plot2 <- ggplot(df_sol_rand) + 
+  geom_line(aes(sqvar, sqout), color = "blue") +
+  xlab(TeX("\\sigma")) + 
+  ylab("squared normalized error") +
+  theme_bw()
+
+library("cowplot")
+plot_grid(plot1, plot2)
