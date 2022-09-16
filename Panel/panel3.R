@@ -14,7 +14,6 @@ source("~/RMT/David/d_functions_eigen_int.R")
 
 # number of patches
 N <- 50
-
 # epidemiological
 #all rates must lie in (0,1) except for betas
 
@@ -387,9 +386,8 @@ k_patches<- ggplot(df_sol_k_outl) +
 
 ggarrange(gg_1_vs_k, k_patches, common.legend = TRUE, labels = c("a","b"))
 
-#### RAND BETAS compare 2 situations ####
-# Compare a rand betas where the real variance is small compare with one with big real variance
-# number of patches
+#### ERROR with theoretical values:
+### Fixed sigma beta:
 N <- 100
 
 # epidemiological
@@ -408,14 +406,14 @@ gammas = deaths + alphas + deltas
 mug <- gammas[1]
 # mobility
 #commuting and migration networks
-muw <- 0.6
+muw <- 0.2
 sw <- 0.3
 rhow <- 0 #original rho (Gamma of baron et al)
 Gammaw <- 0 #gamma of baron et al
 rw <- 0
 cw <- 0
 
-muc <- 0.01
+muc <- 0.2
 sc <- 0.002
 rhoc <- 0
 Gammac <- 0
@@ -424,69 +422,9 @@ cc <- 0
 
 COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
 diag(COMMUTING) <- 0
-# COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
-# COMMUTING[sample.int(N^2, round(p*N^2))] <- 0
-
 MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
 diag(MIGRATION) <- 0
 
-##### Random beta ####
-mub <- 0.3
-sb <- 0.6
-betas1 <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 
-
-var(betas1)
-
-jacobian1 <- (COMMUTING + diag(N)) %*% diag(betas1) + MIGRATION -
-  diag(deaths + alphas + deltas + colSums(MIGRATION))
-
-mub <- mean(betas1)
-
-print(plot_eigen(jacobian1))
-
-sus_init <- rep(100, N) # Initial susceptibles
-inf_init <- rep(100, N)
-end_time <- 40
-sol.rand1 <- int(N, Deltas,betas1,deaths,thetas,alphas,deltas,
-                COMMUTING,MIGRATION,
-                sus_init,inf_init,end_time)
-
-plot_stab.rand1 <- plot_int(N, sol.rand1, state = "INF") +
-  theme_bw() + theme(legend.position="none") 
-plot_stab.rand1
-
-##### Random beta ####
-mub <- 0.3
-sb <- 0.6
-betas2 <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 
-
-var(betas2)
-
-jacobian2 <- (COMMUTING + diag(N)) %*% diag(betas2) + MIGRATION -
-  diag(deaths + alphas + deltas + colSums(MIGRATION))
-
-mub <- mean(betas)
-
-print(plot_eigen(jacobian2))
-
-sus_init <- rep(100, N) # Initial susceptibles
-inf_init <- rep(100, N)
-end_time <- 40
-sol.rand2 <- int(N, Deltas,betas2,deaths,thetas,alphas,deltas,
-                COMMUTING,MIGRATION,
-                sus_init,inf_init,end_time)
-
-plot_stab.rand2 <- plot_int(N, sol.rand2, state = "INF") +
-  theme_bw() + theme(legend.position="none") 
-plot_stab.rand2
-
-library("cowplot")
-plot_6 <- plot_grid(plot_stab.rand1 + ggtitle(paste0("var :", var(betas1), 
-                                           "mean:", mean(betas1))),
-          plot_stab.rand2 + ggtitle(paste0("var :", var(betas2), 
-                                            "mean:", mean(betas2))))
-
-#### ERROR with theoretical values:
 df_sol_rand <- data.frame(mub = numeric(0), 
                           sb = numeric(0),
                           outcte = numeric(0),
@@ -494,46 +432,68 @@ df_sol_rand <- data.frame(mub = numeric(0),
                           meanbet = numeric(0),
                           varbet = numeric(0))
 
-sb <- 0.8
-sb_vec <- seq(0,2,0.001)
-max_it <- length(sb_vec)
+sb <- 0.5
+mub_vec <- seq(0,1,0.01)
+max_it <- length(mub_vec)
+it = 0
+
 for(i in c(1:max_it)){
-  sb <- sb_vec[i]
-  betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 
-  if(sb == 0){
+  it = 0
+  while( it < 100){
+    mub <- mub_vec[i]
+    betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 
+    print(paste0("betas:",betas))
+    if(sb == 0){
+      betas <- rep(mub,N)
+    }
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    outl_rand <- max(eigen_mat(jacobian)$re)
+    
     betas <- rep(mub,N)
+    betas <- rep(mean(betas),N) 
+    
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    out_cte <- max(eigen_mat(jacobian)$re)
+    
+    df_sol_rand[(nrow(df_sol_rand)+1), ] <- c(mub, sb, out_cte, 
+                                              outl_rand,mean(betas),var(betas))
+    it = it + 1
+    print(it)
   }
-  jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
-    diag(gammas + colSums(MIGRATION))
-  outl_rand <- max(eigen_mat(jacobian)$re)
-  out_cte <- mean(betas) - mug + muw*mub*(N-1)
-  
-  df_sol_rand[(nrow(df_sol_rand)+1), ] <- c(mub, sb, out_cte, 
-                                            outl_rand,mean(betas),var(betas))
 }
 
-df_sol_rand$sqCV <- sqrt(df_sol_rand$sb)/df_sol_rand$mub
-df_sol_rand$sqvar <- sqrt(df_sol_rand$varbet)
-df_sol_rand$sqout <- ((df_sol_rand$outcte - df_sol_rand$outrand)/df_sol_rand$outcte)^2
+df_group <- df_sol_rand %>%  group_by(mub) %>% 
+    summarise(sb = min(sb), out_cte = mean(outcte),
+              outl_rand = mean(outrand), meanbet = mean(meanbet), n = n())
 
+df_group$sqout <- ((df_group$out_cte - df_group$outl_rand)/df_group$out_cte)^2
+df_group$diffmean <- (df_group$meanbet - df_group$mub)
+df_group$CV <- df_group$sb/df_group$mub
+
+bet_thres <- mug/(muw * (N-1) + 1)
+CV_thres <- sb/bet_thres
 library("latex2exp")
-plot1 <- ggplot(df_sol_rand) + 
-  geom_line(aes(sqCV,sqout), color = "red") + 
-  xlab("CV") + 
-  ylab("squared normalized error") +
+plotmu_fixedsig <- ggplot(df_group) + 
+  geom_line(aes(mub,sqout), color = "red") + 
+  xlab(TeX("$\\mu_{\\beta}$")) + 
+  ylab("Squared normalized error") +
+  geom_vline(xintercept = bet_thres, color = "blue", linetype = "dashed") +
   theme_bw()
 
-plot2 <- ggplot(df_sol_rand) + 
-  geom_line(aes(sb, sqout), color = "blue") +
-  xlab(TeX("\\sigma")) + 
-  ylab("squared normalized error") +
-  theme_bw()
+# plotCV_fixedsig <- ggplot(df_group) + 
+#   geom_line(aes(CV,sqout), color = "red") + 
+#   xlab(TeX("CV")) + 
+#   ylab("Squared normalized error") +
+#   geom_vline(xintercept = CV_thres, color = "blue", linetype = "dashed") +
+#   theme_bw()
 
 library("cowplot")
-plot_grid(plot1, plot2)
+# plot_grid(plotmu_fixedsig + ggtitle(TeX("$\\sigma_{\\beta}=0.5$")),
+#           plotCV_fixedsig + ggtitle(""))
 
-
-#### ERROR with theoretical values:
+### Fixed CV:
 df_sol_rand <- data.frame(mub = numeric(0), 
                           sb = numeric(0),
                           outcte = numeric(0),
@@ -541,41 +501,119 @@ df_sol_rand <- data.frame(mub = numeric(0),
                           meanbet = numeric(0),
                           varbet = numeric(0))
 
-sb <- 0.8
-sb_vec <- seq(0,2,0.001)
-max_it <- length(sb_vec)
+CV <- 0.8
+sig_vec <- seq(0.1,1,0.01)
+mub_vec <- sig_vec/CV
+max_it <- length(mub_vec)
 for(i in c(1:max_it)){
-  sb <- sb_vec[i]
-  betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 
-  if(sb == 0){
-    betas <- rep(mub,N)
+  sb <- sig_vec[i]
+  mub <- mub_vec[i]
+  it = 0
+  while( it < 100){
+    betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 
+    print(paste0("betas:",betas))
+    if(sb == 0){
+      betas <- rep(mub,N)
+    }
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    outl_rand <- max(eigen_mat(jacobian)$re)
+    
+    betas <- rep(mean(betas),N) 
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    out_cte <- max(eigen_mat(jacobian)$re)
+    
+    df_sol_rand[(nrow(df_sol_rand)+1), ] <- c(mub, sb, out_cte, 
+                                              outl_rand,mean(betas),var(betas))
+    it = it + 1
+    print(it)
   }
-  jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
-    diag(gammas + colSums(MIGRATION))
-  outl_rand <- max(eigen_mat(jacobian)$re)
-  out_cte <- mean(betas) - mug + muw*mub*(N-1)
-  
-  df_sol_rand[(nrow(df_sol_rand)+1), ] <- c(mub, sb, out_cte, 
-                                            outl_rand,mean(betas),var(betas))
+
 }
 
-df_sol_rand$sqCV <- sqrt(df_sol_rand$sb)/df_sol_rand$mub
-df_sol_rand$sqCV <- df_sol_rand$varbet/df_sol_rand$meanbet
-df_sol_rand$sqvar <- sqrt(df_sol_rand$varbet)
-df_sol_rand$sqout <- ((df_sol_rand$outcte - df_sol_rand$outrand)/df_sol_rand$outcte)^2
+df_sol_rand$CV <- df_sol_rand$sb/df_sol_rand$mub
+df_sol_rand <- df_sol_rand[-1,]
+df_group <- df_sol_rand %>%  group_by(mub,sb) %>% 
+  summarise(out_cte = mean(outcte),
+            outl_rand = mean(outrand), meanbet = mean(meanbet), n = n())
+
+df_group$sqout <- ((df_group$out_cte - df_group$outl_rand)/df_group$out_cte)^2
+df_group$diffmean <- (df_group$meanbet - df_group$mub)
+df_group$CV <- df_group$sb/df_group$mub
 
 library("latex2exp")
-plot1 <- ggplot(df_sol_rand) + 
-  geom_line(aes(sqCV,sqout), color = "red") + 
-  xlab("CV") + 
+plotsig_fixedCV <- ggplot(df_group) + 
+  geom_line(aes(sb,sqout), color = "red") + 
+  xlab(TeX("$\\sigma_{\\beta}$")) + 
   ylab("squared normalized error") +
   theme_bw()
 
-plot2 <- ggplot(df_sol_rand) + 
-  geom_line(aes(sqvar, sqout), color = "blue") +
-  xlab(TeX("\\sigma")) + 
+plotmu_fixedCV <- ggplot(df_group) + 
+  geom_line(aes(mub,sqout), color = "red") + 
+  xlab(TeX("$\\mu_{\\beta}$")) + 
   ylab("squared normalized error") +
   theme_bw()
 
-library("cowplot")
-plot_grid(plot1, plot2)
+# fixed mu move sigma:
+df_sol_rand <- data.frame(mub = numeric(0), 
+                          sb = numeric(0),
+                          outcte = numeric(0),
+                          outrand = numeric(0),
+                          meanbet = numeric(0),
+                          varbet = numeric(0))
+
+mub <- 0.5
+sb_vec <- seq(0,1,0.01)
+max_it <- length(sb_vec)
+it = 0
+
+for(i in c(1:max_it)){
+  it = 0
+  while( it < 100){
+    sb <- sb_vec[i]
+    betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 
+    print(paste0("betas:",betas))
+    if(sb == 0){
+      betas <- rep(mub,N)
+    }
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    outl_rand <- max(eigen_mat(jacobian)$re)
+    
+    betas <- rep(mean(betas),N) 
+    jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+      diag(gammas + colSums(MIGRATION))
+    out_cte <- max(eigen_mat(jacobian)$re)
+    
+    df_sol_rand[(nrow(df_sol_rand)+1), ] <- c(mub, sb, out_cte, 
+                                              outl_rand,mean(betas),var(betas))
+    it = it + 1
+    print(it)
+  }
+}
+
+df_group <- df_sol_rand %>%  group_by(sb) %>% 
+  summarise(mub = min(mub), out_cte = mean(outcte),
+            outl_rand = mean(outrand), meanbet = mean(meanbet), n = n())
+
+df_group$sqout <- ((df_group$out_cte - df_group$outl_rand)/df_group$out_cte)^2
+df_group$diffmean <- (df_group$meanbet - df_group$mub)
+df_group$CV <- df_group$sb/df_group$mub
+
+bet_thres <- mug/(muw * (N-1) + 1)
+CV_thres <- sb/bet_thres
+library("latex2exp")
+plotsb_fixedmub <- ggplot(df_group) + 
+  geom_line(aes(sb,sqout), color = "red") + 
+  xlab(TeX("$\\sigma_{\\beta}$")) + 
+  ylab("Squared normalized error") +
+  geom_vline(xintercept = bet_thres, color = "blue", linetype = "dashed") +
+  theme_bw()
+
+plot_grid(plotsb_fixedmub + ggtitle(TeX("$\\mu_{\\beta}:0.5$")),
+          plotsig_fixedCV + ggtitle(TeX("$C_{V}:0.8$")),
+          NULL,
+          plotmu_fixedsig + ggtitle(TeX("$\\sigma_{\\beta}:0.5$")),
+          rel_widths = c(1,1,0.1,1))
+          

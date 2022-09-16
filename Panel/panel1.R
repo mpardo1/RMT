@@ -10,6 +10,7 @@ source("~/RMT/David/RMT_genrandom.R")
 source("~/RMT/David/RMT_plotmobility.R")
 source("~/RMT/David/d_functions_eigen_int.R")
 library("viridis")
+library("latex2exp")
 ####### GENERATE JACOBIAN ###############################
 
 # number of patches
@@ -52,103 +53,84 @@ MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
 diag(MIGRATION) <- 0
 # ----------------------------------------------------------------------#
 ##### Plot Stability #####
-step <- 0.0025
-beta_vec <- seq(0.01,0.9,step)
-muw_vec <- seq(0.01,0.9,step)
-df_sol <- data.frame(beta = 0, gamma = 0, N = 0, muw = 0, state = FALSE)
-N = 50
-for(i in c(1:length(beta_vec))){
-  print(paste0(" i : ", i))
-  for(j in c(1:length(beta_vec))){
-    if(is.na(muw_vec[j]) | muw_vec[j] > 1 | muw_vec[j] <0  ){
-      print(paste0("Problem muw: ", muw_vec[j]))
-    }else{
-      # EPI param:
-      betas <- rep(beta_vec[i], N)
-      
-      # Computed by the prediction from RMT:
-      state <- ifelse(((N-1)*muw_vec[j]) < ((gammas[1]/betas[1]) - 1), TRUE, FALSE)
-      df_sol[nrow(df_sol) + 1,1:4] <- list(betas[1], gammas[1], N, muw_vec[j])
-      df_sol[nrow(df_sol) ,5] <- state
-    }
-  }
+
+beta_vec <- seq(0, 0.5, 0.001)
+stab_func <- function(bet){
+ (mug - bet)/(bet*(N-1)) 
 }
-
- df_sol <- df_sol[-1,]
-
-# path <- paste0("~/RMT/David/OUTPUT/area_gen_",Sys.Date(),".csv")
-# write.csv(df_sol, path,row.names = TRUE)
-
-# path <- "~/RMT/David/OUTPUT/area_gen_2022-03-30.csv"
-# df_sol <- read.csv(file = path)
-df_sol$Stability <- ifelse(df_sol$state == TRUE, "Stable", "Unstable")
-
-# df_sol <- df_sol[vec,]
-library(latex2exp)
-
-# Values for the points in the area graph:
-stab_par <- 0.1
-unstab_par <- 0.25
-
-dif <- 0.02
+line_thresh <- sapply(beta_vec, stab_func)
+df_thres <- data.frame(bet = beta_vec, muc = line_thresh)
+df_thres[which(df_thres$muc>0.75), 2] = 0.75
 
 
+# Data points for the values beta and muc for integration and eigenvalues plots:
+stab_par = 0.1
 betnew <- 0.35
 muwnew <- ((betnew*stab_par*(N-1)) + betnew - stab_par)/(stab_par*(N-1))
 
-betnew - mug + betnew*stab_par*(N-1)
 betnew - mug + betnew*stab_par*(N-1) == stab_par - mug + stab_par*muwnew*(N-1)
+
+dif <- 0.02
 # Create annotate for labels at each point in the area graph:
-annotation <- data.frame(
-  x = c(stab_par + dif, stab_par + dif, betnew + dif),
-  y = c(stab_par + dif, muwnew + dif, stab_par + dif),
-  label = c("c", "d", "e")
+annotation_u <- data.frame(
+  x = c(stab_par + dif),
+  y = c(stab_par + dif),
+  label = c("c")
 )
 
-library(ggstar)
-library("latex2exp")
+annotation_c <- data.frame(
+  x = c( stab_par + dif),
+  y = c(muwnew + dif),
+  label = c("d")
+)
 
-color_stab <- "#48639C"
-color_unstab <- "#BB4430"
-# 
-# color_stab <- "#034732"
-# color_unstab <- "#008148"
+annotation_b <- data.frame(
+  x = c(betnew + dif),
+  y = c(stab_par + dif),
+  label = c("e")
+)
 
-plot_area <- ggplot(df_sol) +
-  geom_point(aes(beta,muw, colour = Stability)) + theme_bw()  +
-  scale_color_manual(values=c(color_stab, color_unstab)) +
-  ylab(TeX("$\\mu_c$")) +
-  xlab(TeX("$\\beta$")) +
-  scale_x_continuous(breaks=c(0,0.25,0.50), limits = c(0, 0.5),
-                     labels = c("0", "0.25", "0.50")) +
-  scale_y_continuous(breaks=c(0,0.25,0.50, 0.75), limits = c(0, 0.75),
-                     labels = c("0", "0.25", "0.50", "0.75")) +
-  coord_fixed() +
-  theme(text = element_text(size = 15), legend.position = "bottom") +
-  guides(colour = guide_legend(override.aes = list(size=3))) 
 
-data_points <- data.frame(mub = c(stab_par,stab_par,betnew), 
-                          muw = c(stab_par,muwnew,stab_par))
-color_points <- "#050505"
-plot_area <-  ggplot(df_sol) +
-  geom_point(aes(beta,muw, colour = Stability)) + theme_bw()  +
-  scale_color_manual(values=c(color_stab, color_unstab)) +
-  ylab(TeX("$\\mu_c$")) +
-  xlab(TeX("$\\beta$")) +
-  scale_x_continuous(breaks=c(0,0.25,0.50), limits = c(0, 0.5),
-                     labels = c("0", "0.25", "0.50")) +
-  scale_y_continuous(breaks=c(0,0.25,0.50, 0.75), limits = c(0, 0.75),
-                     labels = c("0", "0.25", "0.50", "0.75")) +
-  geom_point(data = data_points, aes(mub, muw),
-             colour= color_points, size = 1.5) +
-  geom_text(data=annotation, aes( x=x, y=y, label=label),
-            color=color_points, 
+data_points <- data.frame(mub = c(stab_par,stab_par,betnew), muc = c(stab_par,muwnew,stab_par))
+df_stab <- data.frame(mub = c(stab_par), muc = c(stab_par))
+df_unst_c <- data.frame(mub = c(stab_par), muc = c(muwnew))
+df_unst_b <- data.frame(mub = c(betnew), muc = c(stab_par))
+
+col_stab <- "#F3A712"
+col_unst_c <- "#129490"
+col_unst_b <- "#7A306C"
+
+col_stab_r = "#484C4E"
+col_unstab_r = "#BCBBC9"
+
+plot_area <- ggplot(df_thres, aes(bet, muc)) + 
+  geom_ribbon(aes(x = bet, ymin = muc, ymax = 0.75, fill = col_unstab_r), alpha= 0.7) + 
+  geom_ribbon(aes(x = bet, ymin = 0, ymax = muc, fill = col_stab_r), alpha= 0.7) + 
+  scale_fill_manual(values = c(col_stab_r,col_unstab_r), name = "",
+                    labels = c("Stable", "Unstable"), position = "bottom") + 
+  xlab(TeX("$\\beta$")) + ylab(TeX("$\\mu_c$")) +
+  geom_point(data = df_stab, aes(mub, muc),
+             colour= col_stab, size = 1.5) +
+  geom_point(data = df_unst_c, aes(mub, muc),
+             colour= col_unst_c, size = 1.5) +
+  geom_point(data = df_unst_b, aes(mub, muc),
+             colour= col_unst_b, size = 1.5) +
+  geom_text(data=annotation_u, aes( x=x, y=y, label=label),
+            color=col_stab, 
             size=5.5 , angle=0, fontface="bold" ) +
-  coord_fixed() +
-  theme(text = element_text(size = 15), legend.position = "bottom") +
-  guides(colour = guide_legend(override.aes = list(size=3)))  
-
-plot_area
+  geom_text(data=annotation_b, aes( x=x, y=y, label=label),
+            color=col_unst_b, 
+            size=5.5 , angle=0, fontface="bold" ) +
+  geom_text(data=annotation_c, aes( x=x, y=y, label=label),
+            color=col_unst_c, 
+            size=5.5 , angle=0, fontface="bold" ) +
+  scale_x_continuous(breaks=c(0,0.25,0.50), limits = c(0, 0.5),
+                     labels = c("0", "0.25", "0.50")) +
+  scale_y_continuous(breaks=c(0,0.25,0.50, 0.75), limits = c(0, 0.75),
+                     labels = c("0", "0.25", "0.50", "0.75")) +
+  theme_bw() +
+  theme(text = element_text(size = 15), legend.position = "bottom") 
+  
 
 # Save plot
 # Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
@@ -157,11 +139,7 @@ ggsave(path,
        plot = plot_area, device = "png")
 #-----------------------------------------------------------------------------#
 ######### PLOTS ##############
-#------------------------------------------------------------------------#
-col_stab <- "#F3A712"
-col_unst_c <- "#129490"
-col_unst_b <- "#7A306C"
-
+#------------------------------------------------------------------------
 # col_stab <- "#C6C013"
 # col_unst_c <- "#EF8A17"
 # col_unst_b <- "#EF2917"
@@ -497,38 +475,3 @@ plot_grid(ggarr1,
           ncol = 1,
           rel_heights = c(1.6,1))
 
-########
-gginf  <- annotate_figure(gginf,
-                            bottom = text_grob("Time", color = "black",
-                                               size = 15),
-                            left = text_grob("Number of infected individuals",
-                                             color = "black", rot = 90,  size = 15))
-
-gginf
-
-ggall <- ggarrange(eigen_full,gginf, ncol = 2)
-
-ggall
-path <- paste0(Path,"gg_g0,95_muc_0,001_sc0,0001_sw0,05.png")
-ggsave(path,
-       plot = ggarr, device = "png")
-
-
-Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel1/diagram_c.png"
-library("png")
-diagram <- readPNG(Path)
-im_A <- ggplot() + 
-  background_image(diagram) +
-  # This ensures that the image leaves so me space at the edges
-  theme(plot.margin = margin(t=1, l=1, r=1, b=1, unit = "cm"))
-
-gg_izq <- ggarrange(plot_area,
-                    im_A, 
-                    widths = c(1.2,2),
-                    ncol = 2, common.legend = TRUE)
-gg_izq
-
-gg_tot <- ggarrange(gg_izq,ggall, 
-                    heights = c(1.2,2),
-                    nrow = 2)
-gg_tot
