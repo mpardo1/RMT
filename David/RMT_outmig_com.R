@@ -32,8 +32,9 @@ stragAB <- function(muc){
 
 stragC <- function(muc){
   N*(mub*muw+muc)/2 + ((k-1)/2)*mub*nu +
-    sqrt((N*(mub*muw+muc))^2+2*mub*nu*(mub*muw+muc)*(N+k*(3*N-2*k-2)) +
-                                                       (mub*nu)^2*(4*k*(N-k) + (k-1)^2))/2 +
+    sqrt((N*(mub*muw+muc))^2+
+           2*mub*nu*(mub*muw+muc)*(N+k*(3*N-2*k-2)) +
+           (mub*nu)^2*(4*k*(N-k) + (k-1)^2))/2 +
     mub*(1-muw) - mug - N*muc
 } 
 
