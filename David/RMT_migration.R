@@ -170,7 +170,7 @@ mudel <- 0
 deltas <- rep(mudel, N) # disease-related death rates
 gammas = deaths + alphas + deltas
 
-muw <- 0.12
+muw <- 0.1
 sw <- 0.07/3
 rhow <- 0 #original rho (Gamma of baron et al)
 
@@ -188,6 +188,9 @@ col_stabD = "#B62F2F"  # rojo
 col_stabE = "#2C5CE1"  # azul
 col_stabF = "#AA2FB5"  # violeta
 col_circ = "#010C0C" # negro
+
+color_stab <- "#4464AD"
+color_unstab <- "#A4B0F5"
 
 COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
 MIGRATION <- rand_mat_ell(N, muc, sc, rhoc, distrib = "beta")
@@ -234,272 +237,122 @@ plot_eigen(jacobian) +
 
 ### CONTROL
 nodes <- 4
-muwstar <- 0
-COMMUTINGA <- COMMUTINGB <- COMMUTINGC <- COMMUTINGD <- COMMUTINGE <- COMMUTINGF <- COMMUTING
+muwstar <- 1
+MIGRATIONA <- MIGRATIONB <- MIGRATIONC <- MIGRATIOND <- MIGRATIONE <- MIGRATIONF <- MIGRATION
+
+color_stab <- "#4464AD"
+color_unstab <- "#8AEA92"
 
 # STRATEGY A
 fs <- sample(c(1:N), nodes)
-COMMUTINGA[fs,] <- muwstar
+MIGRATIONA[fs,] <- muwstar
 solA <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-            COMMUTINGA,MIGRATION,
+            COMMUTING,MIGRATIONA,
             sus_init,inf_init,end_time)
 
-jacobianA <- (COMMUTINGA + diag(N)) %*% diag(betas) + MIGRATION -
-  diag(deaths + alphas + deltas + colSums(MIGRATION))
+jacobianA <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATIONA -
+  diag(deaths + alphas + deltas + colSums(MIGRATIONA))
 
-nu <- muwstar - muw
-outlA <- stragAB(nodes,nu)
+vec_colA <-  vector(mode="character", length=N)
+vec_colA[1:N] <- color_unstab
+vec_colA[fs] <- color_stab
 
-plot_eigen(jacobianA) + 
-  geom_ellipse(aes(x0 = c_unstab, y0 = 0, 
-                   a = r_unstab,
-                   b = r_unstab, 
-                   angle = 0), color = col_circ) +
-  geom_point(aes(outlA,0), 
-             color = col_stabA, shape = 21) +
-  geom_vline(xintercept = 0) +
-  theme_bw()
+plot.infA <- plot_int1(N, solA, state = "INF") +
+  scale_colour_viridis_d() +
+  # scale_colour_manual(values = vec_colA) +
+  theme_bw() +
+  theme(text = element_text(size = 15),
+        legend.position="none") + xlim(c(0,20))
+plot.infA
 
 # STRATEGY B
-cs <- sample(c(1:N), nodes)
-COMMUTINGB[,fs] <- muwstar
+# cs <- sample(c(1:N), nodes)
+MIGRATIONB[,fs] <- muwstar
 solB <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-            COMMUTINGB,MIGRATION,
+            COMMUTING,MIGRATIONB,
             sus_init,inf_init,end_time)
 
-jacobianB <- (COMMUTINGB + diag(N)) %*% diag(betas) + MIGRATION -
-  diag(deaths + alphas + deltas + colSums(MIGRATION))
+jacobianB <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATIONB -
+  diag(deaths + alphas + deltas + colSums(MIGRATIONB))
 
-nu <- muwstar - muw
-outlB <- stragAB(nodes,nu)
+vec_colB <-  vector(mode="character", length=N)
+vec_colB[1:N] <- color_unstab
+vec_colB[fs] <- color_stab
 
-plot_eigen(jacobianB) + 
-  geom_ellipse(aes(x0 = c_unstab, y0 = 0, 
-                   a = r_unstab,
-                   b = r_unstab, 
-                   angle = 0), color = col_circ) +
-  geom_point(aes(outlB,0), 
-             color = col_stabB, shape = 21) +
-  geom_vline(xintercept = 0) +
-  theme_bw()
-
+plot.infB <- plot_int1(N, solB, state = "INF") +
+  scale_colour_manual(values = vec_colB) +
+  theme_bw() +
+  theme(text = element_text(size = 15),
+        legend.position="none") + xlim(c(0,20))
+plot.infB
 
 # STRATEGY C
 fcs <- sample(c(1:N), nodes/2)
 fcs <- fs[c(1:(nodes/2))]
-COMMUTINGC[fcs,] <- COMMUTINGC[,fcs] <- muwstar
+MIGRATIONC[fcs,] <- MIGRATIONC[,fcs] <- muwstar
 solC <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-            COMMUTINGC,MIGRATION,
+            COMMUTING,MIGRATIONC,
             sus_init,inf_init,end_time)
 
-jacobianC <- (COMMUTINGC + diag(N)) %*% diag(betas) + MIGRATION -
-  diag(deaths + alphas + deltas + colSums(MIGRATION))
+jacobianC <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATIONC -
+  diag(deaths + alphas + deltas + colSums(MIGRATIONC))
 
-nu <- muwstar - muw
-outlC <- stragC(nodes,nu)
+vec_colC <-  vector(mode="character", length=N)
+vec_colC[1:N] <- col_stabA
+vec_colC[fcs] <- color_stab
 
-plot_eigen(jacobianC) + 
-  geom_ellipse(aes(x0 = c_unstab, y0 = 0, 
-                   a = r_unstab,
-                   b = r_unstab, 
-                   angle = 0), color = col_circ) +
-  geom_point(aes(outlC,0), 
-             color = col_stabC, shape = 21) +
-  geom_vline(xintercept = 0) +
-  theme_bw()
+plot.infC <- plot_int1(N, solC, state = "INF") +
+  scale_colour_manual(values = vec_colC) +
+  theme_bw() + theme(text = element_text(size = 15),
+        legend.position="none") + xlim(c(0,20))
+plot.infC
 
+plot_grid(plot.infA,plot.infB,plot.infC)
 # RAND STRATEGIES #
 end_time <- 200
 
 # STRATEGY D
 inds <- sample(c(1:N^2), nodes*N)
-COMMUTINGD[inds] <- muwstar
+MIGRATIOND[inds] <- muwstar
 
 solD <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-            COMMUTINGD,MIGRATION,
+            COMMUTING,MIGRATIOND,
             sus_init,inf_init,end_time)
 
-jacobianD <- (COMMUTINGD + diag(N)) %*% diag(betas) + MIGRATION -
-  diag(deaths + alphas + deltas + colSums(MIGRATION))
-
-nu <- muwstar - muw
-outlD <- stragDEF(nodes,nu)
-
-sig <- sqrt(mub^2*sw^2  + sc^2)
-p <- (nodes*N)/(N^2)
-sigma_spa <- sqrt((p*(1-p)*sig^2)+(p*(1-p)*(mub*muw + muc)^2) + sig^2*p^2)
-radius_spa <- sqrt(N)*sigma_spa
-
-plot_eigen(jacobianD) + 
-  geom_ellipse(aes(x0 = c_unstab, y0 = 0, 
-                   a = radius_spa,
-                   b = radius_spa, 
-                   angle = 0), color = col_circ) +
-  geom_point(aes(outlD,0), 
-             color = col_stabD, shape = 21) +
-  geom_vline(xintercept = 0) +
-  theme_bw() + coord_fixed()
+jacobianD <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATIOND -
+  diag(deaths + alphas + deltas + colSums(MIGRATIOND))
 
 # STRATEGY E
 rinds <- inds[c(1:(nodes*N/2))]
-COMMUTINGE[rinds] <- muwstar
-COMMUTINGE <- t(COMMUTINGE)
-COMMUTINGE[rinds] <- muwstar
-COMMUTINGE <- t(COMMUTINGE)
+MIGRATIONE[rinds] <- muwstar
+MIGRATIONE <- t(MIGRATIONE)
+MIGRATIONE[rinds] <- muwstar
+MIGRATIONE <- t(MIGRATIONE)
 
 solE <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-            COMMUTINGE,MIGRATION,
+            COMMUTING,MIGRATIONE,
             sus_init,inf_init,end_time)
 
-jacobianE <- (COMMUTINGE + diag(N)) %*% diag(betas) + MIGRATION -
-  diag(deaths + alphas + deltas + colSums(MIGRATION))
+jacobianE <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATIONE -
+  diag(deaths + alphas + deltas + colSums(MIGRATIONE))
 
-nu <- muwstar - muw
-outlE <- stragDEF(nodes,nu)
-
-# correlation:
-MAT_CORR <- jacobianE
-vec1 <- MAT_CORR[upper.tri(MAT_CORR)]
-vec2 <- MAT_CORR[lower.tri(MAT_CORR)]
-rhoa <- cor(vec1,vec2)
-
-MAT_CORR <-  COMMUTINGE
-vec1 <- MAT_CORR[upper.tri(MAT_CORR)]
-vec2 <- MAT_CORR[lower.tri(MAT_CORR)]
-rhoa <- cor(vec1,vec2)
-# rhoa <- length(rinds)/(N^2) - N
-rhoa <- (mub^2*rhoa*sw^2)/(mub^2*sw+sc)^2
-
-# No me sale con lo teórico puse el radio así a ojo.
-ar <- 0.05
-br <-  0.008
-plot_eigen(jacobianE) + 
-  geom_ellipse(aes(x0 = c_unstab, y0 = 0, 
-                   a = ar,#sig*sqrt(N)*(1-rhoa),
-                   b = br,#sig*(1+rhoa), 
-                   angle = 0), color = col_circ) +
-  geom_point(aes(outlE,0), 
-             color = col_stabE, shape = 21) +
-  geom_vline(xintercept = 0) +
-  theme_bw()
 # STRATEGY F
-COMMUTINGF <- COMMUTINGF*(1-nodes/N)
+MIGRATIONF <- MIGRATIONF*(1-nodes/N)
 solF <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-            COMMUTINGF,MIGRATION,
+            COMMUTING,MIGRATIONF,
             sus_init,inf_init,end_time)
 
-jacobianF <- (COMMUTINGF + diag(N)) %*% diag(betas) + MIGRATION -
-  diag(deaths + alphas + deltas + colSums(MIGRATION))
+jacobianF <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATIONF -
+  diag(deaths + alphas + deltas + colSums(MIGRATIONF))
 
-nu <- muwstar - muw
-outlF <- stragDEF(nodes,nu)
-
-plot_eigen(jacobianF) + 
-  geom_ellipse(aes(x0 = c_unstab, y0 = 0, 
-                   a = r_unstab,
-                   b = r_unstab, 
-                   angle = 0), color = col_circ) +
-  geom_point(aes(outlF,0), 
-             color = col_stabF, shape = 21) +
-  geom_vline(xintercept = 0) +
-  theme_bw()
-
-####EIGENFULL###
-eigstab <- eigen_mat(jacobian)
-eigstab$str <- ""
-eigstab$type <- "" 
-eigenA <- eigen_mat(jacobianA)
-eigenA$str <- "A"
-eigenA$type <- "not-rand" 
-eigenB <- eigen_mat(jacobianB)
-eigenB$str <- "B"
-eigenB$type <- "not-rand" 
-eigenC <- eigen_mat(jacobianC)
-eigenC$str <- "C"
-eigenC$type <- "not-rand" 
-eigenD <- eigen_mat(jacobianD)
-eigenD$str <- "D"
-eigenD$type <- "rand" 
-eigenE <- eigen_mat(jacobianE)
-eigenE$str <- "E"
-eigenE$type <- "rand" 
-eigenF <- eigen_mat(jacobianF)
-eigenF$str <- "F"
-eigenF$type <- "rand" 
-
-eigenT <- rbind(eigstab,eigenA,eigenB,eigenC,eigenD,eigenE,eigenF)
-
-col_unstab = "#0D0C18"   # negro
-col_stabA = "#06D622"  # verde
-col_stabB = "#E96F1D"  # naranja
-col_stabC = "#F8DC22"  # amarillo
-col_stabD = "#B62F2F"  # rojo
-col_stabE = "#2C5CE1"  # azul
-col_stabF = "#AA2FB5"  # violeta
-
-supsmall = 0.2
-small = 0.5
-mid = 1
-big = 1.5
-
-gg_eigen_full <- ggplot(eigenT) + 
-  geom_point(aes(re, im), size = 0.2) +
-  geom_ellipse(aes(x0 = c_unstab, y0 = 0, 
-                   a = r_unstab,
-                   b = r_unstab, 
-                   angle = 0), color = col_unstab, size = 2.5) + 
-  geom_ellipse(aes(x0 = c_unstab, y0 = 0, 
-                   a = r_unstab,
-                   b = r_unstab, 
-                   angle = 0), color = col_stabA, size = 1.8) + 
-  geom_ellipse(aes(x0 = c_unstab, y0 = 0, 
-                   a = r_unstab,
-                   b = r_unstab, 
-                   angle = 0), 
-               color = col_stabB, size = 1.3) +
-  geom_ellipse(aes(x0 = c_unstab, y0 = 0, 
-                   a = r_unstab,
-                   b = r_unstab, 
-                   angle = 0), color = col_stabC, size = 0.8) +
-  geom_ellipse(aes(x0 = c_unstab, y0 = 0, 
-                   a = radius_spa,
-                   b = radius_spa, 
-                   angle = 0), color = col_stabD, size = 0.3)  +
-  geom_ellipse(aes(x0 = c_unstab, y0 = 0, 
-                   a = ar,#sig*sqrt(N)*(1-rhoa),
-                   b = br,#sig*(1+rhoa), 
-                   angle = 0), color = col_stabE, size = 0.3) +
-  geom_ellipse(aes(x0 = c_unstab, y0 = 0 , 
-                   a = r_unstab,
-                   b = r_unstab, 
-                   angle = 0), color = col_stabF, size = 0.3) +
-  geom_point(aes(o_unstab,0), 
-             color = col_unstab, shape = 21, size = 1.5) +
-  geom_point(aes(outlA,0), 
-             color = col_stabA, shape = 21, size = 1) +
-  geom_point(aes(outlB,0), 
-             color = col_stabB, shape = 21, size = 2.5) +
-  geom_point(aes(outlC,0), 
-             color = col_stabC, shape = 21, size = 1.5) +
-  geom_point(aes(outlD,0), 
-             color = col_stabD, shape = 23, size = 2.5) +
-  geom_point(aes(outlE,0), 
-             color = col_stabE, shape = 23, size = 2) +
-  geom_point(aes(outlF,0), 
-             color = col_stabF, shape = 23, size = 1.5) +
-  geom_vline(xintercept = 0, color = "blue",  linetype = "dashed") +
-  theme_bw() + theme(text = element_text(size = 12))
-
-gg_eigen_full
-#######
 
 #### MOB HEAT MAP########
 
 ###########################################################
 
 
-CMAXDET <- max(c(COMMUTINGA,COMMUTINGB,COMMUTINGC))
-CMAXRAND <- max(c(COMMUTINGD,COMMUTINGE, COMMUTINGF))
+CMAXDET <- max(c(MIGRATIONA,MIGRATIONB,MIGRATIONC))
+CMAXRAND <- max(c(MIGRATIOND,MIGRATIONE, MIGRATIONF))
 
 IMAX <- max(unlist(c(select(as.data.frame(solA), c((N+2):(2*N+1))),
                      select(as.data.frame(solB), c((N+2):(2*N+1))),
@@ -513,18 +366,18 @@ IMIN <- min(unlist(c(select(as.data.frame(solA), c((N+2):(2*N+1))),
                      select(as.data.frame(solD), c((N+2):(2*N+1))),
                      select(as.data.frame(solE), c((N+2):(2*N+1))),
                      select(as.data.frame(solF), c((N+2):(2*N+1)))))) - 50
-CMMAX <- max(c(rowSums(COMMUTINGA)/(N-1),colSums(COMMUTINGA)/(N-1),
-               rowSums(COMMUTINGB)/(N-1),colSums(COMMUTINGB)/(N-1),
-               rowSums(COMMUTINGC)/(N-1),colSums(COMMUTINGC)/(N-1),
-               rowSums(COMMUTINGD)/(N-1),colSums(COMMUTINGD)/(N-1),
-               rowSums(COMMUTINGE)/(N-1),colSums(COMMUTINGE)/(N-1),
-               rowSums(COMMUTINGF)/(N-1),colSums(COMMUTINGF)/(N-1)))
-CMMIN <- min(c(rowSums(COMMUTINGA)/(N-1),colSums(COMMUTINGA)/(N-1),
-               rowSums(COMMUTINGB)/(N-1),colSums(COMMUTINGB)/(N-1),
-               rowSums(COMMUTINGC)/(N-1),colSums(COMMUTINGC)/(N-1),
-               rowSums(COMMUTINGD)/(N-1),colSums(COMMUTINGD)/(N-1),
-               rowSums(COMMUTINGE)/(N-1),colSums(COMMUTINGE)/(N-1),
-               rowSums(COMMUTINGF)/(N-1),colSums(COMMUTINGF)/(N-1)))              
+CMMAX <- max(c(rowSums(MIGRATIONA)/(N-1),colSums(MIGRATIONA)/(N-1),
+               rowSums(MIGRATIONB)/(N-1),colSums(MIGRATIONB)/(N-1),
+               rowSums(MIGRATIONC)/(N-1),colSums(MIGRATIONC)/(N-1),
+               rowSums(MIGRATIOND)/(N-1),colSums(MIGRATIOND)/(N-1),
+               rowSums(MIGRATIONE)/(N-1),colSums(MIGRATIONE)/(N-1),
+               rowSums(MIGRATIONF)/(N-1),colSums(MIGRATIONF)/(N-1)))
+CMMIN <- min(c(rowSums(MIGRATIONA)/(N-1),colSums(MIGRATIONA)/(N-1),
+               rowSums(MIGRATIONB)/(N-1),colSums(MIGRATIONB)/(N-1),
+               rowSums(MIGRATIONC)/(N-1),colSums(MIGRATIONC)/(N-1),
+               rowSums(MIGRATIOND)/(N-1),colSums(MIGRATIOND)/(N-1),
+               rowSums(MIGRATIONE)/(N-1),colSums(MIGRATIONE)/(N-1),
+               rowSums(MIGRATIONF)/(N-1),colSums(MIGRATIONF)/(N-1)))              
 # 
 # commpanel <-ggarrange(plotmobility(COMMUTINGA, cmax = CMAX), plot_panelc(N, solA, COMMUTINGA, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
 #                      plotmobility(COMMUTINGB, cmax = CMAX), plot_panelc(N, solB, COMMUTINGB, IMIN = IMIN, IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX),
@@ -539,44 +392,38 @@ col_ldet <- "#B1C2B6"
 col_det <- "#40B565"
 col_lrand <- "#7F9BD5"
 col_rand <- "#567DD1"
-reescale = 1
-mobstab <- plotmobility(reescale*COMMUTING, cmax = CMAXDET, color1 =col_stab )
+mobstab <- plotmobility(MIGRATION, cmax = CMAXDET, color1 =col_stab )
 mobstab
-mobA <- plotmobility(reescale*COMMUTINGA , cmax = CMAXDET, color1 =col_det )
+mobA <- plotmobility(MIGRATIONA , cmax = CMAXDET, color1 =col_det )
 # mobA <- plotmobilityMPA(reescale*COMMUTINGA - 1, col_det )
 mobA
 
-mobB <- plotmobility(COMMUTINGB, cmax = CMAXDET, color1 =col_det )
+mobB <- plotmobility(MIGRATIONB, cmax = CMAXDET, color1 =col_det )
 mobB
-mobC <- plotmobility(COMMUTINGC, cmax = CMAXDET, color1 =col_det )
+mobC <- plotmobility(MIGRATIONC, cmax = CMAXDET, color1 =col_det )
 mobC
-mobD <- plotmobility(COMMUTINGD, cmax = CMAXRAND, color1 =col_rand )
+mobD <- plotmobility(MIGRATIOND, cmax = CMAXRAND, color1 =col_rand )
 mobD
-mobE <- plotmobility(COMMUTINGE, cmax = CMAXRAND, color1 =col_rand )
+mobE <- plotmobility(MIGRATIONE, cmax = CMAXRAND, color1 =col_rand )
 mobE
-mobF <- plotmobility(COMMUTINGF, cmax = CMAXRAND, color1 =col_rand )
+mobF <- plotmobility(MIGRATIONF, cmax = CMAXRAND, color1 =col_rand )
 mobF
 
 ####INTEGRATION####
 int <- plot_panelc(N, sol, COMMUTING,col_mean, col_lstab, col_stab )
 int
-intA <- plot_panelc(N, solA, COMMUTINGA,col_mean, col_ldet, col_det, IMIN = IMIN, 
-                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + ylim(c(0,100))
+intA <- plot_panelc(N, solA, MIGRATIONA, col_mean, col_lstab, col_stab )
+intA <- plot_int(N, solA, state = "INF") 
 intA
-intB <- plot_panelc(N, solB, COMMUTINGB,col_mean, col_ldet, col_det, IMIN = IMIN, 
-                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + ylim(c(0,100))
+intB <- plot_int(N, solB, state = "INF")
 intB
-intC <- plot_panelc(N, solC, COMMUTINGC,col_mean, col_ldet, col_det, IMIN = IMIN, 
-                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)  + ylim(c(0,100))
+intC <- plot_int(N, solC, state = "INF")
 intC
-intD <- plot_panelc(N, solD, COMMUTINGD,col_mean, col_lrand, col_rand, IMIN = IMIN, 
-                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + ylim(c(0,100))
+intD <- plot_int(N, solD, state = "INF")
 intD
-intE <- plot_panelc(N, solE, COMMUTINGE,col_mean, col_lrand, col_rand, IMIN = IMIN, 
-                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX) + ylim(c(0,100))
+intE <- plot_int(N, solE, state = "INF")
 intE
-intF <- plot_panelc(N, solF, COMMUTINGF,col_mean, col_lrand, col_rand, IMIN = IMIN, 
-                    IMAX = IMAX, CMMIN = CMMIN, CMMAX = CMMAX)  + ylim(c(0,100))
+intF <- plot_int(N, solF, state = "INF")
 intF
 text_tit = 15
 

@@ -31,9 +31,9 @@ stragAB <- function(muc){
 } 
 
 stragC <- function(muc){
-  N*(mub*muw+muc)/2 + (k/2-1)*mub*nu/2 +
-    sqrt((N*(mub*muw+muc))^2+mub*nu*(2*mub*muw+muc)*(N+3*N*k/2-2*(k/2+1))+
-           ((mub*nu)^2)*(2*k*(N-k/2)+(k/2-1)^2))/2 +
+  N*(mub*muw+muc)/2 + ((k-1)/2)*mub*nu +
+    sqrt((N*(mub*muw+muc))^2+2*mub*nu*(mub*muw+muc)*(N+k*(3*N-2*k-2)) +
+                                                       (mub*nu)^2*(4*k*(N-k) + (k-1)^2))/2 +
     mub*(1-muw) - mug - N*muc
 } 
 
@@ -100,10 +100,10 @@ vec <- seq(0,1,0.01)
 k <- 2
 nu <- 0.5
 out_AB <- sapply(vec, stragAB)
-out_C <- sapply(vec, stragAB)
+out_C <- sapply(vec, stragC)
 
 df_out <- data.frame(muc = vec, 
-                     A&B = out_AB,
+                     AB = out_AB,
                      "C" = out_C)
 
 ggplot(df_out) +

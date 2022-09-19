@@ -96,9 +96,17 @@ df_stab <- data.frame(mub = c(stab_par), muc = c(stab_par))
 df_unst_c <- data.frame(mub = c(stab_par), muc = c(muwnew))
 df_unst_b <- data.frame(mub = c(betnew), muc = c(stab_par))
 
-col_stab <- "#F3A712"
-col_unst_c <- "#129490"
-col_unst_b <- "#7A306C"
+# col_stab <- "#F3A712"
+# col_unst_c <- "#129490"
+# col_unst_b <- "#7A306C"
+col_stab <- "#F2C911"
+col_unst_c <- "#22A884FF"
+col_unst_b <- "#440154FF"
+
+# col_stab <- "#414487FF"
+# col_unst_c <- "#7AD151FF"
+# col_unst_b <- "#440154FF"
+
 
 col_stab_r = "#484C4E"
 col_unstab_r = "#BCBBC9"
@@ -144,8 +152,8 @@ ggsave(path,
 # col_unst_c <- "#EF8A17"
 # col_unst_b <- "#EF2917"
 #### Plots RMT and Integration ####
-sus_init <- rep(100000, N) # initial susceptibles
-inf_init <- rep(100, N)    # initial infecteds
+sus_init <- rep(50, N) # initial susceptibles
+inf_init <- rep(10, N)    # initial infecteds
 
 end_time <- 100
 
@@ -311,7 +319,7 @@ for(i in c(1:N)){
 sol_uns_bet <- as.data.frame(sol_uns_bet)
 # z  <- z   %>% filter( z$time < 1) 
 sol_uns_bet <- reshape2::melt(sol_uns_bet, id.vars = c("time"))
-
+sol_stab_f <- reshape2::melt(as.data.frame(sol_stab_f[,c(1,52:101)]), id.vars = c("time"))
 # Filter Infected:
 sol_uns_bet$type <- substr(sol_uns_bet$variable,1,1)
 sol_uns_bet <- sol_uns_bet  %>% filter( substr(sol_uns_bet$variable,1,1) == "I")
@@ -328,14 +336,21 @@ plot_inf_unstab_bet <- plot_inf_unstab_bet +
   scale_colour_manual(values = vec_col) 
 plot_inf_unstab_bet
 
-plot  <- ggplot(sol_uns_bet,
+# Plot integrations together
+plot_integration  <- ggplot(sol_uns_bet,
                 aes(time, value), show.legend = NA) + 
   geom_line(aes( group =variable, colour = type),
-            color = col_unst_c , size=0.5, linetype = "dashed")  +
+            color = col_unst_c , size=0.5)  +
   ylab("Number of infected individuals") +
   geom_line(data = sol_uns_com,
             aes( group =variable, colour = type),
-            color = col_unst_b , size=0.5) + theme_bw()
+            color = col_unst_b , size=0.5) +
+  geom_line(data = sol_stab_f,
+          aes( group =variable, colour = type),
+          color = col_stab , size=0.5) + 
+  xlim(c(0,12)) +
+  theme_bw() +
+  theme(text = element_text(size = size_text)) 
   
 ###### ALL EIGENVALUE DIST ####
 size_text <- 16
@@ -431,22 +446,19 @@ gginf <- ggarrange(plot_inf_stab + labs(title = "c") +
 
 ### plot grid
 gg1 <- plot_inf_stab + labs(title = "c") +
-  scale_y_continuous(breaks=c(0, 50, 100),
-                     labels = function(x) format(x, scientific = TRUE)) +
+  scale_y_continuous(breaks=c(0, 5, 10)) +
   theme(text = element_text(size = size_text),
         axis.title.y=element_blank(),
         axis.title.x=element_blank())
 
 gg2 <-  plot_inf_unstab_com + labs(title = "d") +
-  scale_y_continuous(breaks=c(0, 15000, 30000),
-                     labels = function(x) format(x, scientific = TRUE)) +
+  scale_y_continuous(breaks=c(0,10, 15,20), limits = c(10,20)) +
   theme(text = element_text(size = size_text),
         axis.title.y=element_blank(),
         axis.title.x=element_blank())
 
 gg3 <- plot_inf_unstab_bet + labs(title = "e") +
-  scale_y_continuous(breaks=c(0,15000, 30000),
-                     labels = function(x) format(x, scientific = TRUE)) +
+  scale_y_continuous(breaks=c(0, 10, 15,20)) +
   theme(text = element_text(size = size_text),
         axis.title.y=element_blank(),
         axis.title.x=element_blank())
@@ -474,4 +486,43 @@ plot_grid(ggarr1,
           nrow = 2,
           ncol = 1,
           rel_heights = c(1.6,1))
+
+##### Panel with integration together:
+let_size <- 20
+
+legend_b <- get_legend(
+  plot_area + 
+    guides(color = guide_legend(nrow = 1 )) +
+    theme(legend.position = "bottom")
+)
+
+legend_a <- get_legend(
+  eigen_full + 
+    guides(color = guide_legend(nrow = 1),override.aes = list(size = 7,
+                                                              shape = c(16, 16,16))) +
+    theme(legend.position = "bottom")
+)
+
+
+plot1 <- plot_grid(plot_area  + ggtitle("a") +
+            theme(plot.title = element_text(size = let_size),
+                  legend.position = "none"),
+            NULL,
+          plot_integration + ggtitle("c") +
+            scale_x_continuous(breaks=c(0,2,4,6,8,10,12), limits = c(0,12)) +
+            theme(plot.title = element_text(size = let_size)),
+          rel_widths = c(1,0.1,1), nrow = 1)
+
+legend <- plot_grid(legend_b, legend_a)
+
+plot_full <- plot_grid(plot1,
+          eigen_full + ggtitle("b") +
+            theme(plot.title = element_text(size = let_size),
+                  legend.position = "none") ,
+          ncol = 1, rel_heights = c(1.5,1))
+
+plot_grid(plot_full,
+          legend,
+          nrow = 2,
+          rel_heights = c(1,0.1))
 
