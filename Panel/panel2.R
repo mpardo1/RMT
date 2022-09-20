@@ -276,8 +276,7 @@ for(i in c(1:length(alp_bet_vec))){
               size = 0.8) +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
                          low = "#F8F053", high = "#4C0EF6") +
-   scale_y_continuous( breaks=c(0)) +
-  theme(text = element_text(size = size_text))  + theme_bw() +
+   scale_y_continuous( breaks=c(-0.02,0,0.02)) +
   geom_ellipse(aes(x0 = c_stab, y0 = 0,    
                    a = r_stab,
                    b = r_stab,
@@ -288,13 +287,19 @@ for(i in c(1:length(alp_bet_vec))){
              color = color_unstab, shape = 8, size = 2.8) +
  geom_point(aes(outl2,0),
              color = color_unstab, shape = 8, size = 2.8) +
-  geom_vline(xintercept = 0, color = "blue", linetype = "dashed")
+  geom_vline(xintercept = 0, color = "blue", linetype = "dashed") +
+   theme_bw() +
+   theme(text = element_text(size = size_text),
+         legend.position = "none", legend.box = "horizontal",
+         plot.title = element_text(size = text_tit, face = "bold"))  + 
+   ggtitle("c") + rremove("xlab") + rremove("ylab")
  plot_alp
- plot_alp + geom_ellipse(aes(x0 = c_stab, y0 = 0,
-                           a = r_stab,
-                           b = r_stab,
-                           angle = 0, color = "black"))
-# saveRDS(df_sum, file = "df_sum.rds")
+ 
+ leg_plot <- get_legend(plot_alp)
+ 
+ plot_alp1 <- ggdraw() +
+   draw_plot(plot_alp) +
+   draw_plot(leg_plot, x = 0.7, y = .6, width = .3, height = .3)
 # readRDS(file = "df_sum.rds")
 
 dec <- 0
@@ -467,11 +472,9 @@ plotsum <- plot_grid(sum_inf + theme(legend.position = "none") + ggtitle("a")+
                      grid1 ,
            ncol = 2, nrow = 1,
           rel_widths = c(0.8,1,1))
-plot_alp <- plot_alp + ggtitle("c") + 
-  theme(plot.title = element_text(size = text_tit, face = "bold")) +  
-  theme(legend.position = "left")
+
 plot_sum1 <- plot_grid(plotsum ,
-                       plot_alp ,
+                       plot_alp1,
           nrow = 2,
           rel_heights = c(1.1,1))
 

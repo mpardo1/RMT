@@ -365,7 +365,7 @@ colors <- c("c" = col_stab,
 
 eigen_full <- ggplot(eig_full) + 
   geom_point(aes(re,im), size = 0.2) +
-  theme_bw() + coord_fixed() +
+  theme_bw() + 
   theme(text = element_text(size = size_text),
         legend.position = "bottom") +
   guides(colour = guide_legend(override.aes = list(size=3))) +
@@ -403,9 +403,11 @@ plot1 <- plot_grid(plot_area  +
           plot_integration +
             # ggtitle("c") +
             scale_x_continuous(breaks=c(0,2,4,6,8,10,12),
-                               limits = c(0,12)) +
+                               limits = c(0,12), expand = c(0, 0)) +
             theme(plot.title = element_text(size = let_size), 
-                  plot.margin = unit(c(0.2, 0.4, 0.2, 0.2), "cm")) ,
+                  plot.margin = unit(c(0.2, 0.4, 0.2, 0.2), "cm")) +
+            scale_y_continuous( expand = c(0, 0)) +
+            ylab("Infected Individuals"),
           rel_widths = c(1,1), nrow = 1, labels = c("a","c"),
           label_fontfamily = "Helvetica",
           label_size = size_text)
@@ -414,12 +416,14 @@ plot_full <- plot_grid(plot1,
                        eigen_full +
                          theme(plot.title = element_text(size = let_size),
                                legend.position = "none", 
-                               plot.margin = unit(c(0, 0.1, 0, 0), "cm")),
-          ncol = 1, rel_heights = c(1.5,1), axis = "v", scale = c(1,1),
+                               plot.margin = unit(c(0.8, 0.8, 1.3, 1.3), "cm")) +
+                         rremove("xlab") + rremove("ylab") +
+                         scale_y_continuous(breaks=c(-0.1,0,0.1), expand = c(0, 0.01))  +
+                         scale_x_continuous( expand = c(0, 0.07)) ,
+          ncol = 1, rel_heights = c(2.2,1), axis = "v", scale = c(1,1),
           labels = c("","b"),
           label_fontfamily = "Helvetica",
           label_size = size_text)
-
 plot_full
 
 
