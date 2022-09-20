@@ -48,6 +48,7 @@ Gammac <- 0
 rc <- 0
 cc <- 0
 
+size_text <- 16
 
 MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
 diag(MIGRATION) <- 0
@@ -69,27 +70,6 @@ betnew <- 0.35
 muwnew <- ((betnew*stab_par*(N-1)) + betnew - stab_par)/(stab_par*(N-1))
 
 betnew - mug + betnew*stab_par*(N-1) == stab_par - mug + stab_par*muwnew*(N-1)
-
-dif <- 0.02
-# Create annotate for labels at each point in the area graph:
-annotation_u <- data.frame(
-  x = c(stab_par + dif),
-  y = c(stab_par + dif),
-  label = c("c")
-)
-
-annotation_c <- data.frame(
-  x = c( stab_par + dif),
-  y = c(muwnew + dif),
-  label = c("d")
-)
-
-annotation_b <- data.frame(
-  x = c(betnew + dif),
-  y = c(stab_par + dif),
-  label = c("e")
-)
-
 
 data_points <- data.frame(mub = c(stab_par,stab_par,betnew), muc = c(stab_par,muwnew,stab_par))
 df_stab <- data.frame(mub = c(stab_par), muc = c(stab_par))
@@ -114,30 +94,21 @@ col_unstab_r = "#BCBBC9"
 plot_area <- ggplot(df_thres, aes(bet, muc)) + 
   geom_ribbon(aes(x = bet, ymin = muc, ymax = 0.75, fill = col_unstab_r), alpha= 0.7) + 
   geom_ribbon(aes(x = bet, ymin = 0, ymax = muc, fill = col_stab_r), alpha= 0.7) + 
-  scale_fill_manual(values = c(col_stab_r,col_unstab_r), name = "",
+  scale_fill_manual(values = c(col_stab_r,col_unstab_r), name = NULL,
                     labels = c("Stable", "Unstable"), position = "bottom") + 
   xlab(TeX("$\\beta$")) + ylab(TeX("$\\mu_c$")) +
   geom_point(data = df_stab, aes(mub, muc),
-             colour= col_stab, size = 1.5) +
+             colour= col_stab, size = 2.7) +
   geom_point(data = df_unst_c, aes(mub, muc),
-             colour= col_unst_c, size = 1.5) +
+             colour= col_unst_c, size = 2.7) +
   geom_point(data = df_unst_b, aes(mub, muc),
-             colour= col_unst_b, size = 1.5) +
-  geom_text(data=annotation_u, aes( x=x, y=y, label=label),
-            color=col_stab, 
-            size=5.5 , angle=0, fontface="bold" ) +
-  geom_text(data=annotation_b, aes( x=x, y=y, label=label),
-            color=col_unst_b, 
-            size=5.5 , angle=0, fontface="bold" ) +
-  geom_text(data=annotation_c, aes( x=x, y=y, label=label),
-            color=col_unst_c, 
-            size=5.5 , angle=0, fontface="bold" ) +
+             colour= col_unst_b, size = 2.7)  +
   scale_x_continuous(breaks=c(0,0.25,0.50), limits = c(0, 0.5),
                      labels = c("0", "0.25", "0.50")) +
   scale_y_continuous(breaks=c(0,0.25,0.50, 0.75), limits = c(0, 0.75),
                      labels = c("0", "0.25", "0.50", "0.75")) +
   theme_bw() +
-  theme(text = element_text(size = 15), legend.position = "bottom") 
+  theme(text = element_text(size = 15),legend.position = c(0.7, 0.85)) 
   
 
 # Save plot
@@ -337,23 +308,32 @@ plot_inf_unstab_bet <- plot_inf_unstab_bet +
 plot_inf_unstab_bet
 
 # Plot integrations together
-plot_integration  <- ggplot(sol_uns_bet,
-                aes(time, value), show.legend = NA) + 
-  geom_line(aes( group =variable, colour = type),
-            color = col_unst_c , size=0.5)  +
+sol_uns_bet$type <- "uns_bet"
+sol_uns_com$type <- "uns_com"
+sol_stab_f$type <- "stab"
+
+sol_uns_bet$variable1 <- paste0("UB",sol_uns_bet$variable)
+sol_uns_com$variable1 <- paste0("UC",sol_uns_bet$variable)
+sol_stab_f$variable1 <- paste0("S",sol_uns_bet$variable)
+
+sol_tot <- rbind(sol_uns_bet,sol_uns_com,sol_stab_f)
+
+plot_integration  <- ggplot(sol_tot,
+                            aes(time, value), show.legend = NA) + 
+  geom_line(aes( group =variable1, colour = type), size=0.5)  +
   ylab("Number of infected individuals") +
-  geom_line(data = sol_uns_com,
-            aes( group =variable, colour = type),
-            color = col_unst_b , size=0.5) +
-  geom_line(data = sol_stab_f,
-          aes( group =variable, colour = type),
-          color = col_stab , size=0.5) + 
-  xlim(c(0,12)) +
+  scale_color_manual(values = c(col_stab,col_unst_c,col_unst_b),
+                     name = NULL, labels = c("Stable        ", 
+                                           TeX("Unstable $\\mu_c$"), 
+                                           TeX("Unstable $\\beta$ "))) +
+  xlim(c(0,15)) + 
   theme_bw() +
-  theme(text = element_text(size = size_text)) 
-  
+  theme(text = element_text(size = size_text),
+        legend.position = c(0.75, 0.85),
+        legend.text.align = 0)
+
 ###### ALL EIGENVALUE DIST ####
-size_text <- 16
+
 eig_uns_com$lab <- "unstab_com"
 eig_uns_bet$lab <- "unstab_bet"
 eig_stab$lab <- "stab"
@@ -504,25 +484,39 @@ legend_a <- get_legend(
 )
 
 
-plot1 <- plot_grid(plot_area  + ggtitle("a") +
-            theme(plot.title = element_text(size = let_size),
-                  legend.position = "none"),
-            NULL,
-          plot_integration + ggtitle("c") +
-            scale_x_continuous(breaks=c(0,2,4,6,8,10,12), limits = c(0,12)) +
+plot1 <- plot_grid(plot_area  + 
+                     # ggtitle("a") +
             theme(plot.title = element_text(size = let_size)),
-          rel_widths = c(1,0.1,1), nrow = 1)
-
-legend <- plot_grid(legend_b, legend_a)
+          plot_integration +
+            # ggtitle("c") +
+            scale_x_continuous(breaks=c(0,2,4,6,8,10,12),
+                               limits = c(0,12)) +
+            theme(plot.title = element_text(size = let_size)),
+          rel_widths = c(1,1), nrow = 1, labels = c("a","c"),
+          label_fontfamily = "Helvetica",
+          label_size = size_text)
 
 plot_full <- plot_grid(plot1,
+                       eigen_full +
+                         theme(plot.title = element_text(size = let_size),
+                               legend.position = "none", 
+                               plot.margin = unit(c(0, 0.1, 0, 0), "cm")),
+          ncol = 1, rel_heights = c(1.5,1), axis = "v", scale = c(1,1),
+          label_fontfamily = "Helvetica",
+          label_size = size_text)
+
+plot_grid(plot_area  + ggtitle("a") +
+            theme(plot.title = element_text(size = let_size), 
+                  plot.margin = unit(c(0, 0, 0, 0), "cm")),
+          plot_integration + ggtitle("c") +
+            scale_x_continuous(breaks=c(0,2,4,6,8,10,12),
+                               limits = c(0,12)) +
+            theme(plot.title = element_text(size = let_size), 
+                  plot.margin = unit(c(0, 0, 0, 0), "cm")),
           eigen_full + ggtitle("b") +
             theme(plot.title = element_text(size = let_size),
-                  legend.position = "none") ,
-          ncol = 1, rel_heights = c(1.5,1))
-
-plot_grid(plot_full,
-          legend,
-          nrow = 2,
-          rel_heights = c(1,0.1))
+                  legend.position = "none", 
+                  plot.margin = unit(c(0, 0, 0, 0), "cm")),
+          
+          rel_widths = c(1,1,1), nrow = 2, ncol = 2)
 
