@@ -392,106 +392,20 @@ eigen_full <- ggplot(eig_full) +
                      name = " Scenario")
   
 eigen_full  
-  
+let_size <- 15
 ##### Construct panel1 ####
-library("ggpubr")
-
-ggeigen <- ggarrange(eigen_stab  + rremove("xlab")  + rremove("ylab") + labs(title = "c") +
-                       theme(text = element_text(size = size_text)) ,
-                     eigen_unstab_com   + rremove("xlab")  + rremove("ylab") + labs(title = "d") + 
-                       theme(text = element_text(size = size_text)),
-                     eigen_unstab_bet  + rremove("xlab")  + rremove("ylab") + labs(title = "e")  + 
-                       theme(text = element_text(size = size_text)),
-                     nrow = 3, ncol = 1)
-ggeigen  <- annotate_figure(ggeigen,
-                         bottom = text_grob("Real part", color = "black",
-                                            size = 15),
-                         left = text_grob("Imaginary part",
-                                          color = "black", rot = 90,  size = 15))
-ggeigen
-
-gginf <- ggarrange(plot_inf_stab + labs(title = "c") +
-                     rremove("xlab")  + rremove("ylab") +
-                     scale_y_continuous( breaks=c(0, 50, 100)) +
-                     theme(text = element_text(size = size_text)),
-                   plot_inf_unstab_com + labs(title = "d") +
-                     rremove("xlab")  + rremove("ylab") +
-                     scale_y_continuous( breaks=c(0,7500, 15000)) +
-                     theme(text = element_text(size = size_text)),
-                   plot_inf_unstab_bet + labs(title = "e") +
-                      rremove("xlab")  + rremove("ylab") +
-                     scale_y_continuous( breaks=c(0,7500, 15000)) +
-                     theme(text = element_text(size = size_text)),
-                   ncol = 1, nrow = 3)
-
-### plot grid
-gg1 <- plot_inf_stab + labs(title = "c") +
-  scale_y_continuous(breaks=c(0, 5, 10)) +
-  theme(text = element_text(size = size_text),
-        axis.title.y=element_blank(),
-        axis.title.x=element_blank())
-
-gg2 <-  plot_inf_unstab_com + labs(title = "d") +
-  scale_y_continuous(breaks=c(0,10, 15,20), limits = c(10,20)) +
-  theme(text = element_text(size = size_text),
-        axis.title.y=element_blank(),
-        axis.title.x=element_blank())
-
-gg3 <- plot_inf_unstab_bet + labs(title = "e") +
-  scale_y_continuous(breaks=c(0, 10, 15,20)) +
-  theme(text = element_text(size = size_text),
-        axis.title.y=element_blank(),
-        axis.title.x=element_blank())
-
-library("cowplot")
-library("ggpubr")
-gg_grid <- plot_grid(gg1,
-                     gg2,
-                     gg3,
-                     align = "v", ncol = 1)
-
-gginf  <- annotate_figure(gg_grid,
-                          bottom = text_grob("Time", color = "black",
-                                             size = 15),
-                          left = text_grob("Number of infected individuals",
-                                           color = "black", rot = 90,  size = 15))
-
-ggarr1 <- plot_grid(plot_area + ggtitle("a"), 
-                    NULL,
-                    gginf,
-                    rel_widths = c(1,0.1,1),
-                    ncol = 3) 
-plot_grid(ggarr1,
-          eigen_full  + ggtitle("b"),
-          nrow = 2,
-          ncol = 1,
-          rel_heights = c(1.6,1))
-
-##### Panel with integration together:
-let_size <- 20
-
-legend_b <- get_legend(
-  plot_area + 
-    guides(color = guide_legend(nrow = 1 )) +
-    theme(legend.position = "bottom")
-)
-
-legend_a <- get_legend(
-  eigen_full + 
-    guides(color = guide_legend(nrow = 1),override.aes = list(size = 7,
-                                                              shape = c(16, 16,16))) +
-    theme(legend.position = "bottom")
-)
-
-
 plot1 <- plot_grid(plot_area  + 
                      # ggtitle("a") +
-            theme(plot.title = element_text(size = let_size)),
+            theme(plot.title = element_text(size = let_size), 
+                  plot.margin = unit(c(0.2, 0.4, 0.2, 0.2), "cm")) +
+              scale_x_continuous( expand = c(0, 0)) +
+              scale_y_continuous( expand = c(0, 0)),
           plot_integration +
             # ggtitle("c") +
             scale_x_continuous(breaks=c(0,2,4,6,8,10,12),
                                limits = c(0,12)) +
-            theme(plot.title = element_text(size = let_size)),
+            theme(plot.title = element_text(size = let_size), 
+                  plot.margin = unit(c(0.2, 0.4, 0.2, 0.2), "cm")) ,
           rel_widths = c(1,1), nrow = 1, labels = c("a","c"),
           label_fontfamily = "Helvetica",
           label_size = size_text)
@@ -502,21 +416,10 @@ plot_full <- plot_grid(plot1,
                                legend.position = "none", 
                                plot.margin = unit(c(0, 0.1, 0, 0), "cm")),
           ncol = 1, rel_heights = c(1.5,1), axis = "v", scale = c(1,1),
+          labels = c("","b"),
           label_fontfamily = "Helvetica",
           label_size = size_text)
 
-plot_grid(plot_area  + ggtitle("a") +
-            theme(plot.title = element_text(size = let_size), 
-                  plot.margin = unit(c(0, 0, 0, 0), "cm")),
-          plot_integration + ggtitle("c") +
-            scale_x_continuous(breaks=c(0,2,4,6,8,10,12),
-                               limits = c(0,12)) +
-            theme(plot.title = element_text(size = let_size), 
-                  plot.margin = unit(c(0, 0, 0, 0), "cm")),
-          eigen_full + ggtitle("b") +
-            theme(plot.title = element_text(size = let_size),
-                  legend.position = "none", 
-                  plot.margin = unit(c(0, 0, 0, 0), "cm")),
-          
-          rel_widths = c(1,1,1), nrow = 2, ncol = 2)
+plot_full
+
 
