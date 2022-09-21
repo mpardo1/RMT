@@ -416,7 +416,7 @@ plot_full <- plot_grid(plot1,
                        eigen_full +
                          theme(plot.title = element_text(size = let_size),
                                legend.position = "none", 
-                               plot.margin = unit(c(0.8, 0.8, 1.3, 1.3), "cm")) +
+                               plot.margin = unit(c(1.3, 0.2, 1.2, 0.2), "cm")) +
                          rremove("xlab") + rremove("ylab") +
                          scale_y_continuous(breaks=c(-0.1,0,0.1), expand = c(0, 0.01))  +
                          scale_x_continuous( expand = c(0, 0.07)) ,

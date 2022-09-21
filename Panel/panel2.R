@@ -233,27 +233,30 @@ inf_init <- rep(10, N)    # initial infecteds
 end_time <- 500
 alp_bet_vec <- seq(0,2,0.03)
 # end_time <- 500
-sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-           COMMUTING,MIGRATION,
-           sus_init,inf_init,end_time)
-df_sum <- data.frame(time = sol[,1])
-for(i in c(1:length(alp_bet_vec))){
-  print(paste0("i: ", i))
-  betas <- rep(mub, N)
-  betas[1] <- betas[1] + alp_bet_vec[i]
-  sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-             COMMUTING,MIGRATION,
-             sus_init,inf_init,end_time)
-  sol_inf <- sol[,c(1,(N+2):(2*N+1))]
-  sum_inf <- rowSums(sol_inf[,2:(N+1)])
-  df_sum[,ncol(df_sum)+1] <- sum_inf
-}
+# sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+           # COMMUTING,MIGRATION,
+           # sus_init,inf_init,end_time)
+# df_sum <- data.frame(time = sol[,1])
+# for(i in c(1:length(alp_bet_vec))){
+#   print(paste0("i: ", i))
+#   betas <- rep(mub, N)
+#   betas[1] <- betas[1] + alp_bet_vec[i]
+#   sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+#              COMMUTING,MIGRATION,
+#              sus_init,inf_init,end_time)
+#   sol_inf <- sol[,c(1,(N+2):(2*N+1))]
+#   sum_inf <- rowSums(sol_inf[,2:(N+1)])
+#   df_sum[,ncol(df_sum)+1] <- sum_inf
+# }
 
- alp_bet_vec <- seq(0,1,0.01)
+# save(df_sum,file="/home/marta/Documentos/PHD/2022/RMT_SIR/df_sum.Rda")
+load(file="/home/marta/Documentos/PHD/2022/RMT_SIR/df_sum.Rda")
+
+ alp_bet_vec1 <- seq(0,2,0.01)
  # end_time <- 500
  df_bet_out <- data.frame(alp = 0, re = 0)
- for(i in c(1:length(alp_bet_vec))){
-   alp <- alp_bet_vec[i]
+ for(i in c(1:length(alp_bet_vec1))){
+   alp <- alp_bet_vec1[i]
    a <- mub*muw +muc
    b <- alp
    c <- alp*muw
@@ -263,8 +266,8 @@ for(i in c(1:length(alp_bet_vec))){
    outl2 <- (1/2)*(N*a + b - sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
    outl2 <- outl2 + (mub*(1-muw) - N*muc - mug)
 
-   df_bet_out[nrow(df_bet_out) + 1,] <- c(alp_bet_vec[i], outl1)
-   df_bet_out[nrow(df_bet_out) + 2,] <- c(alp_bet_vec[i], outl2)
+   df_bet_out[nrow(df_bet_out) + 1,] <- c(alp_bet_vec1[i], outl1)
+   df_bet_out[nrow(df_bet_out) + 2,] <- c(alp_bet_vec1[i], outl2)
  }
 
  df_bet_out$im <- 0
@@ -275,7 +278,9 @@ for(i in c(1:length(alp_bet_vec))){
   geom_point(data = df_bet_out, aes(re,im, colour = alp),
               size = 0.8) +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
-                         low = "#F8F053", high = "#4C0EF6") +
+                         low = "#F8F053", high = "#4C0EF6",
+                        limits=c(0,2),
+                        breaks = c(0, 0.5, 1, 1.5,2)) +
    scale_y_continuous( breaks=c(-0.02,0,0.02)) +
   geom_ellipse(aes(x0 = c_stab, y0 = 0,    
                    a = r_stab,
@@ -294,14 +299,26 @@ for(i in c(1:length(alp_bet_vec))){
          plot.title = element_text(size = text_tit, face = "bold"))  + 
    ggtitle("c") + rremove("xlab") + rremove("ylab")
  plot_alp
- 
- leg_plot <- get_legend(plot_alp)
+
+ leg_plot <- get_legend(ggplot(df_bet_out) +
+                          geom_point(aes(re,im, colour = alp)) +
+                          scale_colour_gradient(name = TeX("$\\beta^*$"),
+                                                low = "#F8F053", high = "#4C0EF6",
+                                                limits=c(0,2),
+                                                breaks = c(0, 0.5, 1, 1.5,2)) + 
+                          theme(text = element_text(size = size_text),
+                                legend.key.height = unit(0.2, 'cm'),
+                                legend.key.width = unit(0.8, 'cm'),
+                                legend.key.size = unit(0.1, 'cm'),
+                                legend.position = "bottom", legend.box = "horizontal"))
  
  plot_alp1 <- ggdraw() +
    draw_plot(plot_alp) +
-   draw_plot(leg_plot, x = 0.7, y = .6, width = .3, height = .3)
-# readRDS(file = "df_sum.rds")
+   draw_plot(leg_plot, x = 0.65, y = .52, width = .25, height = .25)
+ 
+ plot_alp1
 
+ ##### MAx infected individuals ######
 dec <- 0
 max_vec <- c()
 vec_eq <- c()
@@ -312,6 +329,7 @@ for(i in c(1: (ncol(df_sum)-1))){
   # ind <- which(floor(max_inf[i+1]) == floor(df_sum[,i+1]))[1]
   ind <- which(max_vec[i] == df_sum[,i+1])[1]
   if(is.na(which(max_vec[i] == df_sum[,i+1])[1])){
+    print("NA found")
     break
   }
   vec_eq[length(vec_eq) + 1] <- df_sum[ind,1]
@@ -328,7 +346,7 @@ library("latex2exp")
 plot_inf_max <- ggplot(df_sum_group) + 
   geom_line(aes(alpha, Max_inf, color= alpha), size = 1.4) + 
   xlab(TeX("$\\beta^*$")) +
-  ylab("Max of infected individuals") +
+  ylab("Max of infected ind.") +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
                         low = "#F8F053", high = "#4C0EF6") +
   # scale_y_continuous( breaks=c(0,1000,2000,2900)) +
@@ -341,7 +359,7 @@ plot_time_max <-  ggplot(df_sum_group) +
   geom_point(aes(alpha, Time_max, color= alpha) , size = 1) +
   # scale_y_continuous( breaks=c(0,50,100,150, 190)) +
   xlab(TeX("$\\beta^*$")) +
-  ylab("Time to max of infected individuals") +
+  ylab("Time to max of infected ind.") +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
                         low = "#F8F053", high = "#4C0EF6") +
   theme_bw() +
@@ -377,7 +395,7 @@ mug <- gammas[1]
 outl1 <- function(x){
   (N/2)*(mub*muw + muc) + (x/2)*(1 + (k-1)*muw) + mub*(1-muw) -
     mug - N*muc + (1/2)*sqrt(N^2*(mub*muw + muc)^2 + x^2*(1 + (k-1)*muw)^2 + 
-                               2*x*(mub*muw + muc)*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
+                               2*x*(mub*muw + muc)*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1))) 
 } 
 curve(outl1(x), 0,3)
 abline(h = 0, lty = 3)
@@ -407,43 +425,6 @@ sum_inf <- ggplot(data = df_plot) +
   theme(text = element_text(size = size_let), legend.position = "right") 
 
 sum_inf
-
- 
-
-# # Area:
-# path <- "~/RMT/David/OUTPUT/Areaepi_g0,5_muc_0,001_sc0,0001_muw0,1_sw0,05_2022-04-01.csv"
-# df_sol <- read.csv(file = path)
-# df_sol <- df_sol[-1,]
-# 
-# library("latex2exp")
-# df_sol$Stability <- ifelse(df_sol$state == TRUE, "Stable", "Unstable")
-# 
-# plot_area <- ggplot(df_sol) +
-#   geom_point(aes(beta,alp, colour = Stability)) + theme_bw()  +
-#   scale_color_manual(values=c("#3066BE", "#A63446")) +
-#   ylab(TeX("$\\alpha$")) +
-#   xlab(TeX("$\\beta$")) +
-#   # ggtitle(""*gamma/beta~": 4")
-#   theme(text = element_text(size = size_let), legend.position = "top") +
-#   guides(colour = guide_legend(override.aes = list(size=3)))
-# plot_area
-# 
-# ## join all plots
-# library("ggpubr")
-# gg_1 <- ggarrange(plot.inf.stab,
-#                   plot.inf.1,
-#                   plot_inf_max,
-#                   ncol = 3,nrow = 1,
-#                   labels = c("a", "b", "c"))
-# 
-# gg_2 <- ggarrange(plot_area,
-#                   sum_inf,plot_time_max,
-#                   ncol = 3,nrow = 1,
-#                   labels = c("d", "e", "f"))
-# 
-# gg_full <- ggarrange(gg_1,gg_2,
-#                      nrow = 2, ncol = 1)
-# gg_full
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
 path <- paste0(Path,"panel2.png")
@@ -476,7 +457,7 @@ plotsum <- plot_grid(sum_inf + theme(legend.position = "none") + ggtitle("a")+
 plot_sum1 <- plot_grid(plotsum ,
                        plot_alp1,
           nrow = 2,
-          rel_heights = c(1.1,1))
+          rel_heights = c(1.1,0.7))
 
 grid2 <- plot_grid(plot_inf_max + ggtitle("d") + 
                      theme(plot.title = element_text(size = text_tit, face = "bold")),

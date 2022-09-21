@@ -160,6 +160,29 @@ gg_comp <- ggarrange(plot1,
                      # labels = c("a", "b"))
 gg_comp
 
+#######Plot lines eigenvalues#########
+df_lines <- data.frame(CV = numeric(0), 
+                       eig_cte = numeric(0), 
+                       eig_rand = numeric(0))
+count = 0
+while(count < 1000){
+  mub <- sample(c(0:1),1)
+  sb <- sample(c(0:1),1)
+  betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2)) 
+  jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+    diag(deaths + alphas + deltas + colSums(MIGRATION))
+  outrand <- max(eigen_mat(jacobian)$re)
+  
+  betas <- rep(mean(betas),N)
+  jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+    diag(deaths + alphas + deltas + colSums(MIGRATION))
+  outcte <- max(eigen_mat(jacobian)$re)
+  
+  
+  df_lines[nrow(df_lines)+1,] <- c(sb/mub,outcte,outrand)
+  count = count + 1
+}
+  
 ##### Numerical comparison rand and mean(bet) right most eigen #####
 # Read from a CSV 
 
