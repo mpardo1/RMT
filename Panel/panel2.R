@@ -296,7 +296,7 @@ load(file="/home/marta/Documentos/PHD/2022/RMT_SIR/df_sum.Rda")
    theme_bw() +
    theme(text = element_text(size = size_text),
          legend.position = "none", legend.box = "horizontal",
-         plot.title = element_text(size = text_tit, face = "bold"))  + 
+         plot.title = element_text(size = text_tit))  + 
    ggtitle("c") + rremove("xlab") + rremove("ylab")
  plot_alp
 
@@ -359,7 +359,7 @@ plot_time_max <-  ggplot(df_sum_group) +
   geom_point(aes(alpha, Time_max, color= alpha) , size = 1) +
   # scale_y_continuous( breaks=c(0,50,100,150, 190)) +
   xlab(TeX("$\\beta^*$")) +
-  ylab("Time to max of infected ind.") +
+  ylab("Time to max") +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
                         low = "#F8F053", high = "#4C0EF6") +
   theme_bw() +
@@ -381,7 +381,7 @@ sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
   geom_line() +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
                         low = "#F8F053", high = "#4C0EF6") +
-  ylab("Sum of infected individuals") +
+  ylab("Total infected individuals") +
   # xlim( c(0,10) ) +
   theme_bw() +
   theme(text = element_text(size = size_let),
@@ -419,7 +419,7 @@ sum_inf <- ggplot(data = df_plot) +
   geom_line(data = df_root, aes(time,sum_inf), linetype = "dashed") +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
                         low = "#F8F053", high = "#4C0EF6", breaks = c(0,0.5,1,1.5,2)) +
-  ylab("Sum of infected individuals") +
+  ylab("Total infected individuals") +
   xlim( c(0,30) ) +
   theme_bw() +
   theme(text = element_text(size = size_let), legend.position = "right") 
@@ -441,15 +441,17 @@ plot_alp
 text_tit = 17
 grid1 <- plot_grid(plot.inf.stab +
                      xlim(c(0,30)) + ggtitle("b")  + 
-                     theme(plot.title = element_text(size = text_tit, face = "bold")),
+                     theme(text = element_text(size = size_let),
+                           plot.title = element_text(size = text_tit)),
                    plot.inf.1 + xlim(c(0,30)) + ggtitle("") + 
-                     theme(plot.title = element_text(size = text_tit, face = "bold")) + 
+                     theme(text = element_text(size = size_let),
+                           plot.title = element_text(size = text_tit)) + 
                      rremove("ylab") ,
                    nrow = 1)
 
 
 plotsum <- plot_grid(sum_inf + theme(legend.position = "none") + ggtitle("a")+ 
-                       theme(plot.title = element_text(size = text_tit, face = "bold")),
+                       theme(plot.title = element_text(size = text_tit)),
                      grid1 ,
            ncol = 2, nrow = 1,
           rel_widths = c(0.8,1,1))
@@ -460,9 +462,9 @@ plot_sum1 <- plot_grid(plotsum ,
           rel_heights = c(1.1,0.7))
 
 grid2 <- plot_grid(plot_inf_max + ggtitle("d") + 
-                     theme(plot.title = element_text(size = text_tit, face = "bold")),
+                     theme(plot.title = element_text(size = text_tit)),
                     plot_time_max  + ggtitle(" ")+ 
-                     theme(plot.title = element_text(size = text_tit, face = "bold")), nrow = 1)
+                     theme(plot.title = element_text(size = text_tit)), nrow = 1)
 plot_grid(plot_sum1,
           grid2 , nrow = 2, ncol = 1, 
           rel_heights  = c(1.9,1) )
