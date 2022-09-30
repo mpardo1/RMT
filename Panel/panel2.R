@@ -107,7 +107,7 @@ plot.inf.stab <- plot_int1(N, sol.stab, state = "INF") +
   theme(text = element_text(size = size_let),
         legend.position="none")
 
-plot.inf.stab
+plot.inf.stab + xlim(c(0,20))
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/panel2/"
 path <- paste0(Path,"Plot_inf_b0,02_g0,5_muc_0,01_sc0,001_muw0,08_sw0,05.png")

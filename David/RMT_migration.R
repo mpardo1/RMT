@@ -985,4 +985,81 @@ corpanel
 
 ggsave(file="corpanel.svg", plot=corpanel)
 ggsave(corpanel, file="corpanel.eps", device = cairo_ps, fallback_resolution = 600)
-
+# 
+# ##########################################################################################
+# out_mig <- function(x){
+#   (1/2)*(N*mub*muw+muc) + sqrt((mub*muw+muc)*((N^2*(mub*muw+muc) + (2*(N-1)^2)*x))) + mub*(1-muw) - mug - (N-1)*muc - x
+# }
+# 
+# N = 50
+# Deltas <- rep(0.3, N) # birth rate
+# mub <- 0.2
+# sb <- 0.001
+# betas <- rep(mub, N) # transmission rates
+# # betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
+# thetas <- rep(0.3, N) # loss of immunity rates
+# mud <- 0.3
+# deaths <- rep(mud, N) # not disease-related death rates
+# mua <- 0.4
+# alphas <- rep(mua, N) # recovery rates
+# mudel <- 0
+# deltas <- rep(mudel, N) # disease-related death rates
+# gammas = deaths + alphas + deltas
+# 
+# seq <- seq(0,2,0.1)
+# out <- sapply(seq,out_mig)
+# df_mig <- data.frame(seq, out)
+# ggplot(df_mig) + 
+#   geom_line(aes(seq,out))
+# 
+# COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
+# diag(COMMUTING) <- 0
+# # COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
+# # COMMUTING[sample.int(N^2, round(p*N^2))] <- 0
+# 
+# MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
+# diag(MIGRATION) <- 0
+# 
+# jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+#   diag(deaths + alphas + deltas + colSums(MIGRATION))
+# 
+# print(plot_eigen(jacobian))
+# 
+# sus_init <- rep(10000, N) # initial susceptibles
+# inf_init <- rep(100, N)    # initial infecteds
+# 
+# end_time <- 500
+# sol.stab <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+#                 COMMUTING,MIGRATION,
+#                 sus_init,inf_init,end_time)
+# 
+# plot_stab <- plot_int1(N, sol.stab, state = "INF") +
+#   theme_bw() +theme(legend.position="none")
+# plot_stab
+# 
+# 
+# MIGRATION[,c(2:N)] <- 2
+# jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+#   diag(deaths + alphas + deltas + colSums(MIGRATION))
+# 
+# print(plot_eigen(jacobian))
+# 
+# sus_init <- rep(10000, N) # initial susceptibles
+# inf_init <- rep(100, N)    # initial infecteds
+# 
+# end_time <- 500
+# sol.unstab <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+#                 COMMUTING,MIGRATION,
+#                 sus_init,inf_init,end_time)
+# 
+# plot_unstab <- plot_int1(N, sol.unstab, state = "INF") +
+#   theme_bw() +theme(legend.position="none")
+# plot_unstab
+#  
+# N = 3
+# 
+# ac = 1
+# bc = 2
+# a <- matrix(ac,N,N)
+# a[,c(2:N)] <- ac + bc
+# max(eigen_mat(a)$re) == (1/2)*(N*ac + sqrt(ac*(N^2*ac + 2*(N-1)*bc)))
