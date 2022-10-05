@@ -21,51 +21,9 @@ library("reshape")
 library("ggpubr")
 library("cowplot")
 library("ggforce")
-
-# Eigenvalues:
-
-stragBET <- function(muc){
-  alp <- alp_bet
-  a <- mub*muw +muc
-  b <- alp
-  c <- alp*muw
-  outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
-  outl + (mub*(1-muw) - N*muc - mug)
-} 
+library("latex2exp")
 #----------------------------------------------------------------------------#
 ####### Parameter values #####
-
-# N <- 100
-N <- 50
-# para los plots
-sus_init <- rep(100000, N) # initial susceptibles
-inf_init <- runif(N, min = 50,100)  # initial infecteds
-end_time <- 200
-end_time_rand <- 20
-
-Deltas <- rep(0.1, N) # birth rate
-mub <- 0.1
-sb <- 0.001
-betas <- rep(mub, N) # transmission rates
-#betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
-thetas <- rep(0.1, N) # loss of immunity rates
-mud <- 0.5
-deaths <- rep(mud, N) # not disease-related death rates
-mua <- 0.45
-alphas <- rep(mua, N) # recovery rates
-mudel <- 0
-deltas <- rep(mudel, N) # disease-related death rates
-gammas = deaths + alphas + deltas
-mug <- gammas[1]
-alp_bet <- 1
-  
-muw <- 0.1
-sw <- 0.07/3
-rhow <- 0             # original rho (Gamma of baron et al)
-
-muc <- 0.0001
-sc <- 0.00001
-rhoc <- .001
 
 mub*muw*(N-1)+mub-mua-mud-mudel
 
@@ -77,37 +35,102 @@ colD <- "#85DCFF"
 colE <- "#0ABAFF"
 colF <- "#0084B8"
 
-COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
-MIGRATION <- rand_mat_ell(N, muc, sc, rhoc, distrib = "beta")
+# N <- 100
+N <- 100
+Deltas <- rep(0.1, N) # birth rate
+mub <- 0.35
+# sb <- 0.001
+betas <- rep(mub, N) # transmission rates
+#betas <- rgamma(N, shape = (mub/sb)^2, rate = mub/(sb^2))
+thetas <- rep(0.1, N) # loss of immunity rates
+mud <- 0.2
+deaths <- rep(mud, N) # not disease-related death rates
+mua <- 0.4
+alphas <- rep(mua, N) # recovery rates
+mudel <- 0
+deltas <- rep(mudel, N) # disease-related death rates
+gammas = deaths + alphas + deltas
+mug <- gammas[1]
+alp_bet <- 1
+k <- 5
+  
+muw <- 0.25
+sw <- 0.05
+rhow <- 0             # original rho (Gamma of baron et al)
+
+muc <- 0.001
+sc <- 0.0005
+rhoc <- .001
+
+
+COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
+MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
 # MIGRATION <- matrix(0,N,N)
 diag(COMMUTING) <- diag(MIGRATION) <- rep(0,N)
 
+# para los plots
+sus_init <- rep(100000, N) # initial susceptibles
+inf_init <- runif(N, min = 50,100)  # initial infecteds
+end_time <- 200
+end_time_rand <- 20
 ################################################################
 ##### Change K:
-stragBET <- function(k){
-  (N/2)*(mub*muw+muc) + (alp_bet/2)*(1+(k-1)*muw) + mub*(1-muw) -
-    mug - N*muc + (1/2)*sqrt((N*(mub*muw+muc))^2 +
-                               alp_bet^2*(1+(k-1)*muw)^2 +
-                 2*alp_bet*(mub*muw+muc)*(N*(1+(k-1)*muw) +
-                                            2*(N-k)*(muw-1)))
+stragBET <- function(k,N){
+  a <- mub*muw +muc
+  b <- alp_bet
+  c <- alp_bet*muw
+  (1/2)*(N*a + b + (k-1)*c + sqrt((N*a)^2-(2*N-4*k)*a*b + 
+                                    ((2*k+2)*N-(4*k))*a*c +
+                                    2*(k-1)*b*c + b^2 + ((k-1)*c)^2)) +
+    mub*(1-muw) - mug - N*muc 
 } 
 
-betas[1] <- betas[1] + alp_bet
+# COMMUTING <- rand_mat_cor_beta(N, muw*N, sw*N, rhow, Gammaw, rw, cw)
+# MIGRATION <- rand_mat_cor_beta(N, muc*N, sc*N, rhoc, Gammac, rc, cc)
+# diag(COMMUTING) <- diag(MIGRATION) <- rep(0,N)
+betas[1:k] <- betas[1:k] + alp_bet
 jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
   diag(deaths + alphas + deltas + colSums(MIGRATION))
+deaths[1] + alphas[1] + deltas[1]
 plot_eigen(jacobian) + 
-  geom_point(aes(stragBET(1),0), color = "red")
+  geom_point(aes(stragBET(k,N),0), color = "red")
+
+count = 0
+max_out <- c()
+while(count < 100){
+  COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
+  MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
+  # MIGRATION <- matrix(0,N,N)
+  diag(COMMUTING) <- diag(MIGRATION) <- rep(0,N)
+  count = count + 1
+  jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+    diag(deaths + alphas + deltas + colSums(MIGRATION))
+  max_out[count] <- max(eigen_mat(jacobian)$re)
+}
+
+pred_old <- (N/2)*(mub*muw + muc) + (alp_bet/2)*(1 + (k-1)*muw) + mub*(1-muw) -
+  mug - N*muc + (1/2)*sqrt(N^2*(mub*muw + muc)^2 + alp_bet^2*(1 + (k-1)*muw)^2 + 
+                             2*alp_bet*(mub*muw + muc)*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1))) 
+
+df <- data.frame(it=seq(1,100,1),out = max_out, 
+                 out_pred = stragBET(k,N) , out_old = pred_old)
+df_plot <- reshape2::melt(df, id.vars = c("it"))
+ggplot(df_plot) + 
+  geom_line(aes(it, value, color = variable))
 
 ####################################################################
-# Patches and new mean:
-k <- 1
-nu <- 0.5
+######### CHANGING the PERTURBATION #############
+# Eigenvalues:
+stragBET <- function(muc){
+  a <- mub*muw +muc
+  b <- alp_bet
+  c <- alp_bet*muw
+  (1/2)*(N*a + b + (k-1)*c + sqrt((N*a)^2-(2*N-4*k)*a*b + 
+                                    ((2*k+2)*N-(4*k))*a*c +
+                                    2*(k-1)*b*c + b^2 + ((k-1)*c)^2)) +
+    mub*(1-muw) - mug - N*muc 
+} 
 
-eig_stab <- eigen_mat(jacobianC)
-plot_eigen(jacobianC) +
-  geom_point(aes(stragC(muc),0), color = "red")
-
-### Outliers:
 vec <- seq(0,1,0.01)
 out_BET <- sapply(vec, stragBET)
 
@@ -116,18 +139,19 @@ df_out <- data.frame(muc = vec,
 
 mig_plot <- ggplot(df_out) + 
   geom_line(aes(muc,outBET)) +
-  ylab("s(J)") + xlab(TeX("$\\mu_m$")) + 
+  ylab("s(J)") + xlab(TeX("$\\mu_c$")) + 
   theme_bw()
 
-######### CHANGING the PERTURBATION #############
+
 # Eigenvalues:
 stragBET <- function(muw){
-  alp <- alp_bet
   a <- mub*muw +muc
-  b <- alp
-  c <- alp*muw
-  outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
-  outl + (mub*(1-muw) - N*muc - mug)
+  b <- alp_bet
+  c <- alp_bet*muw
+  (1/2)*(N*a + b + (k-1)*c + sqrt((N*a)^2-(2*N-4*k)*a*b + 
+                                    ((2*k+2)*N-(4*k))*a*c +
+                                    2*(k-1)*b*c + b^2 + ((k-1)*c)^2)) +
+    mub*(1-muw) - mug - N*muc 
 } 
 
 vec <- seq(0,1,0.01)
@@ -144,12 +168,13 @@ com_plot <- ggplot(df_out) +
 ######### CHANGING the PERTURBATION #############
 # Eigenvalues:
 stragBET <- function(mub){
-  alp <- alp_bet
   a <- mub*muw +muc
-  b <- alp
-  c <- alp*muw
-  outl <- (1/2)*(N*a + b + sqrt((N*a)^2 - (2*N-4)*a*b + (4*N-4)*a*c + b^2))
-  outl + (mub*(1-muw) - N*muc - mug)
+  b <- alp_bet
+  c <- alp_bet*muw
+  (1/2)*(N*a + b + (k-1)*c + sqrt((N*a)^2-(2*N-4*k)*a*b + 
+                                    ((2*k+2)*N-(4*k))*a*c +
+                                    2*(k-1)*b*c + b^2 + ((k-1)*c)^2)) +
+    mub*(1-muw) - mug - N*muc 
 } 
 
 vec <- seq(0,1,0.01)
@@ -165,10 +190,13 @@ bet_plot <- ggplot(df_out) +
 
 ##### Change K:
 stragBET <- function(k){
-  (N/2)*(mub*muw+muc) + (alp_bet/2)*(1+(k-1)*muw) + mub*(1-muw) - mug - N*muc +
-    (1/2)*sqrt((N*(mub*muw+muc))^2 + alp_bet^2*(1+(k-1)*muw)^2 +
-                 2*alp_bet*(mub*muw+muc)*(N*(1+(k-1)*muw) +
-                                            2*(N-k)*(muw-1)))
+  a <- mub*muw +muc
+  b <- alp_bet
+  c <- alp_bet*muw
+  (1/2)*(N*a + b + (k-1)*c + sqrt((N*a)^2-(2*N-4*k)*a*b + 
+                                    ((2*k+2)*N-(4*k))*a*c +
+                                    2*(k-1)*b*c + b^2 + ((k-1)*c)^2)) +
+    mub*(1-muw) - mug - N*muc 
 } 
 
 vec <- seq(0,N/2,1)
@@ -197,4 +225,8 @@ mub
 N
 mug
 muc
-ggsave(file=paste0(Path,"StrategiesSJ50N0_05mum0_1muc0_1mub0_95mug.pdf"))
+ggsave(file=paste0(Path,"betaSJ50N0_05mum0_1muc0_1mub0_95mug.pdf"))
+
+
+#########################################################################
+

@@ -32,14 +32,16 @@ stragAB <- function(muc){
 } 
 
 stragC <- function(muc){
-  N*(mub*muw+muc)/2 + (k-1)*mub*nu/2 +
-    sqrt((N*(mub*muw+muc))^2+2*mub*nu*(mub*muw+muc)*(N+k*(3*N-2*k-2))+
-           ((mub*nu)^2)*(4*k*(N-k)+(k-1)^2))/2   +
-    mub*(1-muw) - mug - N*muc
+  c <- (mub*muw+muc)
+  (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc + 
+    (1/2)*sqrt((N*c)^2 + 2*mub*nu*c*(N+k*(3*N-2*k-2)) +
+                 ((mub*nu)^2)*(4*k*(N-k) + (k-1)^2))
 } 
 
-stragDEF <- function(nu){
-  (N-1)*mub*(muw + nu) + mub - mug
+
+stragDEF <- function(muc){
+  k0 <- k/N
+  (N-1)*mub*(muw + k0*nu) + mub - mug
 } 
 
 #----------------------------------------------------------------------------#
@@ -118,10 +120,12 @@ plot_eigen(jacobianC) +
 vec <- seq(0,1,0.01)
 out_AB <- sapply(vec, stragAB)
 out_C <- sapply(vec, stragC)
+out_DEF <- sapply(vec, stragDEF)
 
 df_out <- data.frame(muc = vec, 
                      AB = out_AB,
-                     C = out_C)
+                     C = out_C,
+                     DEF = out_DEF)
 
 ggplot(df_out) + geom_line(aes(muc,C))
 df_plot <- reshape2::melt(df_out, id.vars = c("muc"))
@@ -131,7 +135,7 @@ mig_plot <- ggplot(df_plot) +
   geom_line(aes(muc,value, 
                 colour = Strategy ), size = 1) + 
   ylab("s(J)") + xlab(TeX("$\\mu_m$")) + 
-  scale_colour_manual(values = c(colA,colC)) +
+  scale_colour_manual(values = c(colA,colC,colD)) +
   theme_bw()
 
 Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/SM/"
@@ -143,7 +147,7 @@ ggsave(file=paste0(Path,"MUCvsSJ40N0_12muc0_1mub0_55mug.pdf"))
 
 ######### CHANGING the PERTURBATION #############
 # Eigenvalues:
-
+# Changing nu:
 stragAB <- function(nu){
   c <- (mub*muw+muc)
   (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc + 
@@ -153,20 +157,19 @@ stragAB <- function(nu){
 
 stragC <- function(nu){
   c <- (mub*muw+muc)
-  (N/2)*c + ((k-1)/2)*mub*nu +
-    sqrt((N*c)^2+
-           2*mub*nu*c*(N+k*(3*N-(2*k)-2)) +
-           (mub*nu)^2*(4*k*(N-k) + (k-1)^2))/2 +
-    mub*(1-muw) - mug - N*muc
+  (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc+ 
+    (1/2)*sqrt((N*c)^2 + 2*mub*nu*c*(N+k*(3*N-2*k-2)) +
+                 ((mub*nu)^2)*(4*k*(N-k) + (k-1)^2))
 } 
 
 stragDEF <- function(nu){
-  (N-1)*mub*(muw + nu) + mub - mug
+  k0 <- k/N
+  (N-1)*mub*(muw + k0*nu) + mub - mug
 } 
 
-vec <- seq(0,1,0.01)
-k <- 2
-muc <- 0.05
+vec <- seq(-muw,1,0.01)
+# k <- 2
+# muc <- 0.05
 out_AB <- sapply(vec, stragAB)
 out_C <- sapply(vec, stragC)
 out_DEF <- sapply(vec, stragDEF)
@@ -188,7 +191,50 @@ nu_plot <- ggplot(df_plot) +
   ylab("s(J)") + xlab(TeX("$\\nu$")) + 
   theme_bw()
 
-### Changing k:
+# Changing k:
+stragAB <- function(k){
+  c <- (mub*muw+muc)
+  (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc + 
+    (1/2)*sqrt(N^2*c^2 + ((k-1)*mub*nu)^2 + 2*(N+N*k-4*k)*c*mub*nu)
+  
+} 
+
+stragC <- function(k){
+  c <- (mub*muw+muc)
+  (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc+ 
+    (1/2)*sqrt((N*c)^2 + 2*mub*nu*c*(N+k*(3*N-2*k-2)) +
+                 ((mub*nu)^2)*(4*k*(N-k) + (k-1)^2))
+} 
+
+stragDEF <- function(k){
+  k0 <-  k/N
+  (N-1)*mub*(muw + k0*nu) + mub - mug
+} 
+
+vec <- seq(0,N/2,1)
+# nu <- 0.5
+out_AB <- sapply(vec, stragAB)
+out_C <- sapply(vec, stragC)
+out_DEF <- sapply(vec, stragDEF)
+
+df_out <- data.frame(k = vec, 
+                     AB = out_AB,
+                     C = out_C,
+                     DEF = out_DEF)
+
+ggplot(df_out) +
+  geom_line(aes(k,C))
+df_plot <- reshape2::melt(df_out, id.vars = c("k"))
+library("latex2exp")
+colnames(df_plot) <- c("k", "Strategy","value")
+k_plot <- ggplot(df_plot) + 
+  geom_line(aes(k,value, 
+                colour = Strategy ), size = 1) + 
+  scale_colour_manual(values = c(colA,colC,colD)) +
+  ylab("s(J)") + xlab("k") + 
+  theme_bw()
+
+### Changing muw:
 stragAB <- function(muw){
   c <- (mub*muw+muc)
   (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc + 
@@ -198,20 +244,19 @@ stragAB <- function(muw){
 
 stragC <- function(muw){
   c <- (mub*muw+muc)
-  (N/2)*c + ((k-1)/2)*mub*nu +
-    sqrt((N*c)^2+
-           2*mub*nu*c*(N+k*(3*N-(2*k)-2)) +
-           (mub*nu)^2*(4*k*(N-k) + (k-1)^2))/2 +
-    mub*(1-muw) - mug - N*muc
+  (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc+ 
+    (1/2)*sqrt((N*c)^2 + 2*mub*nu*c*(N+k*(3*N-2*k-2)) +
+                 ((mub*nu)^2)*(4*k*(N-k) + (k-1)^2))
 } 
 
 stragDEF <- function(muw){
-  (N-1)*mub*(muw + nu) + mub - mug
+  k0 <-  k/N
+  (N-1)*mub*(muw + k0*nu) + mub - mug
 } 
 
 vec <- seq(0,1,0.01)
-nu <- 0.5
-muc <- 0.05
+# nu <- 0.5
+# muc <- 0.05
 out_AB <- sapply(vec, stragAB)
 out_C <- sapply(vec, stragC)
 out_DEF <- sapply(vec, stragDEF)
@@ -250,20 +295,19 @@ stragAB <- function(mub){
 
 stragC <- function(mub){
   c <- (mub*muw+muc)
-  (N/2)*c + ((k-1)/2)*mub*nu +
-    sqrt((N*c)^2+
-           2*mub*nu*c*(N+k*(3*N-(2*k)-2)) +
-           (mub*nu)^2*(4*k*(N-k) + (k-1)^2))/2 +
-    mub*(1-muw) - mug - N*muc
+  (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc+ 
+    (1/2)*sqrt((N*c)^2 + 2*mub*nu*c*(N+k*(3*N-2*k-2)) +
+                 ((mub*nu)^2)*(4*k*(N-k) + (k-1)^2))
 } 
 
 stragDEF <- function(mub){
-  (N-1)*mub*(muw + nu) + mub - mug
-} 
+  k0 <-  k/N
+  (N-1)*mub*(muw + k0*nu) + mub - mug
+}
 
 vec <- seq(0,1,0.01)
-nu <- 0.5
-muc <- 0.05
+# nu <- 0.5
+# muc <- 0.05
 out_AB <- sapply(vec, stragAB)
 out_C <- sapply(vec, stragC)
 out_DEF <- sapply(vec, stragDEF)
@@ -300,4 +344,5 @@ mub
 N
 mug
 muc
-ggsave(file=paste0(Path,"StrategiesSJ50N0_05mum0_1muc0_1mub0_95mug.pdf"))
+ggsave(file=paste0(Path,"Strategies1SJ50N0_05mum0_1muc0_1mub0_95mug.pdf"))
+
