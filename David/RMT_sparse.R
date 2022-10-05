@@ -10,7 +10,44 @@ rm(list=ls())
 source("~/RMT/David/RMT_genrandom.R")
 source("~/RMT/David/RMT_plotmobility.R")
 source("~/RMT/David/d_functions_eigen_int.R")
-
+plotmobility <- function(mob, color1 = "#0000FF", cmin = "N", cmax = "N"){
+  
+  # cmin <- ifelse(cmin == "N", min(mob), cmin)
+  # cmax <- ifelse(cmax == "N", max(mob), cmax)
+  cmin = min(mob)
+  cmax = max(mob)
+  collow <- "white"
+  
+  N <- nrow(mob)
+  if (is.matrix(mob) & (nrow(mob) == ncol(mob))) {
+    
+    mob <- t(mob)
+    
+    diag(mob) <- rep(0,N)
+    
+    #mob <- mob[seq(N,1,-1),]
+    
+    mob <- as.data.frame(mob)
+    names(mob) <- c(1:N)
+    mob$x <- c(N:1)
+    mob <- mob %>% pivot_longer(as.character(c(1:N)), names_to = "y", values_to = "mob")
+    
+    mob$x <- factor(mob$x, c(N:1))
+    mob$y <- factor(mob$y, c(N:1))
+    
+    ggplot(mob, aes(x,y)) +
+      geom_tile(aes(fill = mob)) +
+      scale_fill_gradient(low = collow, high = color1, na.value = "yellow", limits = c(cmin,cmax)) +
+      theme_void() +
+      theme(legend.position="none",
+            panel.background=element_blank(),
+            plot.margin = unit(c(0.1,0.1,0.1,0.1),"cm")) +
+      coord_fixed()
+    
+  } else {
+    print("mob needs to be a square matrix")
+  }
+}
 ####### GENERATE JACOBIAN ###############################
 
 # number of patches
@@ -106,7 +143,7 @@ ggarrange(plot_eig, plot_eig_spa)
 # plot the mobility network
 #legend for plotmobility2 can be found in RMT_plotmobility
 plotmobility(COM_SPA)
-plot_mob <- plotmobility2(MIGRATION, COM_SPA)
+plot_mob <- plotmobility(COM_SPA, color1 = col_s)
 #### MEAN = p*muw ###  
 muw <- p*muw
 muc <- p*muc
@@ -126,75 +163,143 @@ plot_eig_mean <- plot_eigen(jacobian) +
   geom_circle(aes(x0 = center_mean, y0 = 0, r = radius), color = "#5448C8") +
   theme_bw()
 
-### MOBILITY MATRIX ##
+#### FULL EIGEN ###
+df_eigen_n <- eigen_mat(jacobian)
+df_eigen_n$mat <- "Fully connected"
+df_eigen_s <- eigen_mat(jacobian_sparse)
+df_eigen_s$mat <- "Sparse"
+df_eigen <- rbind(df_eigen_n, df_eigen_s)
 
+col_n <- "#3186D0"
+col_s <- "#D7612A"
+plot <- ggplot(df_eigen) + 
+  geom_point(aes(re, im, color = mat), size = 0.2) +
+  scale_color_manual(name = NULL,values = c(col_n,col_s )) + 
+  geom_point(aes(outl_mean,0), color = "#000000") + 
+  geom_circle(aes(x0 = center_mean, y0 = 0, r = radius), color = "#000000") + 
+  geom_point(aes(outl_spa,0), color = "#000000") + 
+  geom_circle(aes(x0 = center_spa, y0 = 0, r = radius_spa), color = "#000000") + 
+  theme_bw() + guides(colour = guide_legend(override.aes = list(size=2))) + 
+  theme(legend.position = "left")
+
+leg <- get_legend(plot)
+plot <- ggplot(df_eigen) + 
+  geom_point(aes(re, im), size = 0.1)  + 
+  geom_point(aes(outl_spa,0), color = col_s, size = 2) + 
+  geom_point(aes(outl_mean,0), color = col_n, size = 0.2) + 
+  geom_circle(aes(x0 = center_mean, y0 = 0, r = radius), color = col_n) + 
+  geom_circle(aes(x0 = center_spa, y0 = 0, r = radius_spa), color = col_s) + 
+  theme_bw() + guides(colour = guide_legend(override.aes = list(size=2)))### MOBILITY MATRIX ##
+
+plot <- plot_grid(plot + rremove("xlab") + rremove("ylab"),
+          leg, nrow = 1, rel_widths  = c(1,0.3))
 # plot the mobility network
 #legend for plotmobility2 can be found in RMT_plotmobility
 plotmobility(COMMUTING)
-plot_mob_mean <- plotmobility2(MIGRATION, COMMUTING)
+plot_mob_mean <- plotmobility(COMMUTING, color1 = col_n)
 
 library("latex2exp")
-gg_arr <- ggarrange(plot_eig_spa + ggtitle("Sparse matrix with p probability"),
-          plot_eig_mean + ggtitle(TeX("$Mean:p(\\beta\\mu_w + \\mu_c)$")) +
-            ylab(""),
-          plot_mob,
-          plot_mob_mean,
-          nrow = 2, ncol = 2)
-gg_arr
+library("cowplot")
 
-Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
-path <- paste0(Path,"Plot_spa_mean1_b0,1_g0,95_muc_0,004_sc0,002_muw0,24_sw0,05.png")
+gg_arr <- plot_grid(plot_mob + theme(aspect.ratio = 1),
+          plot_mob_mean+ theme(aspect.ratio = 1),
+          nrow = 1, ncol = 2,
+          align = "h")
+# gg_arr <- plot_grid(plot,gg_arr , 
+#           ncol = 1, rel_heights = c(0.7,1))
+# gg_arr
+
+Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/SM/"
+path <- paste0(Path,"Plot1_spa_mean1_b0,1_g0,95_muc_0,004_sc0,002_muw0,24_sw0,05.pdf")
 ggsave(path,
-       plot = gg_arr, device = "png")
+       plot = plot_f, device = "pdf")
+
+#######INTEGRATION#######
+end_time <- 100
+sus_init <- rep(1000, N) # initial susceptibles
+inf_init <- rep(10, N)
+sol_n <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+                  COMMUTING,MIGRATION,
+                  sus_init,inf_init,end_time)
+
+sol_s <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+                  COM_SPA,MIGRATION,
+                  sus_init,inf_init,end_time)
+
+vec_col <-  vector(mode="character", length=N)
+vec_col[1:N] <- col_n
+plotint_n <- plot_int(N,sol_n, state ="INF")   + 
+  rremove("ylab") +
+  scale_colour_manual(values = vec_col) + theme_bw()  +
+  theme(text = element_text(size = 15),legend.position = "none")
+  
+vec_col <-  vector(mode="character", length=N)
+vec_col[1:N] <- col_s
+plotint_s <- plot_int(N,sol_s, state ="INF")+ 
+  ylab("Infected Individuals") +
+  scale_colour_manual(values = vec_col) + theme_bw() +
+  theme(text = element_text(size = 15),legend.position = "none")
+
+plotint <- plot_grid(plotint_s + xlim(c(0,20))+
+                       theme(plot.margin = unit(c(0.1,0.1,0.1,0.1),"cm")) ,
+                     plotint_n + ylab("")  + xlim(c(0,20)) +
+                       theme(plot.margin = unit(c(0.1,0.3,0.1,0.1),"cm")),  ncol = 2)
+
+ggarr <- plot_grid(plotint_s + theme(aspect.ratio = 1), 
+                    plotint_n + ylab("")+ theme(aspect.ratio = 1),
+                    plot_mob + theme(aspect.ratio = 1),
+                   plot_mob_mean+ theme(aspect.ratio = 1),
+                   nrow = 2, ncol = 2, align = "v")
+plot_f <- plot_grid(gg_arr , plot ,plotint,  ncol = 1, rel_heights = c(0.9,0.6,1))
 # Compute the difference between the right most eigenvalue with sparse
-# and with the matix with mean p*muc, p*muw
-p_vec <- seq(0.1,1,0.01)
-dim <- length(p_vec)
-df_spa <- data_frame(p = 0, max_eig_m = 0, max_eig_spa = 0)
-for(i in c(1:dim)){
-  COMMUTING <- rand_mat(N, p_vec[i]*muw, sw, distrib = "beta")
-  diag(COMMUTING) <- 0
-  MIGRATION <- rand_mat(N, p_vec[i]*muc, sc, distrib = "beta")
-  diag(MIGRATION) <- 0
-  
-  jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
-    diag(deaths + alphas + deltas + colSums(MIGRATION))
-  
-  eig_mean <- eigen_mat(jacobian)
-  max_eig_mean <- max(eig_mean$re)
-  
-  #### Sparse matrix ###
-  COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
-  diag(COMMUTING) <- 0
-  MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
-  diag(MIGRATION) <- 0
-  vec_p <- which(rbinom(N^2, 1, p_vec[i])==0)
-  COMMUTING[vec_p] <- 0
-  MIGRATION[vec_p] <- 0
-  
-  ### MOBILITY MATRIX #
-  
-  # plot the mobility network
-  #legend for plotmobility2 can be found in RMT_plotmobility
-  plotmobility(COMMUTING)
-  plotmobility2(MIGRATION, COMMUTING)
-  jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
-    diag(deaths + alphas + deltas + colSums(MIGRATION))
-  
-  eig_spa <- eigen_mat(jacobian)
-  max_eig_spa <- max(eig_spa$re)
-  
-  df_spa[nrow(df_spa)+1,] <- list(p_vec[i], max_eig_mean, max_eig_spa)
-}
-
-df_spa <- df_spa[-1,]
-df_plot <- reshape2::melt(df_spa, id.vars="p")
-gg_max_eig <- ggplot(df_plot) +
-  geom_line(aes(p, value, colour=variable)) +
-  xlab("Right most eigenvalue real part") +
-  theme_bw()
-
-Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
-path <- paste0(Path,"Plot_spa_max_eig1_b0,1_g0,95_muc_0,004_sc0,002_muw0,24_sw0,05.png")
-ggsave(path,
-       plot = gg_max_eig, device = "png")
+# # and with the matix with mean p*muc, p*muw
+# p_vec <- seq(0.1,1,0.01)
+# dim <- length(p_vec)
+# df_spa <- data_frame(p = 0, max_eig_m = 0, max_eig_spa = 0)
+# for(i in c(1:dim)){
+#   COMMUTING <- rand_mat(N, p_vec[i]*muw, sw, distrib = "beta")
+#   diag(COMMUTING) <- 0
+#   MIGRATION <- rand_mat(N, p_vec[i]*muc, sc, distrib = "beta")
+#   diag(MIGRATION) <- 0
+#   
+#   jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+#     diag(deaths + alphas + deltas + colSums(MIGRATION))
+#   
+#   eig_mean <- eigen_mat(jacobian)
+#   max_eig_mean <- max(eig_mean$re)
+#   
+#   #### Sparse matrix ###
+#   COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
+#   diag(COMMUTING) <- 0
+#   MIGRATION <- rand_mat(N, muc, sc, distrib = "beta")
+#   diag(MIGRATION) <- 0
+#   vec_p <- which(rbinom(N^2, 1, p_vec[i])==0)
+#   COMMUTING[vec_p] <- 0
+#   MIGRATION[vec_p] <- 0
+#   
+#   ### MOBILITY MATRIX #
+#   
+#   # plot the mobility network
+#   #legend for plotmobility2 can be found in RMT_plotmobility
+#   plotmobility(COMMUTING)
+#   plotmobility2(MIGRATION, COMMUTING)
+#   jacobian <- (COMMUTING + diag(N)) %*% diag(betas) + MIGRATION -
+#     diag(deaths + alphas + deltas + colSums(MIGRATION))
+#   
+#   eig_spa <- eigen_mat(jacobian)
+#   max_eig_spa <- max(eig_spa$re)
+#   
+#   df_spa[nrow(df_spa)+1,] <- list(p_vec[i], max_eig_mean, max_eig_spa)
+# }
+# 
+# df_spa <- df_spa[-1,]
+# df_plot <- reshape2::melt(df_spa, id.vars="p")
+# gg_max_eig <- ggplot(df_plot) +
+#   geom_line(aes(p, value, colour=variable)) +
+#   xlab("Right most eigenvalue real part") +
+#   theme_bw()
+# 
+# Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
+# path <- paste0(Path,"Plot_spa_max_eig1_b0,1_g0,95_muc_0,004_sc0,002_muw0,24_sw0,05.png")
+# ggsave(path,
+#        plot = gg_max_eig, device = "png")
