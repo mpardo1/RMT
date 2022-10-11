@@ -226,6 +226,39 @@ unst_stab <- plot_grid(grid1 ,
                        ncol = 1)
 unst_stab
 
+#### PPT ####
+ggplot(eigen_stab) + 
+  geom_point(aes(re,im), size = 0.2) +
+  guides(colour = guide_legend(override.aes = list(size=3))) +
+  geom_ellipse(aes(x0 = c_stab, y0 = 0, 
+                   a = r_stab,
+                   b = r_stab, 
+                   angle = 0, color = "c")) +
+  geom_point(aes(o_stab,0), 
+             color = col_stab, shape = 21) +
+  geom_vline(xintercept = 0, color = "blue", linetype = "dashed")  +
+  scale_color_manual(values = colors,
+                     name = " ", 
+                     labels = c("Equal transmission","Perturbed case")) +
+  theme_bw() + coord_fixed() +
+  theme(text = element_text(size = 20),
+        legend.position = "none",
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) + rremove("xlab") + rremove("ylab")
+
+grid1 <- plot_grid(plot.inf.stab +
+                     xlim(c(0,30)) + ylim(c(0,950)) + 
+                     rremove("xlab") +
+                     rremove("ylab") +
+                     theme(text = element_text(size = 20),aspect.ratio = 1)  ,
+                   plot.inf.1 + xlim(c(0,30)) + 
+                     theme(text = element_text(size = 20),aspect.ratio = 1) + 
+                     rremove("ylab") + ylim(c(0,950)) + 
+                     rremove("xlab"),
+                   nrow = 2)
+plot_grid(grid1 ,eigen_full, ncol = 1)
+unst_stab
+
 ##### Sum of all the infected by alpha ####
 sus_init <- rep(1000, N) # initial susceptibles
 inf_init <- rep(10, N)    # initial infecteds

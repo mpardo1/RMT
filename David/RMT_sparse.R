@@ -87,6 +87,10 @@ Gammac <- 0
 rc <- 0
 cc <- 0
 
+#Colors:
+col_n <- "#3186D0"
+col_s <- "#D7612A"
+
 COMMUTING <- rand_mat(N, muw, sw, distrib = "beta")
 diag(COMMUTING) <- 0
 # COMMUTING <- rand_mat_ell(N, muw, sw, rhow, distrib = "beta")
@@ -170,8 +174,7 @@ df_eigen_s <- eigen_mat(jacobian_sparse)
 df_eigen_s$mat <- "Sparse"
 df_eigen <- rbind(df_eigen_n, df_eigen_s)
 
-col_n <- "#3186D0"
-col_s <- "#D7612A"
+
 plot <- ggplot(df_eigen) + 
   geom_point(aes(re, im, color = mat), size = 0.2) +
   scale_color_manual(name = NULL,values = c(col_n,col_s )) + 
@@ -185,8 +188,8 @@ plot <- ggplot(df_eigen) +
 leg <- get_legend(plot)
 plot <- ggplot(df_eigen) + 
   geom_point(aes(re, im), size = 0.1)  + 
-  geom_point(aes(outl_spa,0), color = col_s, size = 2) + 
-  geom_point(aes(outl_mean,0), color = col_n, size = 0.2) + 
+  geom_point(aes(outl_spa,0), color = col_s, size = 3, pch = 8) + 
+  geom_point(aes(outl_mean,0), color = col_n, size = 2) + 
   geom_circle(aes(x0 = center_mean, y0 = 0, r = radius), color = col_n) + 
   geom_circle(aes(x0 = center_spa, y0 = 0, r = radius_spa), color = col_s) + 
   theme_bw() + guides(colour = guide_legend(override.aes = list(size=2)))### MOBILITY MATRIX ##
@@ -251,6 +254,7 @@ ggarr <- plot_grid(plotint_s + theme(aspect.ratio = 1),
                    plot_mob_mean+ theme(aspect.ratio = 1),
                    nrow = 2, ncol = 2, align = "v")
 plot_f <- plot_grid(gg_arr , plot ,plotint,  ncol = 1, rel_heights = c(0.9,0.6,1))
+plot_f
 # Compute the difference between the right most eigenvalue with sparse
 # # and with the matix with mean p*muc, p*muw
 # p_vec <- seq(0.1,1,0.01)
@@ -299,7 +303,7 @@ plot_f <- plot_grid(gg_arr , plot ,plotint,  ncol = 1, rel_heights = c(0.9,0.6,1
 #   xlab("Right most eigenvalue real part") +
 #   theme_bw()
 # 
-# Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
-# path <- paste0(Path,"Plot_spa_max_eig1_b0,1_g0,95_muc_0,004_sc0,002_muw0,24_sw0,05.png")
-# ggsave(path,
-#        plot = gg_max_eig, device = "png")
+Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/SM/"
+path <- paste0(Path,"Plot1_spa_mean1_b0,1_g0,95_muc_0,004_sc0,002_muw0,24_sw0,05.pdf")
+ggsave(path,
+       plot = plot, device = "pdf")

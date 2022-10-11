@@ -77,12 +77,8 @@ end_time_rand <- 20
 ##### Change K:
 stragBET <- function(k,N){
   a <- mub*muw +muc
-  b <- alp_bet
-  c <- alp_bet*muw
-  (1/2)*(N*a + b + (k-1)*c + sqrt((N*a)^2-(2*N-4*k)*a*b + 
-                                    ((2*k+2)*N-(4*k))*a*c +
-                                    2*(k-1)*b*c + b^2 + ((k-1)*c)^2)) +
-    mub*(1-muw) - mug - N*muc 
+  (N/2)*a +  (alp_bet/2)*(1+ (k-1)*muw) + mub*(1-muw) - mug - N*muc +
+    (1/2)*sqrt(N^2*a^2 + alp_bet^2*(1+(k-1)*muw)^2 + 2*alp_bet*a*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
 } 
 
 # COMMUTING <- rand_mat_cor_beta(N, muw*N, sw*N, rhow, Gammaw, rw, cw)
@@ -123,42 +119,34 @@ ggplot(df_plot) +
 # Eigenvalues:
 stragBET <- function(muc){
   a <- mub*muw +muc
-  b <- alp_bet
-  c <- alp_bet*muw
-  (1/2)*(N*a + b + (k-1)*c + sqrt((N*a)^2-(2*N-4*k)*a*b + 
-                                    ((2*k+2)*N-(4*k))*a*c +
-                                    2*(k-1)*b*c + b^2 + ((k-1)*c)^2)) +
-    mub*(1-muw) - mug - N*muc 
+  (N/2)*a +  (alp_bet/2)*(1+ (k-1)*muw) + mub*(1-muw) - mug - N*muc +
+    (1/2)*sqrt(N^2*a^2 + alp_bet^2*(1+(k-1)*muw)^2 + 2*alp_bet*a*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
 } 
 
 vec <- seq(0,1,0.01)
-out_BET <- sapply(vec, stragBET)
+outBETmuc <- sapply(vec, stragBET)
 
 df_out <- data.frame(muc = vec, 
-                     outBET = out_BET)
+                     outBETmuc = outBETmuc)
 
 mig_plot <- ggplot(df_out) + 
-  geom_line(aes(muc,outBET)) +
-  ylab("s(J)") + xlab(TeX("$\\mu_c$")) + 
+  geom_line(aes(muc,outBETmuc)) +
+  ylab("s(J)") + xlab(TeX("$\\mu_m$")) + 
   theme_bw()
 
 
 # Eigenvalues:
 stragBET <- function(muw){
   a <- mub*muw +muc
-  b <- alp_bet
-  c <- alp_bet*muw
-  (1/2)*(N*a + b + (k-1)*c + sqrt((N*a)^2-(2*N-4*k)*a*b + 
-                                    ((2*k+2)*N-(4*k))*a*c +
-                                    2*(k-1)*b*c + b^2 + ((k-1)*c)^2)) +
-    mub*(1-muw) - mug - N*muc 
+  (N/2)*a +  (alp_bet/2)*(1+ (k-1)*muw) + mub*(1-muw) - mug - N*muc +
+    (1/2)*sqrt(N^2*a^2 + alp_bet^2*(1+(k-1)*muw)^2 + 2*alp_bet*a*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
 } 
 
 vec <- seq(0,1,0.01)
-out_BET <- sapply(vec, stragBET)
+outBETmuw <- sapply(vec, stragBET)
 
 df_out <- data.frame(muw = vec, 
-                     outBET = out_BET)
+                     outBET = outBETmuw)
 
 com_plot <- ggplot(df_out) + 
   geom_line(aes(muw,outBET)) +
@@ -169,19 +157,15 @@ com_plot <- ggplot(df_out) +
 # Eigenvalues:
 stragBET <- function(mub){
   a <- mub*muw +muc
-  b <- alp_bet
-  c <- alp_bet*muw
-  (1/2)*(N*a + b + (k-1)*c + sqrt((N*a)^2-(2*N-4*k)*a*b + 
-                                    ((2*k+2)*N-(4*k))*a*c +
-                                    2*(k-1)*b*c + b^2 + ((k-1)*c)^2)) +
-    mub*(1-muw) - mug - N*muc 
+  (N/2)*a +  (alp_bet/2)*(1+ (k-1)*muw) + mub*(1-muw) - mug - N*muc +
+    (1/2)*sqrt(N^2*a^2 + alp_bet^2*(1+(k-1)*muw)^2 + 2*alp_bet*a*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
 } 
 
 vec <- seq(0,1,0.01)
-out_BET <- sapply(vec, stragBET)
+outBETmub <- sapply(vec, stragBET)
 
 df_out <- data.frame(mub = vec, 
-                     outBET = out_BET)
+                     outBET = outBETmub)
 
 bet_plot <- ggplot(df_out) + 
   geom_line(aes(mub,outBET)) +
@@ -191,12 +175,8 @@ bet_plot <- ggplot(df_out) +
 ##### Change K:
 stragBET <- function(k){
   a <- mub*muw +muc
-  b <- alp_bet
-  c <- alp_bet*muw
-  (1/2)*(N*a + b + (k-1)*c + sqrt((N*a)^2-(2*N-4*k)*a*b + 
-                                    ((2*k+2)*N-(4*k))*a*c +
-                                    2*(k-1)*b*c + b^2 + ((k-1)*c)^2)) +
-    mub*(1-muw) - mug - N*muc 
+  (N/2)*a +  (alp_bet/2)*(1+ (k-1)*muw) + mub*(1-muw) - mug - N*muc +
+    (1/2)*sqrt(N^2*a^2 + alp_bet^2*(1+(k-1)*muw)^2 + 2*alp_bet*a*(N*(1+(k-1)*muw) + 2*(N-k)*(muw-1)))
 } 
 
 vec <- seq(0,N/2,1)
@@ -206,19 +186,40 @@ df_out <- data.frame(k = vec,
                      outBET = out_BET)
 
 k_plot <- ggplot(df_out) + 
-  geom_line(aes(k,outBET)) +
+  geom_line(aes(k,outBET), color = "#4C6085", size = 0.8) +
   ylab("s(J)") + xlab("k") + 
   theme_bw()
+
+colA <- "#F69A79"
+colB <- "#F26430"
+colC <- "#D2430F"
+colD <- "#85DCFF"
+colE <- "#0ABAFF"
+colF <- "#0084B8"
+
+df_combmuc <- data.frame(x = seq(0,1,0.01), out_BET = outBETmuc, type = "muc")
+df_combmub <- data.frame(x = seq(0,1,0.01), out_BET = outBETmub, type = "mub")
+df_combmuw <- data.frame(x = seq(0,1,0.01), out_BET = outBETmuw, type = "muw")
+df_comb <- rbind(df_combmuc, df_combmub, df_combmuw)
+plot_3 <- ggplot(df_comb) + 
+  geom_line(aes(x, out_BET, color = type), size = 0.8) +
+  scale_color_manual(values = c(colA, colC, colD),
+                     name = NULL,
+                     labels = c(TeX("$\\beta$"), TeX("$\\mu_{m}$"),TeX("$\\mu_{c}$") )) + 
+  theme_bw() + 
+  theme(text = element_text(size = 15),legend.position = c(0.15, 0.8),
+        legend.text.align = 0) + xlab("") +
+  
+  ylab("s(J)")
+
+
 ### panel
 col <- "#5C5D8D"
-plot_grid(mig_plot + 
-            scale_colour_manual(values = c(col))  ,
-          com_plot + rremove("ylab") + 
-            scale_colour_manual(values = c(col)) ,
-          bet_plot + 
-            scale_colour_manual(values = c(col)) ,
-          k_plot + rremove("ylab") + 
-            scale_colour_manual(values = c(col)) )
+plotf <- plot_grid(plot_3 ,
+          k_plot + ylab("")+ 
+            scale_colour_manual(values = c(col))+ 
+            theme(text = element_text(size = 15),legend.position = c(0.15, 0.8),
+                  legend.text.align = 0)  )
 Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/SM/"
 muw
 mub
@@ -229,4 +230,27 @@ ggsave(file=paste0(Path,"betaSJ50N0_05mum0_1muc0_1mub0_95mug.pdf"))
 
 
 #########################################################################
+outl_mean <- mub*(muw*(N-1)+1) - mug
+k_max = 15
+mat <- matrix(1,k_max,3)
+for(i in c(1:k_max)){
+  bet <- rep(mub,N)
+  bet[1:i] <- bet[1:i] + alp_bet
+  mubk <- mean(bet)
+  outl_mean <- mubk *(muw*(N-1)+1) - mug
+  out_k <- stragBET(i)
+  jacobian <- (COMMUTING + diag(N)) %*% diag(bet) + MIGRATION -
+    diag(deaths + alphas + deltas + colSums(MIGRATION))
+  reout <- max(eigen_mat(jacobian)$re)
+  mat[i,] <- c(outl_mean, out_k, reout)
+}
 
+df_out <- data.frame( k = seq(1,k_max,1), outm = mat[,1], outk = mat[,2], outr = mat[,3] )
+df_plot <- reshape2::melt(df_out, id.vars = "k")
+df_plot$var2 <- "1"
+df_plot[which(df_plot$variable == "outm")]
+
+ggplot(df_plot) + 
+  geom_line(aes(k, value, color = variable, linetype = ), size = 1) +
+  theme_bw() +
+  theme(text = element_text(size = 15))

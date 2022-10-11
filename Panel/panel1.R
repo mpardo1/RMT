@@ -66,7 +66,7 @@ df_thres[which(df_thres$muc>0.75), 2] = 0.75
 
 # Data points for the values beta and muc for integration and eigenvalues plots:
 stab_par = 0.1
-betnew <- 0.35
+betnew <- 0.25
 muwnew <- ((betnew*stab_par*(N-1)) + betnew - stab_par)/(stab_par*(N-1))
 
 betnew - mug + betnew*stab_par*(N-1) == stab_par - mug + stab_par*muwnew*(N-1)
@@ -110,7 +110,6 @@ plot_area <- ggplot(df_thres, aes(bet, muc)) +
   theme_bw() +
   theme(text = element_text(size = 15),legend.position = c(0.7, 0.85)) 
   
-
 # Save plot
 # Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
 path <- paste0(Path,"Area_g0,95_muc_0,01_sc0,00001_sw0,05.png")
@@ -123,7 +122,7 @@ ggsave(path,
 # col_unst_c <- "#EF8A17"
 # col_unst_b <- "#EF2917"
 #### Plots RMT and Integration ####
-sus_init <- rep(50, N) # initial susceptibles
+sus_init <- rep(100, N) # initial susceptibles
 inf_init <- rep(10, N)    # initial infecteds
 
 end_time <- 100
@@ -248,7 +247,7 @@ plot  <- ggplot(sol_stab,
                 aes(time, value), show.legend = NA) + 
   geom_line(aes( group =variable, colour = type),size=0.5)  +
   # geom_line(aes( colour =variable),size=0.5)  +
-  ylab("Number of infected individuals") 
+  ylab("Infected individuals") 
 
 ### Unstable by commuting:
 mub <- betnew
@@ -321,7 +320,7 @@ sol_tot <- rbind(sol_uns_bet,sol_uns_com,sol_stab_f)
 plot_integration  <- ggplot(sol_tot,
                             aes(time, value), show.legend = NA) + 
   geom_line(aes( group =variable1, colour = type), size=0.5)  +
-  ylab("Number of infected individuals") +
+  ylab("Infected individuals") +
   scale_color_manual(values = c(col_stab,col_unst_c,col_unst_b),
                      name = NULL, labels = c("Stable        ", 
                                            TeX("Unstable $\\mu_c$"), 
@@ -426,4 +425,296 @@ plot_full <- plot_grid(plot1,
           label_size = size_text)
 plot_full
 
+##Plots ppt conference###
+#### EIGEN  PPT ######
+# col1_ppt <- "#1E91D6"
+# col2_ppt <- "#FF8811"
+# plot_area_ppt <- ggplot(df_thres, aes(bet, muc)) + 
+#   geom_ribbon(aes(x = bet, ymin = muc, ymax = 0.75, fill = col_unstab_r), alpha= 0.7) + 
+#   geom_ribbon(aes(x = bet, ymin = 0, ymax = muc, fill = col_stab_r), alpha= 0.7) + 
+#   scale_fill_manual(values = c(col_stab_r,col_unstab_r), name = NULL,
+#                     labels = c("Stable", "Unstable"), position = "bottom") + 
+#   xlab(TeX("$\\beta$")) + ylab(TeX("$\\mu_c$")) +
+#   scale_x_continuous(breaks=c(0,0.25,0.50), limits = c(0, 0.5),
+#                      labels = c("0", "0.25", "0.50")) +
+#   scale_y_continuous(breaks=c(0,0.25,0.50, 0.75), limits = c(0, 0.75),
+#                      labels = c("0", "0.25", "0.50", "0.75")) +
+#   theme_bw() +
+#   theme(text = element_text(size = 15),legend.position = c(0.7, 0.85),
+#         axis.title.y = element_text(angle = 0, vjust = 0.5, hjust=1)) +
+#   coord_fixed()
 
+ggplot(df_thres, aes(bet, muc)) + 
+  geom_ribbon(aes(x = bet, ymin = muc, ymax = 0.75, fill = col_unstab_r), alpha= 0.7) + 
+  geom_ribbon(aes(x = bet, ymin = 0, ymax = muc, fill = col_stab_r), alpha= 0.7) + 
+  scale_fill_manual(values = c(col_stab_r,col_unstab_r), name = NULL,
+                    labels = c("Stable", "Unstable"), position = "bottom") + 
+  xlab(TeX("$\\beta$")) + ylab(TeX("$\\mu_c$")) +
+  scale_x_continuous(breaks=c(0,0.25,0.50), limits = c(0, 0.5),
+                     labels = c("0", "0.25", "0.50")) +
+  scale_y_continuous(breaks=c(0,0.25,0.50, 0.75), limits = c(0, 0.75),
+                     labels = c("0", "0.25", "0.50", "0.75")) +
+  theme_bw() +
+  theme(text = element_text(size = 20),legend.position = c(0.7, 0.85),
+        axis.title.y = element_text(angle = 0, vjust = 0.5, hjust=1))  +
+  coord_fixed()
+
+
+ggplot(df_thres, aes(bet, muc)) + 
+  geom_ribbon(aes(x = bet, ymin = muc, ymax = 0.75, fill = col_unstab_r), alpha= 0.7) + 
+  geom_ribbon(aes(x = bet, ymin = 0, ymax = muc, fill = col_stab_r), alpha= 0.7) + 
+  scale_fill_manual(values = c(col_stab_r,col_unstab_r), name = NULL,
+                    labels = c("Stable", "Unstable"), position = "bottom") + 
+  xlab(TeX("$\\beta$")) + ylab(TeX("$\\mu_c$")) +
+  geom_point(data = df_stab, aes(mub, muc),
+             colour= col_stab, size = 2.7) +
+  scale_x_continuous(breaks=c(0,0.25,0.50), limits = c(0, 0.5),
+                     labels = c("0", "0.25", "0.50")) +
+  scale_y_continuous(breaks=c(0,0.25,0.50, 0.75), limits = c(0, 0.75),
+                     labels = c("0", "0.25", "0.50", "0.75")) +
+  theme_bw() +
+  theme(text = element_text(size = 20),legend.position = c(0.7, 0.85),
+        axis.title.y = element_text(angle = 0, vjust = 0.5, hjust=1))  +
+  coord_fixed()
+
+
+ggplot(df_thres, aes(bet, muc)) + 
+  geom_ribbon(aes(x = bet, ymin = muc, ymax = 0.75, fill = col_unstab_r), alpha= 0.7) + 
+  geom_ribbon(aes(x = bet, ymin = 0, ymax = muc, fill = col_stab_r), alpha= 0.7) + 
+  scale_fill_manual(values = c(col_stab_r,col_unstab_r), name = NULL,
+                    labels = c("Stable", "Unstable"), position = "bottom") + 
+  xlab(TeX("$\\beta$")) + ylab(TeX("$\\mu_c$")) +
+  geom_point(data = df_stab, aes(mub, muc),
+             colour= col_stab, size = 2.7) +
+  geom_point(data = df_unst_b, aes(mub, muc),
+             colour= col_unst_b, size = 2.7)  +
+  scale_x_continuous(breaks=c(0,0.25,0.50), limits = c(0, 0.5),
+                     labels = c("0", "0.25", "0.50")) +
+  scale_y_continuous(breaks=c(0,0.25,0.50, 0.75), limits = c(0, 0.75),
+                     labels = c("0", "0.25", "0.50", "0.75")) +
+  theme_bw() +
+  theme(text = element_text(size = 20),legend.position = c(0.7, 0.85),
+        axis.title.y = element_text(angle = 0, vjust = 0.5, hjust=1))  +
+  coord_fixed()
+
+
+ggplot(df_thres, aes(bet, muc)) + 
+  geom_ribbon(aes(x = bet, ymin = muc, ymax = 0.75, fill = col_unstab_r), alpha= 0.7) + 
+  geom_ribbon(aes(x = bet, ymin = 0, ymax = muc, fill = col_stab_r), alpha= 0.7) + 
+  scale_fill_manual(values = c(col_stab_r,col_unstab_r), name = NULL,
+                    labels = c("Stable", "Unstable"), position = "bottom") + 
+  xlab(TeX("$\\beta$")) + ylab(TeX("$\\mu_c$")) +
+  geom_point(data = df_stab, aes(mub, muc),
+             colour= col_stab, size = 2.7) +
+  geom_point(data = df_unst_c, aes(mub, muc),
+             colour= col_unst_c, size = 2.7) +
+  geom_point(data = df_unst_b, aes(mub, muc),
+             colour= col_unst_b, size = 2.7)  +
+  scale_x_continuous(breaks=c(0,0.25,0.50), limits = c(0, 0.5),
+                     labels = c("0", "0.25", "0.50")) +
+  scale_y_continuous(breaks=c(0,0.25,0.50, 0.75), limits = c(0, 0.75),
+                     labels = c("0", "0.25", "0.50", "0.75")) +
+  theme_bw() +
+  theme(text = element_text(size = 20),legend.position = c(0.7, 0.85),
+        axis.title.y = element_text(angle = 0, vjust = 0.5, hjust=1))  +
+  coord_fixed()
+
+####### EIGEN  PPT #######
+size_text <- 20
+ggplot(eig_stab) + 
+  geom_point(aes(re,im), size = 0.2) +
+  theme_bw() +
+  guides(colour = guide_legend(override.aes = list(size=3))) +
+  geom_ellipse(aes(x0 = c_stab, y0 = 0, 
+                   a = r_stab,
+                   b = r_stab, 
+                   angle = 0), color = col1_ppt) +
+  geom_point(aes(o_stab,0), 
+             color = col1_ppt, shape = 21) +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed")  +
+  theme(text = element_text(size = size_text),
+        legend.position = "none",
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title.y = element_text(angle=0)) + 
+  rremove("xlab") + rremove("ylab") +
+  coord_fixed()
+
+ggplot(eig_uns_bet) + 
+  geom_point(aes(re,im), size = 0.2) +
+  theme_bw() + 
+  theme(text = element_text(size = size_text),
+        legend.position = "bottom") +
+  guides(colour = guide_legend(override.aes = list(size=3))) +
+  geom_ellipse(aes(x0 = c_unstab_b, y0 = 0, 
+                   a = r_unstab_b,
+                   b = r_unstab_b, 
+                   angle = 0), color = col2_ppt) +
+  geom_point(aes(o_unstab_b,0),
+             color = col2_ppt, shape = 21, size = 2.4) +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed")  +
+  theme(text = element_text(size = size_text),
+        legend.position = "none",
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title.y = element_text(angle=0)) + 
+  rremove("xlab") + rremove("ylab") +
+  coord_fixed()
+
+eig_stab_uns <- rbind(eig_stab,eig_uns_bet)
+ggplot(eig_stab_uns) + 
+  geom_point(aes(re,im), size = 0.2) +
+  theme_bw() + 
+  theme(text = element_text(size = size_text),
+        legend.position = "bottom") +
+  guides(colour = guide_legend(override.aes = list(size=3))) +
+  geom_ellipse(aes(x0 = c_unstab_b, y0 = 0, 
+                   a = r_unstab_b,
+                   b = r_unstab_b, 
+                   angle = 0), color = col2_ppt) +
+  geom_point(aes(o_unstab_b,0),
+             color = col2_ppt, shape = 21, size = 2.4) +
+  geom_ellipse(aes(x0 = c_stab, y0 = 0, 
+                   a = r_stab,
+                   b = r_stab, 
+                   angle = 0), color = col1_ppt) +
+  geom_point(aes(o_stab,0), 
+             color = col1_ppt, shape = 21) +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed")  +
+  theme(text = element_text(size = size_text),
+        legend.position = "none",
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title.y = element_text(angle=0),
+        plot.margin = margin(0.3, 0.3, 0.3, 0.3, "cm")) + 
+  rremove("xlab") + rremove("ylab") +
+  coord_fixed()
+
+##### INTEGRATION PPT ######
+ggplot(sol_stab_f,aes(time, value), show.legend = NA) + 
+  geom_line(aes( group =variable1, colour = type), size=0.5)  +
+  ylab("Infected\n   Individuals") +
+  scale_color_manual(values = c(col_stab),
+                     name = NULL, labels = c("Stable        ", 
+                                             TeX("Unstable $\\mu_c$"), 
+                                             TeX("Unstable $\\beta$ "))) +
+  xlim(c(0,15)) + 
+  ylim(c(0,22)) +
+  theme_bw() +
+  theme(text = element_text(size = size_text),
+        legend.position = c(0.7, 0.5),
+        legend.text.align = 0,
+        axis.title.y = element_text(angle = 0, vjust = 0.5, hjust=1)) + 
+  coord_fixed()
+
+sol_tot <- rbind(sol_uns_bet,sol_stab_f)
+ggplot(sol_tot,aes(time, value), show.legend = NA) + 
+  geom_line(aes( group =variable1, colour = type), size=0.5)  +
+  ylab("Infected\n   Individuals") +
+  scale_color_manual(values = c(col_stab,col_unst_b),
+                     name = NULL, labels = c("Stable        ", 
+                                             TeX("Unstable $\\beta$ "))) +
+  xlim(c(0,15)) + 
+  ylim(c(0,22)) +
+  theme_bw() +
+  theme(text = element_text(size = size_text),
+        legend.position = c(0.7, 0.5),
+        legend.text.align = 0,
+        axis.title.y = element_text(angle = 0, vjust = 0.5, hjust=1)) + 
+  coord_fixed()
+
+sol_tot <- rbind(sol_uns_bet,sol_uns_com,sol_stab_f)
+ggplot(sol_tot,aes(time, value), show.legend = NA) + 
+  geom_line(aes( group =variable1, colour = type), size=0.5)  +
+  ylab("Infected\n   Individuals") +
+  scale_color_manual(values = c(col_stab,col_unst_c,col_unst_b),
+                     name = NULL, labels = c("Stable        ", 
+                                             TeX("Unstable $\\mu_c$"), 
+                                             TeX("Unstable $\\beta$ "))) +
+  xlim(c(0,15)) + 
+  ylim(c(0,22)) +
+  theme_bw() +
+  theme(text = element_text(size = size_text),
+        legend.position = c(0.7, 0.5),
+        legend.text.align = 0,
+        axis.title.y = element_text(angle = 0, vjust = 0.5, hjust=1)) +
+  coord_fixed()
+
+##### EIGEN FULL PPT #### 
+ggplot(eig_stab) + 
+  geom_point(aes(re,im), size = 0.2) +
+  theme_bw() + 
+  theme(text = element_text(size = size_text),
+        legend.position = "none",
+        axis.title.y = element_text(angle = 0, vjust = 0.5, hjust=1),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  guides(colour = guide_legend(override.aes = list(size=3))) +
+  geom_ellipse(aes(x0 = c_stab, y0 = 0, 
+                   a = r_stab,
+                   b = r_stab, 
+                   angle = 0, color = "c")) +
+  ylim(c(-0.1,0.1)) +
+  geom_point(aes(o_stab,0), 
+             color = col_stab, shape = 21) +
+  geom_vline(xintercept = 0, color = "blue", linetype = "dashed")  +
+  scale_color_manual(values = colors,
+                     name = " Scenario") + coord_fixed()
+
+eig_full <- rbind(eig_stab,eig_uns_bet)
+ggplot(eig_full) + 
+  geom_point(aes(re,im), size = 0.2) +
+  theme_bw() + 
+  theme(text = element_text(size = size_text),
+        legend.position = "none",
+        axis.title.y = element_text(angle = 0, vjust = 0.5, hjust=1),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  guides(colour = guide_legend(override.aes = list(size=3))) +
+  geom_ellipse(aes(x0 = c_unstab_b, y0 = 0, 
+                   a = r_unstab_b,
+                   b = r_unstab_b, 
+                   angle = 0, color = "e")) +
+  geom_ellipse(aes(x0 = c_stab, y0 = 0, 
+                   a = r_stab,
+                   b = r_stab, 
+                   angle = 0, color = "c")) +
+  geom_point(aes(o_stab,0), 
+             color = col_stab, shape = 21) +
+  geom_point(aes(o_unstab_b,0),
+             color = col_unst_b, shape = 21, size = 2.4) +
+  geom_vline(xintercept = 0, color = "blue", linetype = "dashed")  +
+  scale_color_manual(values = colors,
+                     name = " Scenario") + coord_fixed()
+
+eig_full <- rbind(eig_stab,eig_uns_bet, eig_uns_com)
+ggplot(eig_full) + 
+  geom_point(aes(re,im), size = 0.2) +
+  theme_bw() + 
+  theme(text = element_text(size = size_text),
+        legend.position = "none",
+        axis.title.y = element_text(angle = 0, vjust = 0.5, hjust=1),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  guides(colour = guide_legend(override.aes = list(size=3))) +
+  geom_ellipse(aes(x0 = c_unstab_b, y0 = 0, 
+                   a = r_unstab_b,
+                   b = r_unstab_b, 
+                   angle = 0, color = "e")) +
+  geom_ellipse(aes(x0 = c_unstab_c, y0 = 0, 
+                   a = r_unstab_c,
+                   b = r_unstab_c, 
+                   angle = 0, color = "d"))  +
+  geom_ellipse(aes(x0 = c_stab, y0 = 0, 
+                   a = r_stab,
+                   b = r_stab, 
+                   angle = 0, color = "c")) +
+  geom_point(aes(o_stab,0), 
+             color = col_stab, shape = 21) +
+  geom_point(aes(o_unstab_b,0),
+             color = col_unst_b, shape = 19, size = 2.4) +
+  geom_point(aes(o_unstab_c,0), 
+             color = col_unst_c, shape = 21, size = 0.6) +
+  geom_vline(xintercept = 0, color = "blue", linetype = "dashed")  +
+  scale_color_manual(values = colors,
+                     name = " Scenario") + coord_fixed()
