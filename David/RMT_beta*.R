@@ -217,7 +217,7 @@ plot_3 <- ggplot(df_comb) +
 col <- "#5C5D8D"
 plotf <- plot_grid(plot_3 ,
           k_plot + ylab("")+ 
-            scale_colour_manual(values = c(col))+ 
+            scale_colour_manual(values = c(col)) + 
             theme(text = element_text(size = 15),legend.position = c(0.15, 0.8),
                   legend.text.align = 0)  )
 Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/SM/"
@@ -250,7 +250,12 @@ df_plot <- reshape2::melt(df_out, id.vars = "k")
 df_plot$var2 <- "1"
 df_plot[which(df_plot$variable == "outm")]
 
-ggplot(df_plot) + 
+plot_pred_vs_real <- ggplot(df_plot) + 
   geom_line(aes(k, value, color = variable, linetype = ), size = 1) +
-  theme_bw() +
-  theme(text = element_text(size = 15))
+  scale_color_manual(values = c(colA, colC, colD),
+                     name = NULL,
+                     labels = c("Prediction CL", "Prediction LRP ", "Right most eigenvalue") ) +
+  theme_bw() + 
+  theme(text = element_text(size = 15),legend.position = c(0.3, 0.8),
+        legend.text.align = 0)
+

@@ -270,29 +270,40 @@ for(i in c(1:(N/2))){
 df_sol_k_1 <- df_sol_k_1[-1,]
 df_plot <- df_sol_k_1[,c(1,3,4,5,6)]
 
-colnames(df_plot) <- c("k","real 1 patch","real k patches",
-                       "pred 1 patch","pred k patches")
+colA <- "#F69A79"
+colB <- "#F26430"
+colC <- "#D2430F"
+colD <- "#85DCFF"
+colE <- "#0ABAFF"
+colF <- "#0084B8"
+# colnames(df_plot) <- c("k","real 1 patch","real k patches",
+                       # "pred 1 patch","pred k patches")
 # df_filt <- df_sol_k_1[,c(1,5,6)]
 df_plot <- reshape2::melt(df_plot, id.vars = "k")
-df_plot$type <- substr(df_plot$variable,1,4)
+df_plot$type <- substr(df_plot$variable,1,3)
+df_plot$numk <- substr(df_plot$variable,
+                       nchar(as.character(df_plot$variable)),
+                       nchar(as.character(df_plot$variable)))
+
+df_plot$type[which(df_plot$type == "max")] <- "Real"
+df_plot$type[which(df_plot$type == "pre")] <- "s(J)"
 gg_1_vs_k <- ggplot(df_plot) + 
-  geom_line(aes(k,value, colour = variable, linetype = type)) + 
-  ylab("Right most eigenvalue") + 
-  xlab("Number of patches") +
+  geom_line(aes(k,value, colour = numk, linetype = type), size = 1.4, alpha = 0.6) + 
+  ylab("value") + 
+  xlab("Number of patches, k") +
   labs(color='') +
-  theme_bw()
+  scale_color_manual(values = c(colA, colD),
+                     name = NULL,
+                     labels = c("1", "k") ) +
+  theme_bw() + 
+  theme(text = element_text(size = 15),
+        legend.position = c(0.2, 0.7),
+        legend.text.align = 0)
 
 gg_1_vs_k
 
-df_plot_pred <- reshape2::melt(df_filt, id.vars = "k")
-gg_1_vs_k_pred <- ggplot(df_plot_pred) + 
-  geom_line(aes(k,value, colour = variable)) + 
-  ylab("Right most eigenvalue") + 
-  xlab("Number of patches") +
-  labs(color='') +
-  theme_bw()
-
-gg_1_vs_k_pred
+plot_grid(plot_pred_vs_real,
+          gg_1_vs_k + ylab("") + xlab("k"), nrow = 1)
 ################
 # number of patches
 N <- 100
