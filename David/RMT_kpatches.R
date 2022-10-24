@@ -302,8 +302,8 @@ gg_1_vs_k <- ggplot(df_plot) +
 
 gg_1_vs_k
 
-plot_grid(plot_pred_vs_real,
-          gg_1_vs_k + ylab("") + xlab("k"), nrow = 1)
+plot_grid(plot_pred_vs_real + ggtitle("a"),
+          gg_1_vs_k + ggtitle("b") + ylab("") + xlab("k"), nrow = 1)
 ################
 # number of patches
 N <- 100
