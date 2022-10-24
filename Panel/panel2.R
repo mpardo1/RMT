@@ -183,9 +183,7 @@ eig_full <- rbind(eigen_unst, eigen_stab)
 size_text <- 16
 
 eigen_full <- ggplot(eig_full) + 
-  geom_point(aes(re,im), size = 0.2) +
-  theme(text = element_text(size = size_text),
-        legend.position = "bottom") +
+  geom_point(aes(re,im), size = 0.2)+
   guides(colour = guide_legend(override.aes = list(size=3))) +
   geom_ellipse(aes(x0 = c_stab, y0 = 0, 
                    a = r_stab,
@@ -205,7 +203,10 @@ eigen_full <- ggplot(eig_full) +
   scale_color_manual(values = colors,
                      name = " ", 
                      labels = c("Equal transmission","Perturbed case")) +
-  theme_bw() + coord_fixed() 
+  theme_bw() + coord_fixed()  +
+  theme(text = element_text(size = size_text),
+        legend.position = "none")  + 
+  scale_y_continuous( breaks=c(0))
 
 eigen_full
 
@@ -242,10 +243,8 @@ ggplot(eigen_stab) +
                      labels = c("Equal transmission","Perturbed case")) +
   theme_bw() + coord_fixed() +
   theme(text = element_text(size = 20),
-        legend.position = "none",
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank()) + rremove("xlab") + rremove("ylab")
-
+        legend.position = "none") + 
+  scale_y_continuous( breaks=c(0)) 
 grid1 <- plot_grid(plot.inf.stab +
                      xlim(c(0,30)) + ylim(c(0,950)) + 
                      rremove("xlab") +
