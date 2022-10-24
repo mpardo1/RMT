@@ -427,8 +427,8 @@ plot_full
 
 ##Plots ppt conference###
 #### EIGEN  PPT ######
-# col1_ppt <- "#1E91D6"
-# col2_ppt <- "#FF8811"
+col1_ppt <- "#1E91D6"
+col2_ppt <- "#FF8811"
 # plot_area_ppt <- ggplot(df_thres, aes(bet, muc)) + 
 #   geom_ribbon(aes(x = bet, ymin = muc, ymax = 0.75, fill = col_unstab_r), alpha= 0.7) + 
 #   geom_ribbon(aes(x = bet, ymin = 0, ymax = muc, fill = col_stab_r), alpha= 0.7) + 
@@ -521,6 +521,18 @@ ggplot(df_thres, aes(bet, muc)) +
 
 ####### EIGEN  PPT #######
 size_text <- 20
+ggplot(eig_stab) + 
+  geom_point(aes(re,im), size = 0.2) +
+  theme_bw() +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed")  +
+  theme(text = element_text(size = size_text),
+        legend.position = "none",
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title.y = element_text(angle=0)) + 
+  rremove("xlab") + rremove("ylab") +
+  coord_fixed()
+
 ggplot(eig_stab) + 
   geom_point(aes(re,im), size = 0.2) +
   theme_bw() +
