@@ -199,7 +199,7 @@ eigen_full <- ggplot(eig_full) +
              color = col_unst_c, shape = 21) +
   geom_point(aes(outl2,0),
              color = col_unst_c, shape = 21, size = 2.4) +
-  geom_vline(xintercept = 0, color = "blue", linetype = "dashed")  +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed")  +
   scale_color_manual(values = colors,
                      name = " ", 
                      labels = c("Equal transmission","Perturbed case")) +
@@ -237,7 +237,7 @@ ggplot(eigen_stab) +
                    angle = 0, color = "c")) +
   geom_point(aes(o_stab,0), 
              color = col_stab, shape = 21) +
-  geom_vline(xintercept = 0, color = "blue", linetype = "dashed")  +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed")  +
   scale_color_manual(values = colors,
                      name = " ", 
                      labels = c("Equal transmission","Perturbed case")) +
@@ -328,7 +328,7 @@ load(file="/home/marta/Documentos/PHD/2022/RMT_SIR/df_sum.Rda")
              color = color_unstab, shape = 8, size = 2.8) +
  geom_point(aes(outl2,0),
              color = color_unstab, shape = 8, size = 2.8) +
-  geom_vline(xintercept = 0, color = "blue", linetype = "dashed") +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed") +
    theme_bw() +
    theme(text = element_text(size = size_text),
          legend.position = "none", legend.box = "horizontal",
@@ -457,7 +457,7 @@ sum_inf <- ggplot(data = df_plot) +
   geom_line(data = df_root, aes(time,sum_inf), linetype = "dashed") +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
                         low = "#F8F053", high = "#4C0EF6", breaks = c(0,0.5,1,1.5,2)) +
-  ylab("Max of infected individuals") +
+  ylab("Total infected individuals") +
   xlab("Time") +
   xlim( c(0,30) ) +
   theme_bw() +
@@ -477,12 +477,12 @@ sum_inf
 plot_alp
 
 # Create Panel 2:
-text_tit = 17
+# text_tit = 17
 grid1 <- plot_grid(plot.inf.stab +
-                     xlim(c(0,30)) + ggtitle("b")  + 
+                     xlim(c(0,30)) + ggtitle("b")  + xlab("Time") +
                      theme(text = element_text(size = size_let),
                            plot.title = element_text(size = text_tit)),
-                   plot.inf.1 + xlim(c(0,30)) + ggtitle("") + 
+                   plot.inf.1 + xlim(c(0,30)) + ggtitle("") + xlab("Time")  + 
                      theme(text = element_text(size = size_let),
                            plot.title = element_text(size = text_tit)) + 
                      rremove("ylab") ,
@@ -490,7 +490,7 @@ grid1 <- plot_grid(plot.inf.stab +
 
 
 plotsum <- plot_grid(sum_inf + theme(legend.position = "none") + ggtitle("a")+ 
-                       theme(plot.title = element_text(size = text_tit)),
+                       theme(plot.title = element_text(size = text_tit)) ,
                      grid1 ,
            ncol = 2, nrow = 1,
           rel_widths = c(0.8,1,1))
@@ -501,8 +501,10 @@ plot_sum1 <- plot_grid(plotsum ,
           rel_heights = c(1.1,0.7))
 
 grid2 <- plot_grid(plot_inf_max + ggtitle("d") + 
-                     theme(plot.title = element_text(size = text_tit)),
-                    plot_time_max  + ggtitle(" ")+ 
+                     theme(plot.title = element_text(size = text_tit)) + 
+                     ylab("Total inf. at peak"),
+                    plot_time_max  + ggtitle(" ") + 
+                     ylab("Time to peak") + 
                      theme(plot.title = element_text(size = text_tit)), nrow = 1)
 plot_grid(plot_sum1,
           grid2 , nrow = 2, ncol = 1, 
