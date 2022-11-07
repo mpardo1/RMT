@@ -305,16 +305,18 @@ load(file="/home/marta/Documentos/PHD/2022/RMT_SIR/df_sum.Rda")
 
  df_bet_out$im <- 0
  df_bet_out <- df_bet_out[-(which(is.na(df_bet_out$re) == TRUE)),]
+ df_bet_out$beta_star <- mub + df_bet_out$alp
+ df_bet_out <- df_bet_out[-1] 
  # eigen_unst$alp = 0
 
  plot_alp <- ggplot(eigen_unst, aes(re,im)) +
    geom_point(size = 0.3) +
-  geom_point(data = df_bet_out, aes(re,im, colour = alp),
+  geom_point(data = df_bet_out, aes(re,im, colour = beta_star),
               size = 0.8) +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
                          low = "#F8F053", high = "#4C0EF6",
-                        limits=c(0,2),
-                        breaks = c(0, 0.5, 1, 1.5,2)) +
+                        limits=c(0,max(df_bet_out$beta_star)),
+                        breaks = c(-mub, 0.5, 1, 1.5,2)) +
    scale_y_continuous( breaks=c(-0.02,0,0.02)) +
   geom_ellipse(aes(x0 = c_stab, y0 = 0,    
                    a = r_stab,
@@ -335,10 +337,10 @@ load(file="/home/marta/Documentos/PHD/2022/RMT_SIR/df_sum.Rda")
  plot_alp
 
  leg_plot <- get_legend(ggplot(df_bet_out) +
-                          geom_point(aes(re,im, colour = alp)) +
+                          geom_point(aes(re,im, colour = beta_star)) +
                           scale_colour_gradient(name = TeX("$\\beta^*$"),
                                                 low = "#F8F053", high = "#4C0EF6",
-                                                limits=c(0,2),
+                                                limits=c(0,max(df_bet_out$beta_star)),
                                                 breaks = c(0, 0.5, 1, 1.5,2)) + 
                           theme(text = element_text(size = size_text),
                                 legend.key.height = unit(0.2, 'cm'),
@@ -377,8 +379,9 @@ df_sum_group <- data.frame(alp <- alp_bet_vec[1:len_vec],
 
 colnames(df_sum_group) <-  c("alpha", "Max_inf", "Time_max")
 library("latex2exp")
+df_sum_group$beta_st <- mub + df_sum_group$alp
 plot_inf_max <- ggplot(df_sum_group) + 
-  geom_line(aes(alpha, Max_inf, color= alpha), size = 1.4) + 
+  geom_line(aes(beta_st, Max_inf, color= beta_st), size = 1.4) + 
   xlab(TeX("$\\beta^*$")) +
   ylab("Max of infected ind.") +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
@@ -389,8 +392,8 @@ plot_inf_max <- ggplot(df_sum_group) +
 plot_inf_max
 
 plot_time_max <-  ggplot(df_sum_group) + 
-  geom_line(aes(alpha, Time_max), size = 0.5) + 
-  geom_point(aes(alpha, Time_max, color= alpha) , size = 1) +
+  geom_line(aes(beta_st, Time_max), size = 0.5) + 
+  geom_point(aes(beta_st, Time_max, color= beta_st) , size = 1.5) +
   # scale_y_continuous( breaks=c(0,50,100,150, 190)) +
   xlab(TeX("$\\beta^*$")) +
   ylab("Time to max") +
@@ -408,9 +411,10 @@ colnames(df_sum) <- c("time",as.character(alp_bet_vec))
 # df_plot <- reshape2::melt(filt_sum, id.vars = c("time"))
 df_plot <- reshape2::melt(df_sum, id.vars = c("time"))
 
-size_let <- 13
+# size_let <- 13
+df_plot$variable <- as.numeric(as.character(df_plot$variable)) + mub
 sum_inf <- ggplot(data = df_plot, aes(x = time, y = value,
-                                      color = as.numeric(as.character(variable)),
+                                      color = variable,
                                       group = variable)) +
   geom_line() +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
@@ -448,12 +452,13 @@ df_root <- data.frame(time = as.data.frame(sol)$time , sum_inf = sum_inf)
 ggplot() + geom_line(data = df_root, aes(time,sum_inf))
 sum_inf <- ggplot(data = df_plot) +
   geom_line(aes(x = time, y = value,
-                color = as.numeric(as.character(variable)),
+                color = variable,
                 group = variable)) +
   geom_line(data = df_root, aes(time,sum_inf), linetype = "dashed") +
   scale_colour_gradient(name = TeX("$\\beta^*$"),
                         low = "#F8F053", high = "#4C0EF6", breaks = c(0,0.5,1,1.5,2)) +
-  ylab("Total infected individuals") +
+  ylab("Max of infected individuals") +
+  xlab("Time") +
   xlim( c(0,30) ) +
   theme_bw() +
   theme(text = element_text(size = size_let), legend.position = "right") 
