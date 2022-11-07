@@ -66,7 +66,7 @@ diag(COMMUTING) <-  rep(0,N)
 
 jacobian <- (COMMUTING + diag(N)) %*% diag(betas)  -
   diag(deaths + alphas + deltas )
-Kmat <- -(COMMUTING + diag(N)) %*% diag(betas)%*%diag(1/(deaths + alphas + deltas))
+Kmat <- (COMMUTING + diag(N)) %*% diag(betas)%*%diag(1/(deaths + alphas + deltas))
 
 
 eig_J <- eigen_mat(jacobian)
@@ -74,14 +74,16 @@ eig_J$type <- "Jacobian"
 eig_K <- eigen_mat(Kmat)
 eig_K$type <- "NGM"
 eig_t <- rbind(eig_J, eig_K)
+maxJ1 <- max(eig_J$re)
+maxK1 <- max(abs(eig_K$re))
 
 colA <- "#2E294E"
 colB <- "#16BAC5"
 
 ggunst <- ggplot() + 
   geom_circle(aes(x0 = 0, y0 = 0, r = 1), 
-                            size =  0.3, linetype = "dashed", color = "red",
-                            alpha = 0.5) + 
+              size =  0.3, linetype = "dashed", color = "red",
+              alpha = 0.5) + 
   geom_vline(xintercept = 0, 
              size =  0.4, linetype = "dashed", color = "red") +
   geom_point(data = eig_t, aes(re, im, color = type), size = 0.3) + 
@@ -89,13 +91,13 @@ ggunst <- ggplot() +
   theme_bw() +
   scale_color_manual(values = c(colA, colB),
                      name = NULL ) +
+  geom_point(aes(maxJ1,0), size = 1, color = colA) +
+  geom_point(aes(maxK1,0), size = 1, color = colB) +
   theme_bw() + 
   theme(text = element_text(size = 15),legend.position = "left",
         legend.text.align = 0) +
-  guides(color = guide_legend(override.aes = list(size = 3))) +
-  ylab("")
+  guides(color = guide_legend(override.aes = list(size = 3))) 
 ggunst
-
 ### Stable
 mua <- 0.5 # stable
 alphas <- rep(mua, N) # recovery rates
@@ -113,7 +115,7 @@ diag(COMMUTING) <-  rep(0,N)
 
 jacobian <- (COMMUTING + diag(N)) %*% diag(betas)  -
   diag(deaths + alphas + deltas )
-Kmat <- -(COMMUTING + diag(N)) %*% diag(betas)%*%diag(1/(deaths + alphas + deltas))
+Kmat <- (COMMUTING + diag(N)) %*% diag(betas)%*%diag(1/(deaths + alphas + deltas))
 
 
 eig_J <- eigen_mat(jacobian)
@@ -121,6 +123,8 @@ eig_J$type <- "Jacobian"
 eig_K <- eigen_mat(Kmat)
 eig_K$type <- "NGM"
 eig_t <- rbind(eig_J, eig_K)
+maxJ <- max(eig_J$re)
+maxK <- max(abs(eig_K$re))
 
 colA <- "#2E294E"
 colB <- "#16BAC5"
@@ -136,11 +140,13 @@ ggst <- ggplot() +
   theme_bw() +
   scale_color_manual(values = c(colA, colB),
                      name = NULL ) +
+  geom_point(aes(maxJ,0), size = 1, color = colA) +
+  geom_point(aes(maxK,0), size = 1, color = colB) +
   theme_bw() + 
   theme(text = element_text(size = 15),legend.position = "left",
         legend.text.align = 0) +
   guides(color = guide_legend(override.aes = list(size = 3))) 
 ggst
 
-ggarrange( ggst,ggunst , common.legend = TRUE, widths  = c(0.91,1))
+ggarrange( ggst,ggunst , common.legend = TRUE, widths  = c(0.93,1))
 

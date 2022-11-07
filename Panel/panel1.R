@@ -321,6 +321,7 @@ plot_integration  <- ggplot(sol_tot,
                             aes(time, value), show.legend = NA) + 
   geom_line(aes( group =variable1, colour = type), size=0.5)  +
   ylab("Infected individuals") +
+  xlab("Time") +
   scale_color_manual(values = c(col_stab,col_unst_c,col_unst_b),
                      name = NULL, labels = c("Stable        ", 
                                            TeX("Unstable $\\mu_c$"), 
@@ -328,7 +329,7 @@ plot_integration  <- ggplot(sol_tot,
   xlim(c(0,15)) + 
   theme_bw() +
   theme(text = element_text(size = size_text),
-        legend.position = c(0.75, 0.85),
+        legend.position = c(0.75, 0.20),
         legend.text.align = 0)
 
 ###### ALL EIGENVALUE DIST ####
@@ -386,13 +387,15 @@ eigen_full <- ggplot(eig_full) +
              color = col_unst_b, shape = 19, size = 2.4) +
   geom_point(aes(o_unstab_c,0), 
              color = col_unst_c, shape = 21, size = 0.6) +
-  geom_vline(xintercept = 0, color = "blue", linetype = "dashed")  +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed")  +
   scale_color_manual(values = colors,
                      name = " Scenario")
   
 eigen_full  
 let_size <- 15
 ##### Construct panel1 ####
+library("cowplot")
+library("ggpubr")
 plot1 <- plot_grid(plot_area  + 
                      # ggtitle("a") +
             theme(plot.title = element_text(size = let_size), 
@@ -404,9 +407,10 @@ plot1 <- plot_grid(plot_area  +
             scale_x_continuous(breaks=c(0,2,4,6,8,10,12),
                                limits = c(0,12), expand = c(0, 0)) +
             theme(plot.title = element_text(size = let_size), 
-                  plot.margin = unit(c(0.2, 0.4, 0.2, 0.2), "cm")) +
-            scale_y_continuous( expand = c(0, 0)) +
-            ylab("Infected Individuals"),
+                  plot.margin = unit(c(0.2, 0.4, 0.2, 0.2), "cm"),
+                  axis.ticks.y = element_blank(),
+                  axis.text.y = element_blank()) +
+            scale_y_continuous( expand = c(0, 0), limits = c(0,22)) ,
           rel_widths = c(1,1), nrow = 1, labels = c("a","c"),
           label_fontfamily = "Helvetica",
           label_size = size_text)
@@ -417,7 +421,8 @@ plot_full <- plot_grid(plot1,
                                legend.position = "none", 
                                plot.margin = unit(c(1.3, 0.2, 1.2, 0.2), "cm")) +
                          rremove("xlab") + rremove("ylab") +
-                         scale_y_continuous(breaks=c(-0.1,0,0.1), expand = c(0, 0.01))  +
+                         scale_y_continuous(breaks=c(-0.1,0,0.1),
+                                            expand = c(0, 0.01))  +
                          scale_x_continuous( expand = c(0, 0.07)) ,
           ncol = 1, rel_heights = c(2.2,1), axis = "v", scale = c(1,1),
           labels = c("","b"),

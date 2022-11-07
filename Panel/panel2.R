@@ -263,28 +263,29 @@ sus_init <- rep(1000, N) # initial susceptibles
 inf_init <- rep(10, N)    # initial infecteds
 
 end_time <- 500
-alp_bet_vec <- seq(0,2,0.03)
-# end_time <- 500
-# sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-           # COMMUTING,MIGRATION,
-           # sus_init,inf_init,end_time)
-# df_sum <- data.frame(time = sol[,1])
-# for(i in c(1:length(alp_bet_vec))){
-#   print(paste0("i: ", i))
-#   betas <- rep(mub, N)
-#   betas[1] <- betas[1] + alp_bet_vec[i]
-#   sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
-#              COMMUTING,MIGRATION,
-#              sus_init,inf_init,end_time)
-#   sol_inf <- sol[,c(1,(N+2):(2*N+1))]
-#   sum_inf <- rowSums(sol_inf[,2:(N+1)])
-#   df_sum[,ncol(df_sum)+1] <- sum_inf
-# }
-
+alp_bet_vec <- seq(-mub,2,0.03)
+#  end_time <- 500
+#  sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+#             COMMUTING,MIGRATION,
+#             sus_init,inf_init,end_time)
+#  df_sum <- data.frame(time = sol[,1])
+#  for(i in c(1:length(alp_bet_vec))){
+#    print(paste0("i: ", i))
+#    betas <- rep(mub, N)
+#    betas[1] <- betas[1] + alp_bet_vec[i]
+#    sol <- int(N, Deltas,betas,deaths,thetas,alphas,deltas,
+#               COMMUTING,MIGRATION,
+#               sus_init,inf_init,end_time)
+#    sol_inf <- sol[,c(1,(N+2):(2*N+1))]
+#    sum_inf <- rowSums(sol_inf[,2:(N+1)])
+#    df_sum[,ncol(df_sum)+1] <- sum_inf
+#  }
+# 
 # save(df_sum,file="/home/marta/Documentos/PHD/2022/RMT_SIR/df_sum.Rda")
 load(file="/home/marta/Documentos/PHD/2022/RMT_SIR/df_sum.Rda")
 
- alp_bet_vec1 <- seq(0,2,0.01)
+ 
+ alp_bet_vec1 <- seq(-mub,2,0.01)
  # end_time <- 500
  df_bet_out <- data.frame(alp = 0, re = 0)
  for(i in c(1:length(alp_bet_vec1))){
@@ -303,7 +304,8 @@ load(file="/home/marta/Documentos/PHD/2022/RMT_SIR/df_sum.Rda")
  }
 
  df_bet_out$im <- 0
- eigen_unst$alp = 0
+ df_bet_out <- df_bet_out[-(which(is.na(df_bet_out$re) == TRUE)),]
+ # eigen_unst$alp = 0
 
  plot_alp <- ggplot(eigen_unst, aes(re,im)) +
    geom_point(size = 0.3) +

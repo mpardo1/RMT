@@ -148,6 +148,7 @@ ggarrange(plot_eig, plot_eig_spa)
 #legend for plotmobility2 can be found in RMT_plotmobility
 plotmobility(COM_SPA)
 plot_mob <- plotmobility(COM_SPA, color1 = col_s)
+plotmobility(MIGRATION, color1 = col_s)
 #### MEAN = p*muw ###  
 muw <- p*muw
 muc <- p*muc

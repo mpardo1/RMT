@@ -285,12 +285,13 @@ df_plot$numk <- substr(df_plot$variable,
                        nchar(as.character(df_plot$variable)),
                        nchar(as.character(df_plot$variable)))
 
-df_plot$type[which(df_plot$type == "max")] <- "Real"
-df_plot$type[which(df_plot$type == "pre")] <- "s(J)"
+df_plot$type[which(df_plot$type == "max")] <- "Empiric"
+df_plot$type[which(df_plot$type == "pre")] <- "Prediction"
+df_plot$kalp <- alp_cte*df_plot$k
 gg_1_vs_k <- ggplot(df_plot) + 
-  geom_line(aes(k,value, colour = numk, linetype = type), size = 1.4, alpha = 0.6) + 
+  geom_line(aes(kalp,value, colour = numk, linetype = type), size = 1.4, alpha = 0.6) + 
   ylab("value") + 
-  xlab("Number of patches, k") +
+  xlab("") +
   labs(color='') +
   scale_color_manual(values = c(colA, colD),
                      name = NULL,
@@ -302,8 +303,8 @@ gg_1_vs_k <- ggplot(df_plot) +
 
 gg_1_vs_k
 
-plot_grid(plot_pred_vs_real + ggtitle("a"),
-          gg_1_vs_k + ggtitle("b") + ylab("") + xlab("k"), nrow = 1)
+plot_grid(plot_pred_vs_real + ggtitle("a")  + ylab("s(J)") ,
+          gg_1_vs_k + ggtitle("b") + ylab("") + xlab(""), nrow = 1)
 ################
 # number of patches
 N <- 100
