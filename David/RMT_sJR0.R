@@ -148,5 +148,5 @@ ggst <- ggplot() +
   guides(color = guide_legend(override.aes = list(size = 3))) 
 ggst
 
-ggarrange( ggst,ggunst , common.legend = TRUE, widths  = c(0.93,1))
+ggarrange( ggst + xlab("") + ylab("") ,ggunst + xlab("") + ylab("") , common.legend = TRUE, widths  = c(0.93,1))
 

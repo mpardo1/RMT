@@ -69,6 +69,7 @@ mudel <- 0
 deltas <- rep(mudel, N) # disease-related death rates
 gammas = deaths + alphas + deltas
 mug <- gammas[1]
+
 muw <- 0.1
 sw <- 0.07/3
 rhow <- 0             # original rho (Gamma of baron et al)
@@ -130,13 +131,14 @@ df_out <- data.frame(muc = vec,
 ggplot(df_out) + geom_line(aes(muc,C))
 df_plot <- reshape2::melt(df_out, id.vars = c("muc"))
 library("latex2exp")
+text_size = 16
 colnames(df_plot) <- c("muc", "Strategy","value")
 mig_plot <- ggplot(df_plot) + 
   geom_line(aes(muc,value, 
                 colour = Strategy ), size = 1) + 
   ylab("s(J)") + xlab(TeX("$\\mu_m$")) + 
   scale_colour_manual(values = c(colA,colC,colD)) +
-  theme_bw()
+  theme_bw() + theme(text = element_text(size = text_size))
 
 Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/SM/"
 muw
@@ -157,7 +159,7 @@ stragAB <- function(nu){
 
 stragC <- function(nu){
   c <- (mub*muw+muc)
-  (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc+ 
+  (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc + 
     (1/2)*sqrt((N*c)^2 + 2*mub*nu*c*(N+k*(3*N-2*k-2)) +
                  ((mub*nu)^2)*(4*k*(N-k) + (k-1)^2))
 } 
@@ -189,8 +191,9 @@ nu_plot <- ggplot(df_plot) +
                 colour = Strategy ), size = 1) + 
   scale_colour_manual(values = c(colA,colC,colD)) +
   ylab("s(J)") + xlab(TeX("$\\nu$")) + 
-  theme_bw()
+  theme_bw() + theme(text = element_text(size = text_size))
 
+nu <- 0.5
 # Changing k:
 stragAB <- function(k){
   c <- (mub*muw+muc)
@@ -201,13 +204,13 @@ stragAB <- function(k){
 
 stragC <- function(k){
   c <- (mub*muw+muc)
-  (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc+ 
+  (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc + 
     (1/2)*sqrt((N*c)^2 + 2*mub*nu*c*(N+k*(3*N-2*k-2)) +
                  ((mub*nu)^2)*(4*k*(N-k) + (k-1)^2))
-} 
+}
 
 stragDEF <- function(k){
-  k0 <-  k/N
+  k0 <- k/N
   (N-1)*mub*(muw + k0*nu) + mub - mug
 } 
 
@@ -232,8 +235,9 @@ k_plot <- ggplot(df_plot) +
                 colour = Strategy ), size = 1) + 
   scale_colour_manual(values = c(colA,colC,colD)) +
   ylab("s(J)") + xlab("k") + 
-  theme_bw()
+  theme_bw() + theme(text = element_text(size = text_size))
 
+k <- 1
 ### Changing muw:
 stragAB <- function(muw){
   c <- (mub*muw+muc)
@@ -244,7 +248,7 @@ stragAB <- function(muw){
 
 stragC <- function(muw){
   c <- (mub*muw+muc)
-  (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc+ 
+  (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc + 
     (1/2)*sqrt((N*c)^2 + 2*mub*nu*c*(N+k*(3*N-2*k-2)) +
                  ((mub*nu)^2)*(4*k*(N-k) + (k-1)^2))
 } 
@@ -276,9 +280,9 @@ muw_plot <- ggplot(df_plot) +
                 colour = Strategy ), size = 1) + 
   ylab("s(J)") + xlab(TeX("$\\mu_c$")) + 
   scale_colour_manual(values = c(colA,colC,colD)) +
-  theme_bw()
+  theme_bw() + theme(text = element_text(size = text_size))
 
-
+muw <- 0.1
 ### panel
 ggarrange(nu_plot ,
           mig_plot + rremove("ylab"),
@@ -295,13 +299,13 @@ stragAB <- function(mub){
 
 stragC <- function(mub){
   c <- (mub*muw+muc)
-  (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc+ 
+  (N/2)*c + ((k-1)/2)*(mub*nu) + mub*(1-muw) - mug - N*muc + 
     (1/2)*sqrt((N*c)^2 + 2*mub*nu*c*(N+k*(3*N-2*k-2)) +
                  ((mub*nu)^2)*(4*k*(N-k) + (k-1)^2))
 } 
 
 stragDEF <- function(mub){
-  k0 <-  k/N
+  k0 <- k/N
   (N-1)*mub*(muw + k0*nu) + mub - mug
 }
 
@@ -327,17 +331,39 @@ beta_plot <- ggplot(df_plot) +
                 colour = Strategy ), size = 1) + 
   ylab("s(J)") + xlab(TeX("$\\beta$")) + 
   scale_colour_manual(values = c(colA,colC,colD)) +
-  theme_bw()
+  theme_bw() + theme(text = element_text(size = text_size))
 
-
+mub <- 0.1
 ### panel
-ggarrange(nu_plot ,
-          mig_plot + rremove("ylab"),
-          muw_plot,
-          beta_plot + rremove("ylab"),
-          common.legend = TRUE)
+library("cowplot")
+leg <- get_legend(nu_plot)
+text_size = 16
+plot_sJ <- plot_grid(nu_plot + geom_hline(yintercept = 0, color = "red",
+                                          linetype = "dashed") +
+                       theme(legend.position = "none", 
+                             text = element_text(size = text_size)),
+          mig_plot  +  geom_hline(yintercept = 0, color = "red", 
+                                  linetype = "dashed") +
+            theme(legend.position = "none",
+                  text = element_text(size = text_size)) + rremove("ylab"),
+          muw_plot + geom_hline(yintercept = 0, color = "red", 
+                                linetype = "dashed") +
+            theme(legend.position = "none",
+                  text = element_text(size = text_size)),
+          beta_plot + geom_hline(yintercept = 0, color = "red", 
+                                 linetype = "dashed") +
+            theme(legend.position = "none", 
+                  text = element_text(size = text_size)) + 
+            rremove("ylab"),
+          ncol = 2, nrow = 2, align = "v")
 
+plot_SJ <- ggdraw() +
+  draw_plot(plot_sJ) +
+  draw_plot(leg, x = 0.75, y = .69, width = .25, height = .25)
 
+plot_SJ
+
+plot_grid( leg, plot_sJ, ncol = 1, rel_heighs = c(0.1,2.2))
 Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/SM/"
 muw
 mub

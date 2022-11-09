@@ -119,10 +119,10 @@ df_err_g_gam <- df_err_g_gam[-1,]
 
 library("latex2exp")
 gg_gammas <- ggplot(df_err_g_gam) + 
-  geom_line(aes(sal, mean_err_mean), color ="#A40E4C", size = 0.4) + 
+  geom_line(aes(sal, mean_err_mean), color ="#3293CE", size = 0.4) + 
   geom_point(aes(sal, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
   theme_bw() + xlab(TeX("$\\sigma_{\\gamma}$")) + 
-  ylab("Mean squared error") +
+  ylab("Relative error") +
   theme(text = element_text(size = 15), legend.position = "bottom") 
 gg_gammas
 
@@ -225,10 +225,10 @@ df_err_bet_g <- df_err_bet_g[-1,]
 library("latex2exp")
 x_inter <- 0.7650498
 gg_betas <- ggplot(df_err_bet_g) + 
-  geom_line(aes(var_bet, mean_err_mean), color ="#A40E4C", size = 0.4) + 
+  geom_line(aes(var_bet, mean_err_mean), color ="#3293CE", size = 0.4) + 
   geom_point(aes(var_bet, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
   theme_bw() + xlab(TeX("CV")) + 
-  ylab("Mean squared error")  +
+  ylab("Relative error")  +
   # geom_vline(xintercept = x_inter, color = "blue", linetype = "longdash") +
   theme(text = element_text(size = 15), legend.position = "bottom",
         plot.margin = margin(1, 1, 1, 1, "cm")) 
@@ -314,11 +314,11 @@ df_err_bet_N_g <- df_err_bet_N_g[-1,]
 
 library("latex2exp")
 gg_betas_err_N <- ggplot(df_err_bet_N_g) + 
-  geom_line(aes(N, mean_err_mean), color ="#A40E4C", size = 0.4) + 
+  geom_line(aes(N, mean_err_mean), color ="#3293CE", size = 0.4) + 
   geom_point(aes(N,mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
   theme_bw() +
   xlab(TeX("$N$")) + 
-  ylab("Mean squared error") +
+  ylab("Relative error") +
   geom_vline(xintercept = 200, color = "blue", linetype = "longdash") +
   theme(text = element_text(size = 15), legend.position = "bottom") 
 
@@ -418,11 +418,11 @@ df_err_g_N <- df_err_g_N[-1,]
 
 library("latex2exp")
 gg_gammas_err_N <- ggplot(df_err_g_N) + 
-  geom_line(aes(N, mean_err_mean), color ="#A40E4C", size = 0.4) + 
+  geom_line(aes(N, mean_err_mean), color ="#3293CE", size = 0.4) + 
   geom_point(aes(N,mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
   theme_bw() +
   xlab(TeX("$N$")) + 
-  ylab("Mean squared error")
+  ylab("Relative error")
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
 path <- paste0(Path,"rand_gamm_N_",
@@ -485,10 +485,10 @@ df_err_bet_g_fm <- df_err_bet_g_fm[-1,]
 library("latex2exp")
 x_inter <- 0.7650498
 gg_betas_fm <- ggplot(df_err_bet_g_fm) + 
-  geom_line(aes(sal, mean_err_mean), color ="#A40E4C", size = 0.4) + 
+  geom_line(aes(sal, mean_err_mean), color ="#3293CE", size = 0.4) + 
   geom_point(aes(sal, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
   theme_bw() + xlab(TeX("$\\sigma_{\\beta}$")) + 
-  ylab("Mean squared error")  +
+  ylab("Relative error")  +
   # geom_vline(xintercept = x_inter, color = "blue", linetype = "longdash") +
   theme(text = element_text(size = 15), legend.position = "bottom",
         plot.margin = margin(1, 1, 1, 1, "cm")) 
@@ -542,10 +542,10 @@ df_err_bet_g <- df_err_bet_g[-1,]
 library("latex2exp")
 x_inter <- 0.7650498
 gg_betas_fs <- ggplot(df_err_bet_g) + 
-  geom_line(aes(mual, mean_err_mean), color ="#A40E4C", size = 0.4) + 
+  geom_line(aes(mual, mean_err_mean), color ="#3293CE", size = 0.4) + 
   geom_point(aes(mual, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
   theme_bw() + xlab(TeX("$\\mu_{\\beta}$")) + 
-  ylab("Mean squared error")  +
+  ylab("Relative error")  +
   # geom_vline(xintercept = x_inter, color = "blue", linetype = "longdash") +
   theme(text = element_text(size = 15), legend.position = "bottom",
         plot.margin = margin(1, 1, 1, 1, "cm")) 
@@ -604,10 +604,10 @@ df_err_bet_g <- df_err_bet_g[-1,]
 library("latex2exp")
 x_inter <- 0.7650498
 gg_betas_fCV_s <- ggplot(df_err_bet_g) + 
-  geom_line(aes(sal, mean_err_mean), color ="#A40E4C", size = 0.4) + 
+  geom_line(aes(sal, mean_err_mean), color ="#3293CE", size = 0.4) + 
   geom_point(aes(sal, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
   theme_bw() + xlab(TeX("$\\sigma_{\\beta}$")) + 
-  ylab("Mean squared error")  +
+  ylab("Relative error")  +
   # geom_vline(xintercept = x_inter, color = "blue", linetype = "longdash") +
   theme(text = element_text(size = 15), legend.position = "bottom",
         plot.margin = margin(1, 1, 1, 1, "cm")) 
@@ -662,14 +662,15 @@ df_err_bet_g <- df_err_bet_g[-1,]
 library("latex2exp")
 x_inter <- 0.7650498
 gg_betas_fCV <- ggplot(df_err_bet_g) + 
-  geom_line(aes(mual, mean_err_mean), color ="#A40E4C", size = 0.4) + 
+  geom_line(aes(mual, mean_err_mean), color ="#3293CE", size = 0.4) + 
   geom_point(aes(mual, mean_err_mean), color ="#2C2C54", size = 0.9 ) + 
   theme_bw() + xlab(TeX("$\\mu_{\\beta}$")) + 
-  ylab("Mean squared error")  +
+  ylab("Relative error")  +
   # geom_vline(xintercept = x_inter, color = "blue", linetype = "longdash") +
   theme(text = element_text(size = 15), legend.position = "bottom",
         plot.margin = margin(1, 1, 1, 1, "cm")) 
 gg_betas_fCV
+
 
 gg1 <- ggarrange(gg_betas_fCV_s,
                  gg_betas_fCV + rremove("ylab"),
@@ -686,3 +687,17 @@ gg2 <- ggarrange(gg_betas_fm ,
 
 gg2 <- annotate_figure(gg2, top = text_grob(TeX("$\\mu_\\beta = 1$"), 
                                             color = "black", face = "bold", size = 14))
+
+###### PLOT GRID #####
+library("cowplot")
+gg1 <- plot_grid(gg_betas_fCV_s + ggtitle("CV = 0.5"),
+                 gg_betas_fCV + ggtitle("CV = 0.5") + rremove("ylab"),
+                 rel_widths = c(1.1,1)) 
+
+gg2 <- plot_grid(gg_betas_fm  + ggtitle(TeX("$\\mu_\\beta = 1$")),
+                 gg1, 
+                 nrow = 2,
+                 rel_heights = c(1.6,2),
+                 labels = c("a","b"))
+
+gg2

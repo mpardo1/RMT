@@ -27,7 +27,7 @@ mud <- 0.3
 deaths <- rep(mud, N) # not disease-related death rates
 mua <- 0.2
 alphas <- rep(mua, N) # recovery rates
-mudel <- 0.4
+mudel <- 0
 deltas <- rep(mudel, N) # disease-related death rates
 gammas = deaths + alphas + deltas
 
@@ -237,22 +237,23 @@ sum_alphas <- ggplot(data = df_plot_alp, aes(x = time, y = value,
 
 library("ggpubr")
 library("latex2exp")
-gg_param <- ggarrange(sum_tetha + ggtitle(TeX("$\\theta$")) + 
-                        ylab("") + xlab(""),
+library("cowplot")
+legend <- get_legend(sum_tetha +
+                       theme( legend.position = "bottom") )
+gg_param <- plot_grid(sum_tetha + ggtitle(TeX("$\\theta$")) + 
+                      xlab("") +
+                        theme( legend.position = "none") ,
                       sum_deltas + ggtitle(TeX("$\\delta$")) + 
-                        ylab("") + xlab(""),
-                      sum_deaths + ggtitle(TeX("$d$")) + 
-                        ylab("") + xlab(""),
-                      sum_alphas + ggtitle(TeX("$\\alpha$")) + 
-                        ylab("") + xlab(""),
-                      common.legend = TRUE,
-                      ncol = 2, nrow = 2)
+                        ylab("") + xlab("") +
+                        theme( legend.position = "none") ,
+                      sum_deaths + ggtitle(TeX("$d$")) +
+                        theme( legend.position = "none") ,
+                      sum_alphas + ggtitle(TeX("$\\alpha$")) + ylab("") +
+                        theme( legend.position = "none") ,
+                      ncol = 2, nrow = 2,
+                      align = "v")
 
-gg_param <- annotate_figure(gg_param,
-                bottom = text_grob("Time", color = "black",
-                                   size = 15),
-                left = text_grob("Sum of infected individuals",
-                                 color = "black", rot = 90,  size = 15))
+plot_grid(gg_param, legend,ncol = 1, rel_heights = c(3, .3))
 gg_param
 
 Path <- "~/Documents/PHD/2022/RMT_SIR/Plots/Gen/"
