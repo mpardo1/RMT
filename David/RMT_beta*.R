@@ -263,12 +263,13 @@ plot_3 <- ggplot(df_comb) +
 ### panel
 col <- "#5C5D8D"
 plotf <- plot_grid(plot_3 + 
-                     geom_hline(yintercept = 0, color = "red", linetype = "dashed"),
+                     geom_hline(yintercept = 0, color = "red", linetype = "dashed") + 
+                     theme(text = element_text(size = 16)),
           k_plot + 
             geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
             ylab("") + 
             scale_colour_manual(values = c(col)) + 
-            theme(text = element_text(size = 15),legend.position = c(0.15, 0.8),
+            theme(text = element_text(size = 16),legend.position = c(0.15, 0.8),
                   legend.text.align = 0))
 
 plotf
@@ -325,7 +326,7 @@ plot_pred_vs_real <- ggplot(df_plot) +
                      name = NULL,
                      labels = c("Prediction CL", "Prediction LRP ", "Rightmost eigenvalue") ) +
   theme_bw() + 
-  theme(text = element_text(size = 15),legend.position = c(0.3, 0.8),
+  theme(text = element_text(size = 16),legend.position = c(0.3, 0.82),
         legend.text.align = 0) + 
   geom_hline(yintercept = 0, color = "red", linetype = "dashed")
 
@@ -418,11 +419,11 @@ gg_1_vs_k <- ggplot(df_plot) +
                      name = NULL,
                      labels = c("1", "k") ) +
   theme_bw() + 
-  theme(text = element_text(size = 15),
-        legend.position = c(0.2, 0.7),
+  theme(text = element_text(size = 16),
+        legend.position = c(0.2, 0.72),
         legend.text.align = 0)
 
 gg_1_vs_k
 
-plot_grid(plot_pred_vs_real + ggtitle("a")  + ylab("s(J)") ,
-          gg_1_vs_k + ggtitle("b") + ylab("") + xlab(""), nrow = 1)
+plot_grid(plot_pred_vs_real  + ylab("s(J)") ,
+          gg_1_vs_k  + ylab("") + xlab(""), nrow = 1)

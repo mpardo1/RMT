@@ -281,6 +281,12 @@ muw_plot <- ggplot(df_plot) +
   ylab("s(J)") + xlab(TeX("$\\mu_c$")) + 
   scale_colour_manual(values = c(colA,colC,colD)) +
   theme_bw() + theme(text = element_text(size = text_size))
+leg <- get_legend(ggplot(df_plot) + 
+                    geom_line(aes(muw,value, 
+                                  colour = Strategy ), size = 1) + 
+                    ylab("s(J)") + xlab(TeX("$\\mu_c$")) + 
+                    scale_colour_manual(values = c(colA,colC,colD)) +
+                    theme_bw() + theme(text = element_text(size = 15)))
 
 muw <- 0.1
 ### panel
@@ -336,7 +342,7 @@ beta_plot <- ggplot(df_plot) +
 mub <- 0.1
 ### panel
 library("cowplot")
-leg <- get_legend(nu_plot)
+
 text_size = 16
 plot_sJ <- plot_grid(nu_plot + geom_hline(yintercept = 0, color = "red",
                                           linetype = "dashed") +
@@ -359,11 +365,11 @@ plot_sJ <- plot_grid(nu_plot + geom_hline(yintercept = 0, color = "red",
 
 plot_SJ <- ggdraw() +
   draw_plot(plot_sJ) +
-  draw_plot(leg, x = 0.75, y = .69, width = .25, height = .25)
+  draw_plot(leg, x = 0.8, y = .75, width = .2, height = .2)
 
 plot_SJ
 
-plot_grid( leg, plot_sJ, ncol = 1, rel_heighs = c(0.1,2.2))
+# plot_grid( leg, plot_sJ, ncol = 1, rel_heighs = c(0.1,2.2))
 Path <- "~/Documentos/PHD/2022/RMT_SIR/Plots/SM/"
 muw
 mub
