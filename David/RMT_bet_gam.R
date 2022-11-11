@@ -551,8 +551,8 @@ gg_betas_fs <- ggplot(df_err_bet_g) +
         plot.margin = margin(1, 1, 1, 1, "cm")) 
 gg_betas_fs
 
-
-ggarrange(gg_betas_fm + ggtitle(TeX("$\\mu_{\\beta} = 1$")),
+library("cowplot")
+plot_grid(gg_betas_fm + ggtitle(TeX("$\\mu_{\\beta} = 1$")),
           gg_betas_fs + rremove("ylab") + ggtitle(TeX("$\\sigma_{\\beta} = 0.1$")))
 
 ## fixed CV vary sigma
@@ -671,33 +671,17 @@ gg_betas_fCV <- ggplot(df_err_bet_g) +
         plot.margin = margin(1, 1, 1, 1, "cm")) 
 gg_betas_fCV
 
-
-gg1 <- ggarrange(gg_betas_fCV_s,
-                 gg_betas_fCV + rremove("ylab"),
-                 widths = c(1.1,1)) 
-
-gg1 <- annotate_figure(gg1, top = text_grob("CV = 0.5", 
-                                      color = "black", face = "bold", size = 14))
-
-gg2 <- ggarrange(gg_betas_fm ,
-          gg1, 
-          nrow = 2,
-          heights = c(1.3,2),
-          labels = c("a","b"))
-
-gg2 <- annotate_figure(gg2, top = text_grob(TeX("$\\mu_\\beta = 1$"), 
-                                            color = "black", face = "bold", size = 14))
-
-###### PLOT GRID #####
 library("cowplot")
-gg1 <- plot_grid(gg_betas_fCV_s + ggtitle("CV = 0.5"),
-                 gg_betas_fCV + ggtitle("CV = 0.5") + rremove("ylab"),
-                 rel_widths = c(1.1,1)) 
+plot_grid(gg_betas_fm + 
+            ggtitle(TeX("$\\mu_{\\beta} = 1$"))  + 
+            theme(plot.margin = unit(c(mrg, mrg, mrg, mrg), "cm")),
+          gg_betas_fs + rremove("ylab") + 
+            ggtitle(TeX("$\\sigma_{\\beta} = 0.1$")) + 
+            theme(plot.margin = unit(c(mrg, mrg, mrg, mrg), "cm")),
+          gg_betas_fCV_s + ggtitle("CV=0.5") + 
+            theme(plot.margin = unit(c(mrg, mrg, mrg, mrg), "cm")),
+          gg_betas_fCV  + ggtitle("CV=0.5") + rremove("ylab") + 
+            theme(plot.margin = unit(c(mrg, mrg, mrg, mrg), "cm")),
+          ncol = 2, nrow = 2,
+          labels = c("a","b", "c","d"))
 
-gg2 <- plot_grid(gg_betas_fm  + ggtitle(TeX("$\\mu_\\beta = 1$")),
-                 gg1, 
-                 nrow = 2,
-                 rel_heights = c(1.6,2),
-                 labels = c("a","b"))
-
-gg2
